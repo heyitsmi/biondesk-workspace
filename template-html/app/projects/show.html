@@ -9,242 +9,73 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  a { color: inherit; text-decoration: none; }
-  ul { list-style: none; }
-  input, select, textarea { font: inherit; color: inherit; }
-
-  :root {
-    --bg: #F6F7F9; --surface: #FFFFFF; --surface-raised: #FFFFFF; --border: #E4E6EB;
-    --text: #12161F; --text-muted: #6B7280; --accent: #C77F1F; --accent-text: #FFFFFF;
-    --success: #1F8A5F; --danger: #D6383D;
-    --accent-soft: rgba(199,127,31,0.1); --success-soft: rgba(31,138,95,0.1); --danger-soft: rgba(214,56,61,0.1);
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-bg: #F6F7F9;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-border: #E4E6EB;
+    --color-text: #12161F;
+    --color-text-muted: #6B7280;
+    --color-accent: #C77F1F;
+    --color-accent-text: #FFFFFF;
+    --color-success: #1F8A5F;
+    --color-danger: #D6383D;
+    --color-info: #2563EB;
+    --color-accent-soft: rgba(199,127,31,0.1);
+    --color-success-soft: rgba(31,138,95,0.1);
+    --color-danger-soft: rgba(214,56,61,0.1);
+    --color-info-soft: rgba(37,99,235,0.1);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
-    --font-display: 'Instrument Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Instrument Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
   [data-theme="dark"] {
-    --bg: #0B0E14; --surface: #12161F; --surface-raised: #1A1F2B; --border: #232838;
-    --text: #EDEFF3; --text-muted: #8B93A6; --accent: #E8A33D; --accent-text: #12161F;
-    --success: #34A87C; --danger: #E5484D;
-    --accent-soft: rgba(232,163,61,0.12); --success-soft: rgba(52,168,124,0.12); --danger-soft: rgba(229,72,77,0.12);
+    --color-bg: #0B0E14;
+    --color-surface: #12161F;
+    --color-surface-raised: #1A1F2B;
+    --color-border: #232838;
+    --color-text: #EDEFF3;
+    --color-text-muted: #8B93A6;
+    --color-accent: #E8A33D;
+    --color-accent-text: #12161F;
+    --color-success: #34A87C;
+    --color-danger: #E5484D;
+    --color-info: #60A5FA;
+    --color-accent-soft: rgba(232,163,61,0.12);
+    --color-success-soft: rgba(52,168,124,0.12);
+    --color-danger-soft: rgba(229,72,77,0.12);
+    --color-info-soft: rgba(96,165,250,0.12);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
   }
 
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
-  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .icon-sm { width: 15px; height: 15px; }
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-
-  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  ::-webkit-scrollbar { width: 7px; height: 7px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-  .app-shell { display: flex; height: 100vh; overflow: hidden; }
-  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: width 0.2s ease; }
-  .sidebar.collapsed { width: 68px; }
-  .sidebar-brand { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
-  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
-  .sidebar-toggle { position: absolute; top: 16px; right: -14px; width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-raised); z-index: 35; transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
-  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
-  .sidebar-toggle .icon { transition: transform 0.2s ease; }
-  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
-  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
-  .sidebar.collapsed .sidebar-nav { overflow: visible; }
-  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.12s ease, color 0.12s ease; }
-  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar.collapsed .nav-item { justify-content: center; }
-  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
-  .sidebar.collapsed .nav-item .badge { display: none; }
-  .sidebar.collapsed .nav-item .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40; box-shadow: var(--shadow-raised); }
-  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
-  .tooltip { display: none; } .sidebar.collapsed .tooltip { display: block; }
-  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
-
-  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .topbar { height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg); }
-  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
-  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .breadcrumb a { color: var(--text-muted); flex-shrink: 0; }
-  .breadcrumb a:hover { color: var(--accent); }
-  .breadcrumb .sep { color: var(--border); flex-shrink: 0; }
-  .breadcrumb .current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .search-trigger { display: flex; align-items: center; gap: 10px; width: 260px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
-  .search-trigger:hover { border-color: var(--accent); }
-  .search-trigger .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 11px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
-  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); position: relative; }
-  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
-  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
-  .avatar-btn:hover { background: var(--surface-raised); }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-  .dropdown-wrap { position: relative; }
-  .dropdown-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 240px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 50; opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease; }
-  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
-  .dropdown-item:hover { background: var(--bg); }
-  .dropdown-item.danger { color: var(--danger); }
-  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
-  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
-
-  .content { flex: 1; display: flex; flex-direction: column; padding: 20px 32px 24px; overflow: hidden; min-height: 0; }
-
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
-  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .pill-accent { background: var(--accent-soft); color: var(--accent); } .pill-accent .dot { background: var(--accent); }
-  .pill-success { background: var(--success-soft); color: var(--success); } .pill-success .dot { background: var(--success); }
-  .pill-danger { background: var(--danger-soft); color: var(--danger); } .pill-danger .dot { background: var(--danger); }
-  .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); } .pill-muted .dot { background: var(--text-muted); }
-
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease; }
-  .btn:active { transform: scale(0.97); }
-  .btn:disabled { opacity: 0.5; pointer-events: none; }
-  .btn-primary { background: var(--accent); color: var(--accent-text); } .btn-primary:hover { opacity: 0.88; }
-  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); } .btn-ghost:hover { background: var(--surface-raised); }
-  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
-
-  .detail-header-mini { flex-shrink: 0; margin-bottom: 16px; }
-  .detail-header-mini h1 { font-size: 21px; font-weight: 700; margin-bottom: 5px; }
-  .client-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
-
-  .tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 18px; flex-shrink: 0; }
-  .tab-btn { padding: 10px 2px; margin-right: 24px; font-size: 13.5px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
-  .tab-panels { flex: 1; min-height: 0; }
-  .tab-panel { display: none; height: 100%; flex-direction: column; min-height: 0; }
-  .tab-panel.active { display: flex; }
-
-  .details-form { max-width: 460px; overflow-y: auto; }
-  .field-group { margin-bottom: 18px; }
-  .field-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 7px; display: block; }
-  select.field-select, input.field-input, textarea.field-input { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13.5px; }
-  select.field-select:focus, input.field-input:focus, textarea.field-input:focus { border-color: var(--accent); }
-  .form-row { display: flex; gap: 12px; } .form-row .field-group { flex: 1; }
-
-  .task-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-shrink: 0; flex-wrap: wrap; }
-  .view-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
-  .view-toggle button { padding: 6px 13px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
-  .task-toolbar-right { display: flex; gap: 8px; }
-  .task-add-row { display: flex; gap: 8px; margin-bottom: 14px; flex-shrink: 0; }
-  .task-add-row input { flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; }
-
-  .task-board { flex: 1; min-height: 0; display: flex; gap: 14px; overflow-x: auto; }
-  .task-col { flex: 1; min-width: 200px; display: flex; flex-direction: column; min-height: 0; }
-  .task-col-head { flex-shrink: 0; display: flex; align-items: center; gap: 7px; padding: 0 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
-  .task-col-head .count { margin-left: auto; font-family: var(--font-mono); }
-  .task-col-head .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .task-col-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px; border-radius: 8px; transition: background 0.12s ease; }
-  .task-col-body.drag-over { background: var(--accent-soft); }
-  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 10px 11px; font-size: 13px; cursor: pointer; transition: border-color 0.12s ease; }
-  .task-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .task-card:hover { border-color: var(--accent); }
-  .task-card.dragging { opacity: 0.35; }
-  .task-delete { opacity: 0; color: var(--text-muted); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 5px; flex-shrink: 0; transition: opacity 0.12s ease; }
-  .task-card:hover .task-delete { opacity: 1; }
-  .task-delete:hover { background: var(--danger-soft); color: var(--danger); }
-
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; flex: 1; }
-  .table-wrap { flex: 1; overflow-y: auto; min-height: 0; }
-  .data-table { width: 100%; border-collapse: collapse; }
-  .data-table thead { position: sticky; top: 0; background: var(--surface); z-index: 5; }
-  .data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border); }
-  .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .data-table tbody tr:last-child td { border-bottom: none; }
-  select.status-inline { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); font-size: 12.5px; }
-
-  .reqlog-toolbar { flex-shrink: 0; margin-bottom: 14px; }
-  .search-box { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); margin-bottom: 12px; color: var(--text-muted); }
-  .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; }
-  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip { padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
-  .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .reqlog-scroll { flex: 1; overflow-y: auto; min-height: 0; }
-  .reqlog-row { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--surface); }
-  .reqlog-main { flex: 1; min-width: 0; }
-  .reqlog-text { font-size: 13.5px; font-weight: 500; margin-bottom: 6px; }
-  .reqlog-meta { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); }
-  .class-badge { padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; flex-shrink: 0; }
-  .class-new { background: var(--accent-soft); color: var(--accent); }
-  .class-duplicate, .class-related { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); }
-  .class-contradiction { background: var(--danger-soft); color: var(--danger); }
-  .reqlog-actions-row { display: flex; gap: 8px; flex-shrink: 0; }
-  .empty-note { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 6px 0; }
-
-  .activity-scroll { flex: 1; overflow-y: auto; min-height: 0; max-width: 560px; }
-  .feed-item { display: flex; gap: 12px; padding: 11px 4px; }
-  .feed-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 3px; }
-  .feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
-  .feed-dot.accent { background: var(--accent); } .feed-dot.success { background: var(--success); }
-  .feed-line { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
-  .feed-text { font-size: 13px; margin-bottom: 2px; }
-  .feed-time { font-size: 11.5px; color: var(--text-muted); }
-
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
-  .modal-backdrop.open { opacity: 1; pointer-events: auto; }
-  .modal { width: 100%; max-width: 440px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,0.4); transform: translateY(-10px) scale(0.98); transition: transform 0.15s ease; }
-  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
-  .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .modal-head h3 { font-size: 15.5px; font-weight: 700; }
-  .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
-  .modal-foot { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
-  .slideover-close { color: var(--text-muted); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 7px; flex-shrink: 0; }
-  .slideover-close:hover { background: var(--bg); color: var(--text); }
-  .extract-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .extract-item:last-child { border-bottom: none; }
-  .extract-item input { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--accent); }
-
-  /* ---- tag chips ---- */
-  .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-  .tag-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 500; }
-  .tag-chip button { color: var(--accent); opacity: 0.7; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
-  .tag-chip button:hover { opacity: 1; }
-  .tag-chip svg { width: 11px; height: 11px; }
-
-  /* ---- attachments ---- */
-  .attach-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-  .attach-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 12.5px; background: var(--surface); }
-  .attach-row span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attach-row button { color: var(--text-muted); flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
-  .attach-row button:hover { color: var(--danger); }
-  .attach-btn-label { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; font-weight: 600; cursor: pointer; }
-  .attach-btn-label:hover { background: var(--surface-raised); }
-
-  /* ---- card meta indicators ---- */
-  .card-meta-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-  .meta-tag { padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 10.5px; font-weight: 600; }
-  .meta-icon-group { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 11px; }
-  .meta-icon-group svg { width: 13px; height: 13px; }
-
-  @media (max-width: 1024px) { .search-trigger { display: none; } }
-  @media (max-width: 900px) { .task-board { flex-direction: column; } }
-  @media (max-width: 760px) {
-    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
-    .sidebar.mobile-open { left: 0; }
-    .sidebar.collapsed { width: 240px; }
-    .icon-btn.mobile-menu-btn { display: flex; }
-    .content { padding: 20px 16px 40px; }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    input, select, textarea { font: inherit; color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    * { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
 </style>
 </head>
 <body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <!-- Basic Icons -->
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
     <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></symbol>
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
@@ -279,88 +110,140 @@
   </defs>
 </svg>
 
-<div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand"><div class="brand-mark"><span></span></div><span class="brand-name">Biondesk</span></div>
-    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar"><svg class="icon icon-sm"><use href="#i-chevron-left"/></svg></button>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-label">Dashboard</span><span class="tooltip">Dashboard</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-kanban"/></svg><span class="nav-label">Opportunities</span><span class="badge">8</span><span class="tooltip">Opportunities</span></a>
-      <a href="biondesk_app_projects.html" class="nav-item active"><svg class="icon"><use href="#i-briefcase"/></svg><span class="nav-label">Projects</span><span class="badge">6</span><span class="tooltip">Projects</span></a>
-      <div class="sidebar-section-label">Documents</div>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-file"/></svg><span class="nav-label">Proposals</span><span class="badge">2</span><span class="tooltip">Proposals</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-quote"/></svg><span class="nav-label">Quotations</span><span class="badge">1</span><span class="tooltip">Quotations</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-label">Invoices</span><span class="badge">3</span><span class="tooltip">Invoices</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-users"/></svg><span class="nav-label">Contacts</span><span class="tooltip">Contacts</span></a>
-      <div class="sidebar-section-label">Workspace</div>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-bell"/></svg><span class="nav-label">Reminders</span><span class="tooltip">Reminders</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-layers"/></svg><span class="nav-label">Profile Library</span><span class="tooltip">Profile Library</span></a>
+<div class="flex h-screen overflow-hidden">
+  <aside class="group/sidebar relative flex shrink-0 flex-col border-r border-border bg-surface [transition:width_0.2s_ease] [&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px] max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px] max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!" id="sidebar">
+    <div class="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-border px-[18px]">
+      <div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-border bg-surface-raised"><span class="h-[7px] w-[7px] rounded-full bg-accent"></span></div>
+      <span class="overflow-hidden text-[15px] font-semibold whitespace-nowrap group-[.collapsed]/sidebar:hidden">Biondesk</span>
+    </div>
+    <button class="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-border bg-surface text-text-muted shadow-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-accent hover:text-text max-[760px]:hidden" id="sidebarToggle" title="Collapse sidebar">
+      <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] [transition:transform_0.2s_ease] group-[.collapsed]/sidebar:rotate-180"><use href="#i-chevron-left"/></svg>
+    </button>
+    <nav class="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[12px] py-[16px] group-[.collapsed]/sidebar:overflow-visible!">
+      <a href="../dashboard.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-grid"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Dashboard</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Dashboard</span>
+      </a>
+      <a href="../opportunities/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Opportunities</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">8</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Opportunities</span>
+      </a>
+      <a href="../projects/index.html" class="nav-item active group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap bg-accent-soft text-accent [transition:background_0.12s_ease,color_0.12s_ease] group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Projects</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">6</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Projects</span>
+      </a>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Documents</div>
+      <a href="../proposals/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-file"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Proposals</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">2</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Proposals</span>
+      </a>
+      <a href="../quotations/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-quote"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Quotations</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">1</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Quotations</span>
+      </a>
+      <a href="../invoices/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-receipt"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Invoices</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">3</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Invoices</span>
+      </a>
+      <a href="../contacts/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-users"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Contacts</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Contacts</span>
+      </a>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Workspace</div>
+      <a href="../reminders/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Reminders</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Reminders</span>
+      </a>
+      <a href="../profiles/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-layers"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Profile Library</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Profile Library</span>
+      </a>
     </nav>
-    <div class="sidebar-footer"><a href="#" class="nav-item"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span><span class="tooltip">Settings</span></a></div>
+    <div class="shrink-0 border-t border-border px-[12px] py-[10px]">
+      <a href="../settings/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Settings</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Settings</span>
+      </a>
+    </div>
   </aside>
 
-  <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn"><svg class="icon"><use href="#i-menu"/></svg></button>
-        <div class="breadcrumb">
-          <a href="biondesk_app_projects.html"><svg class="icon icon-sm"><use href="#i-arrow-left"/></svg></a>
-          <a href="biondesk_app_projects.html">Projects</a>
-          <span class="sep">/</span>
-          <span class="current" id="bcTitle">Project</span>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-bg px-[24px]">
+      <div class="flex min-w-0 items-center gap-[10px]">
+        <button class="relative hidden h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text max-[760px]:flex" id="mobileMenuBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-menu"/></svg></button>
+        <div class="flex items-center gap-[8px] overflow-hidden text-[13.5px] font-semibold text-text">
+          <a href="index.html" class="shrink-0 text-text-muted hover:text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-arrow-left"/></svg></a>
+          <a href="index.html" class="shrink-0 text-text-muted hover:text-accent">Projects</a>
+          <span class="shrink-0 text-border">/</span>
+          <span class="overflow-hidden text-ellipsis whitespace-nowrap" id="bcTitle">Project</span>
         </div>
       </div>
-      <button class="search-trigger" id="cmdkTrigger">
-        <svg class="icon icon-sm"><use href="#i-search"/></svg><span>Search or jump to...</span><span class="kbd">⌘K</span>
+      <button class="flex w-[260px] shrink-0 items-center gap-[10px] rounded-[8px] border border-border bg-surface px-[10px] py-[7px] text-[13px] text-text-muted hover:border-accent max-[1024px]:hidden" id="cmdkTrigger">
+        <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg><span>Search or jump to...</span><span class="ml-auto rounded-[4px] border border-border bg-surface-raised px-[6px] py-px font-mono text-[11px]">⌘K</span>
       </button>
-      <div class="topbar-right">
-        <div class="theme-switch" id="themeSwitch">
-          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
-          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
-          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+      <div class="flex shrink-0 items-center gap-[8px]">
+        <div class="flex items-center gap-[2px] rounded-[8px] border border-border bg-surface p-[2px]" id="themeSwitch">
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="light" title="Light"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-sun"/></svg></button>
+          <button class="active flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="dark" title="Dark"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-moon"/></svg></button>
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="system" title="System"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-monitor"/></svg></button>
         </div>
-        <div class="dropdown-wrap">
-          <button class="icon-btn" id="notifBtn"><svg class="icon"><use href="#i-bell"/></svg></button>
-          <div class="dropdown-panel" id="notifPanel"><div class="dropdown-header">Notifications</div><div class="dropdown-item">No new notifications</div></div>
+        <div class="relative">
+          <button class="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text" id="notifBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="notifPanel"><div class="mb-[4px] border-b border-border px-[10px] py-[8px] text-[12.5px] font-semibold">Notifications</div><div class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text">No new notifications</div></div>
         </div>
-        <div class="dropdown-wrap">
-          <button class="avatar-btn" id="userBtn"><div class="avatar">HI</div><svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg></button>
-          <div class="dropdown-panel" id="userPanel">
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
-            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+        <div class="relative">
+          <button class="flex items-center gap-[8px] rounded-[8px] pt-[4px] pr-[8px] pb-[4px] pl-[4px] hover:bg-surface-raised" id="userBtn"><div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-text">HI</div><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] text-text-muted"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="userPanel">
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-user"/></svg> Profile</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg" onclick="window.location.href='../settings/index.html'"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg> Settings</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-danger hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-logout"/></svg> Log out</button>
           </div>
         </div>
       </div>
     </header>
 
-    <main class="content">
-      <div class="detail-header-mini">
-        <h1 id="dTitle">Project title</h1>
-        <div class="client-row">
+    <main class="flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]">
+      <div class="mb-[16px] shrink-0">
+        <h1 class="mb-[5px] text-[21px] font-bold" id="dTitle">Project title</h1>
+        <div class="flex items-center gap-[10px] text-[13px] text-text-muted">
           <span id="dClient">Client name</span>
-          <span class="pill pill-accent" id="dStatusPill"><span class="dot"></span><span id="dStatusText">Status</span></span>
+          <span class="inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap bg-accent-soft text-accent" id="dStatusPill"><span class="h-[6px] w-[6px] rounded-full bg-accent"></span><span id="dStatusText">Status</span></span>
         </div>
       </div>
 
-      <div class="tab-nav">
-        <button class="tab-btn active" data-tab="details">Details</button>
-        <button class="tab-btn" data-tab="tasks">Tasks</button>
-        <button class="tab-btn" data-tab="reqlog">Request Log</button>
-        <button class="tab-btn" data-tab="activity">Activity Log</button>
+      <div class="mb-[18px] flex shrink-0 border-b border-border">
+        <button class="tab-btn active mr-[24px] border-b-2 border-transparent px-[2px] py-[10px] text-[13.5px] font-medium text-text-muted hover:text-text [&.active]:text-text! [&.active]:border-accent!" data-tab="details">Details</button>
+        <button class="tab-btn mr-[24px] border-b-2 border-transparent px-[2px] py-[10px] text-[13.5px] font-medium text-text-muted hover:text-text [&.active]:text-text! [&.active]:border-accent!" data-tab="tasks">Tasks</button>
+        <button class="tab-btn mr-[24px] border-b-2 border-transparent px-[2px] py-[10px] text-[13.5px] font-medium text-text-muted hover:text-text [&.active]:text-text! [&.active]:border-accent!" data-tab="reqlog">Request Log</button>
+        <button class="tab-btn mr-[24px] border-b-2 border-transparent px-[2px] py-[10px] text-[13.5px] font-medium text-text-muted hover:text-text [&.active]:text-text! [&.active]:border-accent!" data-tab="activity">Activity Log</button>
       </div>
 
-      <div class="tab-panels">
-        <div class="tab-panel active" data-panel="details">
-          <div class="details-form">
-            <div class="field-group"><span class="field-label">Title</span><input class="field-input" id="fTitle"></div>
-            <div class="form-row">
-              <div class="field-group"><span class="field-label">Client</span><input class="field-input" id="fClient"></div>
-              <div class="field-group"><span class="field-label">Due date</span><input class="field-input" id="fDue" placeholder="e.g. Jul 28"></div>
+      <div class="min-h-0 flex-1">
+        <div class="tab-panel active hidden min-h-0 flex-col [&.active]:flex!" data-panel="details">
+          <div class="max-w-[460px] overflow-y-auto">
+            <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Title</span><input class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="fTitle"></div>
+            <div class="flex gap-[12px]">
+              <div class="mb-[18px] flex-1"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Client</span><input class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="fClient"></div>
+              <div class="mb-[18px] flex-1"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Due date</span><input class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="fDue" placeholder="e.g. Jul 28"></div>
             </div>
-            <div class="field-group">
-              <span class="field-label">Status</span>
-              <select class="field-select" id="fStage">
+            <div class="mb-[18px]">
+              <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Status</span>
+              <select class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="fStage">
                 <option value="not_started">Not Started</option>
                 <option value="in_progress">In Progress</option>
                 <option value="waiting_on_client">Waiting on Client</option>
@@ -369,98 +252,99 @@
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
-            <div class="field-group"><span class="field-label">Description</span><textarea class="field-input" id="fDescription" rows="5" placeholder="Brief, scope, or any project context..."></textarea></div>
-            <button class="btn btn-primary" id="saveDetailsBtn">Save changes</button>
+            <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Description</span><textarea class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="fDescription" rows="5" placeholder="Brief, scope, or any project context..."></textarea></div>
+            <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="saveDetailsBtn">Save changes</button>
           </div>
         </div>
 
-        <div class="tab-panel" data-panel="tasks">
-          <div class="task-toolbar">
-            <div class="view-toggle" id="taskViewToggle">
-              <button data-view="board" class="active"><svg class="icon icon-sm"><use href="#i-kanban"/></svg> Board</button>
-              <button data-view="list"><svg class="icon icon-sm"><use href="#i-list"/></svg> List</button>
+        <div class="tab-panel hidden flex-col [&.active]:flex!" data-panel="tasks">
+          <div class="mb-[14px] flex shrink-0 flex-wrap items-center justify-between gap-[10px]">
+            <div class="flex rounded-[8px] border border-border bg-surface p-[2px]" id="taskViewToggle">
+              <button data-view="board" class="active flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg> Board</button>
+              <button data-view="list" class="flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-list"/></svg> List</button>
             </div>
-            <div class="task-toolbar-right">
-              <button class="btn btn-ghost btn-sm" id="extractOpenBtn"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg> Extract with AI</button>
+            <div class="flex gap-[8px]">
+              <button class="inline-flex items-center gap-[7px] rounded-[6px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="extractOpenBtn"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-sparkles"/></svg> Extract with AI</button>
             </div>
           </div>
-          <div class="task-add-row">
-            <input type="text" id="newTaskInput" placeholder="Add a task...">
-            <button class="btn btn-ghost" id="addTaskBtn">Add task</button>
-          </div>
-
-          <div class="task-board" id="taskBoardView">
-            <div class="task-col" data-status="backlog">
-              <div class="task-col-head"><span class="dot" style="background:var(--text-muted)"></span>Backlog<span class="count" id="countBacklog">0</span></div>
-              <div class="task-col-body" data-status="backlog"></div>
-            </div>
-            <div class="task-col" data-status="todo">
-              <div class="task-col-head"><span class="dot" style="background:var(--text-muted)"></span>To Do<span class="count" id="countTodo">0</span></div>
-              <div class="task-col-body" data-status="todo"></div>
-            </div>
-            <div class="task-col" data-status="in_progress">
-              <div class="task-col-head"><span class="dot" style="background:var(--accent)"></span>In Progress<span class="count" id="countInProgress">0</span></div>
-              <div class="task-col-body" data-status="in_progress"></div>
-            </div>
-            <div class="task-col" data-status="in_review">
-              <div class="task-col-head"><span class="dot" style="background:var(--accent)"></span>In Review<span class="count" id="countInReview">0</span></div>
-              <div class="task-col-body" data-status="in_review"></div>
-            </div>
-            <div class="task-col" data-status="done">
-              <div class="task-col-head"><span class="dot" style="background:var(--success)"></span>Done<span class="count" id="countDone">0</span></div>
-              <div class="task-col-body" data-status="done"></div>
-            </div>
+          <div class="mb-[14px] flex shrink-0 gap-[8px]">
+            <input type="text" class="flex-1 rounded-[8px] border border-border bg-surface px-[12px] py-[9px] text-[13px]" id="newTaskInput" placeholder="Add a task...">
+            <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="addTaskBtn">Add task</button>
           </div>
 
-          <div class="panel" id="taskListView" style="display:none;">
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead><tr><th>Task</th><th>Status</th></tr></thead>
-                <tbody id="taskTableBody"></tbody>
+          <div class="task-board flex min-h-0 flex-1 gap-[14px] overflow-x-auto max-[900px]:flex-col" id="taskBoardView">
+            <div class="flex min-w-[200px] flex-1 flex-col min-h-0" data-status="backlog">
+              <div class="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-text-muted"></span>Backlog<span class="ml-auto font-mono" id="countBacklog">0</span></div>
+              <div class="task-col-body flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-status="backlog"></div>
+            </div>
+            <div class="flex min-w-[200px] flex-1 flex-col min-h-0" data-status="todo">
+              <div class="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-text-muted"></span>To Do<span class="ml-auto font-mono" id="countTodo">0</span></div>
+              <div class="task-col-body flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-status="todo"></div>
+            </div>
+            <div class="flex min-w-[200px] flex-1 flex-col min-h-0" data-status="in_progress">
+              <div class="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-accent"></span>In Progress<span class="ml-auto font-mono" id="countInProgress">0</span></div>
+              <div class="task-col-body flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-status="in_progress"></div>
+            </div>
+            <div class="flex min-w-[200px] flex-1 flex-col min-h-0" data-status="in_review">
+              <div class="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-accent"></span>In Review<span class="ml-auto font-mono" id="countInReview">0</span></div>
+              <div class="task-col-body flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-status="in_review"></div>
+            </div>
+            <div class="flex min-w-[200px] flex-1 flex-col min-h-0" data-status="done">
+              <div class="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-success"></span>Done<span class="ml-auto font-mono" id="countDone">0</span></div>
+              <div class="task-col-body flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-status="done"></div>
+            </div>
+          </div>
+
+          <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-border bg-surface" id="taskListView" style="display:none;">
+            <div class="min-h-0 flex-1 overflow-y-auto">
+              <table class="w-full border-collapse">
+                <thead><tr>
+                  <th class="border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]">Task</th>
+                  <th class="border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]">Status</th>
+                </tr></thead>
+                <tbody id="taskTableBody" class="[&_tr:last-child_td]:border-b-0"></tbody>
               </table>
             </div>
           </div>
         </div>
 
-        <div class="tab-panel" data-panel="reqlog">
-          <div class="reqlog-toolbar">
-            <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-              <button class="btn btn-ghost btn-sm" id="addReqBtn"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Add Request</button>
+        <div class="tab-panel hidden flex-col [&.active]:flex!" data-panel="reqlog">
+          <div class="mb-[14px] shrink-0">
+            <div class="mb-[12px] flex justify-end">
+              <button class="inline-flex items-center gap-[7px] rounded-[6px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="addReqBtn"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-plus"/></svg> Add Request</button>
             </div>
-            <div class="search-box">
-              <svg class="icon icon-sm"><use href="#i-search"/></svg>
-              <input type="text" id="reqSearch" placeholder="Search past requests by keyword, content...">
+            <div class="mb-[12px] flex items-center gap-[8px] rounded-[8px] border border-border bg-surface px-[12px] py-[8px] text-text-muted">
+              <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg>
+              <input type="text" class="flex-1 border-none bg-transparent text-[13px] text-text outline-none" id="reqSearch" placeholder="Search past requests by keyword, content...">
             </div>
-            <div class="chip-row" id="reqFilterRow">
-              <button class="chip active" data-filter="all">All Requests</button>
-              <button class="chip" data-filter="new">New</button>
-              <button class="chip" data-filter="duplicate">Duplicate</button>
-              <button class="chip" data-filter="related">Related</button>
-              <button class="chip" data-filter="contradiction">Contradiction</button>
+            <div class="flex flex-wrap gap-[8px]" id="reqFilterRow">
+              <button class="chip active rounded-full border border-border bg-surface px-[14px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-text! [&.active]:text-bg! [&.active]:border-text!" data-filter="all">All Requests</button>
+              <button class="chip rounded-full border border-border bg-surface px-[14px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-text! [&.active]:text-bg! [&.active]:border-text!" data-filter="new">New</button>
+              <button class="chip rounded-full border border-border bg-surface px-[14px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-text! [&.active]:text-bg! [&.active]:border-text!" data-filter="duplicate">Duplicate</button>
+              <button class="chip rounded-full border border-border bg-surface px-[14px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-text! [&.active]:text-bg! [&.active]:border-text!" data-filter="related">Related</button>
+              <button class="chip rounded-full border border-border bg-surface px-[14px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-text! [&.active]:text-bg! [&.active]:border-text!" data-filter="contradiction">Contradiction</button>
             </div>
           </div>
-          <div class="reqlog-scroll" id="reqLogList"></div>
+          <div class="min-h-0 flex-1 overflow-y-auto" id="reqLogList"></div>
         </div>
 
-        <div class="tab-panel" data-panel="activity">
-          <div class="activity-scroll" id="activityList"></div>
+        <div class="tab-panel hidden flex-col [&.active]:flex!" data-panel="activity">
+          <div class="min-h-0 max-w-[560px] flex-1 overflow-y-auto" id="activityList"></div>
         </div>
       </div>
     </main>
-  </div>
-</div>
 
-<div class="modal-backdrop" id="taskDetailBackdrop">
-  <div class="modal" style="max-width:520px;">
-    <div class="modal-head">
-      <h3>Edit Task</h3>
-      <button class="slideover-close" id="taskDetailClose"><svg class="icon"><use href="#i-x"/></svg></button>
+<div class="group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="taskDetailBackdrop">
+  <div class="w-full max-w-[520px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+    <div class="flex items-center justify-between border-b border-border px-[20px] py-[18px]">
+      <h3 class="text-[15.5px] font-bold">Edit Task</h3>
+      <button class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-text-muted hover:bg-bg hover:text-text" id="taskDetailClose"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button>
     </div>
-    <div class="modal-body">
-      <div class="field-group"><span class="field-label">Title</span><input class="field-input" id="tdTitle"></div>
-      <div class="field-group">
-        <span class="field-label">Status</span>
-        <select class="field-select" id="tdStatus">
+    <div class="max-h-[60vh] overflow-y-auto p-[20px]">
+      <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Title</span><input class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="tdTitle"></div>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Status</span>
+        <select class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="tdStatus">
           <option value="backlog">Backlog</option>
           <option value="todo">To Do</option>
           <option value="in_progress">In Progress</option>
@@ -468,49 +352,49 @@
           <option value="done">Done</option>
         </select>
       </div>
-      <div class="field-group"><span class="field-label">Description</span><textarea class="field-input" id="tdDescription" rows="3" placeholder="Add more detail about this task..."></textarea></div>
-      <div class="field-group">
-        <span class="field-label">Tags</span>
-        <div class="tag-chips" id="tdTagChips"></div>
-        <input class="field-input" id="tdTagInput" placeholder="Type a tag and press Enter">
+      <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Description</span><textarea class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="tdDescription" rows="3" placeholder="Add more detail about this task..."></textarea></div>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Tags</span>
+        <div class="mb-[8px] flex flex-wrap gap-[6px]" id="tdTagChips"></div>
+        <input class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="tdTagInput" placeholder="Type a tag and press Enter">
       </div>
-      <div class="field-group">
-        <span class="field-label">Attachments</span>
-        <div class="attach-list" id="tdAttachList"></div>
-        <label class="attach-btn-label">
-          <svg class="icon icon-sm"><use href="#i-paperclip"/></svg> Add attachment
-          <input type="file" id="tdFileInput" style="display:none" multiple>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Attachments</span>
+        <div class="mb-[10px] flex flex-col gap-[6px]" id="tdAttachList"></div>
+        <label class="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-border bg-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-surface-raised">
+          <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg> Add attachment
+          <input type="file" class="hidden" id="tdFileInput" multiple>
         </label>
       </div>
     </div>
-    <div class="modal-foot" style="justify-content:space-between;">
-      <button class="btn btn-ghost" id="tdDeleteBtn" style="color:var(--danger);">Delete task</button>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-ghost" id="tdCancelBtn">Cancel</button>
-        <button class="btn btn-primary" id="tdSaveBtn">Save</button>
+    <div class="flex items-center justify-between gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised text-danger" id="tdDeleteBtn">Delete task</button>
+      <div class="flex gap-[10px]">
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="tdCancelBtn">Cancel</button>
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="tdSaveBtn">Save</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal-backdrop" id="reqDetailBackdrop">
-  <div class="modal" style="max-width:520px;">
-    <div class="modal-head">
-      <h3 id="rdHeading">Request Detail</h3>
-      <button class="slideover-close" id="reqDetailClose"><svg class="icon"><use href="#i-x"/></svg></button>
+<div class="group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="reqDetailBackdrop">
+  <div class="w-full max-w-[520px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+    <div class="flex items-center justify-between border-b border-border px-[20px] py-[18px]">
+      <h3 class="text-[15.5px] font-bold" id="rdHeading">Request Detail</h3>
+      <button class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-text-muted hover:bg-bg hover:text-text" id="reqDetailClose"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button>
     </div>
-    <div class="modal-body">
-      <div class="field-group"><span class="field-label">Request text</span><textarea class="field-input" id="rdText" rows="2" placeholder="What did the client ask for?"></textarea></div>
-      <div class="form-row">
-        <div class="field-group">
-          <span class="field-label">Source</span>
-          <select class="field-select" id="rdSource">
+    <div class="max-h-[60vh] overflow-y-auto p-[20px]">
+      <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Request text</span><textarea class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="rdText" rows="2" placeholder="What did the client ask for?"></textarea></div>
+      <div class="flex gap-[12px]">
+        <div class="mb-[18px] flex-1">
+          <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Source</span>
+          <select class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="rdSource">
             <option>WhatsApp</option><option>Email</option><option>Telegram</option><option>Phone call</option><option>Other</option>
           </select>
         </div>
-        <div class="field-group">
-          <span class="field-label">Classification</span>
-          <select class="field-select" id="rdClassification">
+        <div class="mb-[18px] flex-1">
+          <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Classification</span>
+          <select class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="rdClassification">
             <option value="new">New</option>
             <option value="duplicate">Duplicate</option>
             <option value="related">Related</option>
@@ -518,68 +402,69 @@
           </select>
         </div>
       </div>
-      <div class="field-group"><span class="field-label">Notes</span><textarea class="field-input" id="rdNotes" rows="3" placeholder="Internal notes about this request..."></textarea></div>
-      <div class="field-group">
-        <span class="field-label">Attachments</span>
-        <div class="attach-list" id="rdAttachList"></div>
-        <label class="attach-btn-label">
-          <svg class="icon icon-sm"><use href="#i-paperclip"/></svg> Add attachment
-          <input type="file" id="rdFileInput" style="display:none" multiple>
+      <div class="mb-[18px]"><span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Notes</span><textarea class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="rdNotes" rows="3" placeholder="Internal notes about this request..."></textarea></div>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Attachments</span>
+        <div class="mb-[10px] flex flex-col gap-[6px]" id="rdAttachList"></div>
+        <label class="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-border bg-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-surface-raised">
+          <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg> Add attachment
+          <input type="file" class="hidden" id="rdFileInput" multiple>
         </label>
       </div>
     </div>
-    <div class="modal-foot" style="justify-content:space-between;">
-      <button class="btn btn-ghost" id="rdDismissBtn" style="color:var(--danger);">Dismiss request</button>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-ghost" id="rdCancelBtn">Cancel</button>
-        <button class="btn btn-primary" id="rdSaveBtn">Save</button>
+    <div class="flex items-center justify-between gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised text-danger" id="rdDismissBtn">Dismiss request</button>
+      <div class="flex gap-[10px]">
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="rdCancelBtn">Cancel</button>
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="rdSaveBtn">Save</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal-backdrop" id="extractBackdrop">
-  <div class="modal" style="max-width:560px;">
-    <div class="modal-head">
-      <h3><svg class="icon icon-sm" style="display:inline;vertical-align:-2px;color:var(--accent)"><use href="#i-sparkles"/></svg> Extract tasks with AI</h3>
-      <button class="slideover-close" id="extractClose"><svg class="icon"><use href="#i-x"/></svg></button>
+<div class="group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="extractBackdrop">
+  <div class="w-full max-w-[560px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+    <div class="flex items-center justify-between border-b border-border px-[20px] py-[18px]">
+      <h3 class="flex items-center gap-[6px] text-[15.5px] font-bold"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] text-accent"><use href="#i-sparkles"/></svg> Extract tasks with AI</h3>
+      <button class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-text-muted hover:bg-bg hover:text-text" id="extractClose"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button>
     </div>
-    <div class="modal-body">
-      <div class="view-toggle" id="extractSourceToggle" style="margin-bottom:16px;">
-        <button data-esource="text" class="active">Paste Text</button>
-        <button data-esource="file">Upload File</button>
+    <div class="max-h-[60vh] overflow-y-auto p-[20px]">
+      <div class="mb-[16px] flex rounded-[8px] border border-border bg-surface p-[2px]" id="extractSourceToggle">
+        <button data-esource="text" class="active flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!">Paste Text</button>
+        <button data-esource="file" class="flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!">Upload File</button>
       </div>
 
-      <div class="field-group" id="extractTextPanel">
-        <span class="field-label">Paste a description, chat, or any context</span>
-        <textarea class="field-input" id="extractInput" rows="6" placeholder="Paste a project brief, WhatsApp chat, or meeting notes here..."></textarea>
+      <div class="mb-[18px]" id="extractTextPanel">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Paste a description, chat, or any context</span>
+        <textarea class="w-full rounded-[8px] border border-border bg-surface px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="extractInput" rows="6" placeholder="Paste a project brief, WhatsApp chat, or meeting notes here..."></textarea>
       </div>
 
-      <div class="field-group" id="extractFilePanel" style="display:none;">
-        <span class="field-label">Upload a screenshot, photo, or audio recording</span>
-        <label class="attach-btn-label">
-          <svg class="icon icon-sm"><use href="#i-paperclip"/></svg> Choose file
-          <input type="file" id="extractFileInput" accept="image/*,audio/*" style="display:none">
+      <div class="mb-[18px]" id="extractFilePanel" style="display:none;">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Upload a screenshot, photo, or audio recording</span>
+        <label class="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-border bg-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-surface-raised">
+          <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg> Choose file
+          <input type="file" class="hidden" id="extractFileInput" accept="image/*,audio/*">
         </label>
-        <div id="extractFilePreview" style="margin-top:10px;"></div>
+        <div id="extractFilePreview" class="mt-[10px]"></div>
       </div>
 
       <div id="extractResultsWrap" style="display:none;">
-        <span class="field-label">Suggested tasks, uncheck what you don't need</span>
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Suggested tasks, uncheck what you don't need</span>
         <div id="extractList"></div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="extractCancel">Cancel</button>
-      <button class="btn btn-primary" id="extractRun">Extract tasks</button>
+    <div class="flex justify-end gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="extractCancel">Cancel</button>
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="extractRun">Extract tasks</button>
     </div>
+  </div>
+</div>
   </div>
 </div>
 
 <script>
 (function () {
   const root = document.documentElement;
-
   const themeSwitch = document.getElementById('themeSwitch');
   const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
   function applyTheme(choice) {
@@ -622,8 +507,12 @@
   });
 
   const STAGE_LABEL = { not_started: 'Not Started', in_progress: 'In Progress', waiting_on_client: 'Waiting on Client', in_review: 'In Review', completed: 'Completed', cancelled: 'Cancelled' };
-  const STAGE_PILLCLASS = { not_started: 'pill-muted', in_progress: 'pill-muted', waiting_on_client: 'pill-accent', in_review: 'pill-muted', completed: 'pill-success', cancelled: 'pill-danger' };
+  const STAGE_PILLCLASS = { not_started: 'border border-border bg-surface-raised text-text-muted', in_progress: 'border border-border bg-surface-raised text-text-muted', waiting_on_client: 'bg-accent-soft text-accent', in_review: 'border border-border bg-surface-raised text-text-muted', completed: 'bg-success-soft text-success', cancelled: 'bg-danger-soft text-danger' };
+  const STAGE_DOTCLASS = { not_started: 'bg-text-muted', in_progress: 'bg-text-muted', waiting_on_client: 'bg-accent', in_review: 'bg-text-muted', completed: 'bg-success', cancelled: 'bg-danger' };
   const SOURCE_ICON = { WhatsApp: 'i-message-circle', Email: 'i-mail', Telegram: 'i-send', 'Phone call': 'i-phone' };
+  const PILL_BASE = 'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
+  const CLASS_BADGE_BASE = 'shrink-0 rounded-full px-[10px] py-[3px] text-[10.5px] font-bold uppercase [letter-spacing:0.03em]';
+  const CLASS_BADGE_CLS = { new: 'bg-accent-soft text-accent', duplicate: 'border border-border bg-surface-raised text-text-muted', related: 'border border-border bg-surface-raised text-text-muted', contradiction: 'bg-danger-soft text-danger' };
 
   let uid = 300;
   const PROJECTS = {
@@ -668,7 +557,8 @@
 
   function updateStatusPill() {
     const pill = document.getElementById('dStatusPill');
-    pill.className = `pill ${STAGE_PILLCLASS[project.stage]}`;
+    pill.className = `${PILL_BASE} ${STAGE_PILLCLASS[project.stage]}`;
+    pill.querySelector('span').className = `h-[6px] w-[6px] rounded-full ${STAGE_DOTCLASS[project.stage]}`;
     document.getElementById('dStatusText').textContent = STAGE_LABEL[project.stage];
   }
   updateStatusPill();
@@ -690,14 +580,14 @@
     document.querySelectorAll('.task-col-body').forEach(col => col.innerHTML = '');
     project.tasks.forEach(t => {
       const card = document.createElement('div');
-      card.className = 'task-card';
+      card.className = "group cursor-pointer rounded-[9px] border border-border bg-surface px-[11px] py-[10px] text-[13px] [transition:border-color_0.12s_ease] hover:border-accent [&.dragging]:opacity-35!";
       card.draggable = true;
       card.dataset.id = t.id;
-      const tags = (t.tags || []).map(tag => `<span class="meta-tag">${tag}</span>`).join('');
-      const descIcon = t.description ? `<span class="meta-icon-group"><svg class="icon"><use href="#i-align-left"/></svg></span>` : '';
-      const attachIcon = (t.attachments || []).length ? `<span class="meta-icon-group"><svg class="icon"><use href="#i-paperclip"/></svg>${t.attachments.length}</span>` : '';
-      const metaRow = (tags || descIcon || attachIcon) ? `<div class="card-meta-row">${tags}${descIcon}${attachIcon}</div>` : '';
-      card.innerHTML = `<div class="task-card-top"><span>${t.title}</span><button class="task-delete" data-delete><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div>${metaRow}`;
+      const tags = (t.tags || []).map(tag => `<span class="rounded-full bg-accent-soft px-[8px] py-[2px] text-[10.5px] font-semibold text-accent">${tag}</span>`).join('');
+      const descIcon = t.description ? `<span class="flex items-center gap-[4px] text-[11px] text-text-muted"><svg class="w-[13px] h-[13px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-align-left"/></svg></span>` : '';
+      const attachIcon = (t.attachments || []).length ? `<span class="flex items-center gap-[4px] text-[11px] text-text-muted"><svg class="w-[13px] h-[13px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg>${t.attachments.length}</span>` : '';
+      const metaRow = (tags || descIcon || attachIcon) ? `<div class="mt-[8px] flex flex-wrap items-center gap-[10px]">${tags}${descIcon}${attachIcon}</div>` : '';
+      card.innerHTML = `<div class="flex items-center justify-between gap-[8px]"><span>${t.title}</span><button class="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[5px] text-text-muted opacity-0 [transition:opacity_0.12s_ease] group-hover:opacity-100 hover:bg-danger-soft hover:text-danger" data-delete><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button></div>${metaRow}`;
       card.addEventListener('dragstart', () => { draggedId = t.id; card.classList.add('dragging'); });
       card.addEventListener('dragend', () => card.classList.remove('dragging'));
       card.querySelector('[data-delete]').addEventListener('click', (e) => { e.stopPropagation(); project.tasks = project.tasks.filter(x => x.id !== t.id); renderTasks(); });
@@ -713,15 +603,15 @@
     const tbody = document.getElementById('taskTableBody');
     tbody.innerHTML = project.tasks.map(t => `
       <tr data-id="${t.id}">
-        <td>${t.title}</td>
-        <td><select class="status-inline" data-id="${t.id}">
+        <td class="border-b border-border px-[16px] py-[12px] text-[13px]">${t.title}</td>
+        <td class="border-b border-border px-[16px] py-[12px] text-[13px]"><select class="rounded-[6px] border border-border bg-bg px-[8px] py-[5px] text-[12.5px]" data-id="${t.id}">
           <option value="backlog" ${t.status === 'backlog' ? 'selected' : ''}>Backlog</option>
           <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>To Do</option>
           <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
           <option value="in_review" ${t.status === 'in_review' ? 'selected' : ''}>In Review</option>
           <option value="done" ${t.status === 'done' ? 'selected' : ''}>Done</option>
         </select></td>
-      </tr>`).join('') || '<tr><td colspan="2" class="empty-note">No tasks yet.</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="2" class="py-[6px] text-[12px] italic text-text-muted">No tasks yet.</td></tr>';
     tbody.querySelectorAll('tr[data-id]').forEach(tr => {
       tr.querySelector('td').style.cursor = 'pointer';
       tr.querySelector('td').addEventListener('click', () => openTaskDetail(parseInt(tr.dataset.id)));
@@ -760,14 +650,14 @@
 
   function renderTdTags() {
     document.getElementById('tdTagChips').innerHTML = tdPendingTags.map((tag, i) => `
-      <span class="tag-chip">${tag}<button data-remove-tag="${i}"><svg class="icon"><use href="#i-x"/></svg></button></span>`).join('');
+      <span class="inline-flex items-center gap-[5px] rounded-full bg-accent-soft py-[3px] pr-[8px] pl-[10px] text-[11.5px] font-medium text-accent">${tag}<button class="flex h-[14px] w-[14px] items-center justify-center text-accent opacity-70 hover:opacity-100" data-remove-tag="${i}"><svg class="w-[11px] h-[11px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button></span>`).join('');
     document.querySelectorAll('[data-remove-tag]').forEach(btn => {
       btn.addEventListener('click', () => { tdPendingTags.splice(parseInt(btn.dataset.removeTag), 1); renderTdTags(); });
     });
   }
   function renderTdAttachments() {
     document.getElementById('tdAttachList').innerHTML = tdPendingAttachments.map((a, i) => `
-      <div class="attach-row"><svg class="icon icon-sm"><use href="#i-paperclip"/></svg><span>${a.name}</span><button data-remove-attach="${i}"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div>`).join('');
+      <div class="flex items-center gap-[8px] rounded-[7px] border border-border bg-surface px-[10px] py-[7px] text-[12.5px]"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">${a.name}</span><button class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-text-muted hover:text-danger" data-remove-attach="${i}"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button></div>`).join('');
     document.querySelectorAll('[data-remove-attach]').forEach(btn => {
       btn.addEventListener('click', () => { tdPendingAttachments.splice(parseInt(btn.dataset.removeAttach), 1); renderTdAttachments(); });
     });
@@ -841,21 +731,21 @@
     );
     const list = document.getElementById('reqLogList');
     list.innerHTML = filtered.map(r => {
-      const attachBadge = (r.attachments || []).length ? `<span class="meta-icon-group"><svg class="icon"><use href="#i-paperclip"/></svg>${r.attachments.length}</span>` : '';
-      const noteBadge = r.notes ? `<span class="meta-icon-group"><svg class="icon"><use href="#i-align-left"/></svg></span>` : '';
+      const attachBadge = (r.attachments || []).length ? `<span class="flex items-center gap-[4px] text-[11px] text-text-muted"><svg class="w-[13px] h-[13px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg>${r.attachments.length}</span>` : '';
+      const noteBadge = r.notes ? `<span class="flex items-center gap-[4px] text-[11px] text-text-muted"><svg class="w-[13px] h-[13px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-align-left"/></svg></span>` : '';
       return `
-      <div class="reqlog-row" data-req-id="${r.id}" style="cursor:pointer;">
-        <div class="reqlog-main">
-          <div class="reqlog-text">"${r.text}"</div>
-          <div class="reqlog-meta"><svg class="icon icon-sm"><use href="#${SOURCE_ICON[r.source] || 'i-mail'}"/></svg> ${r.source} &middot; ${r.date} ${noteBadge} ${attachBadge}</div>
+      <div class="reqlog-row mb-[10px] flex cursor-pointer items-center gap-[16px] rounded-[10px] border border-border bg-surface px-[16px] py-[14px]" data-req-id="${r.id}">
+        <div class="min-w-0 flex-1">
+          <div class="mb-[6px] text-[13.5px] font-medium">"${r.text}"</div>
+          <div class="flex items-center gap-[7px] text-[12px] text-text-muted"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#${SOURCE_ICON[r.source] || 'i-mail'}"/></svg> ${r.source} &middot; ${r.date} ${noteBadge} ${attachBadge}</div>
         </div>
-        <span class="class-badge class-${r.classification}">${r.classification}</span>
-        <div class="reqlog-actions-row">
-          <button class="btn btn-ghost btn-sm" data-convert>Convert to Task</button>
-          <button class="btn btn-ghost btn-sm" data-dismiss>Dismiss</button>
+        <span class="${CLASS_BADGE_BASE} ${CLASS_BADGE_CLS[r.classification]}">${r.classification}</span>
+        <div class="reqlog-actions-row flex shrink-0 gap-[8px]">
+          <button class="inline-flex items-center gap-[7px] rounded-[6px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" data-convert>Convert to Task</button>
+          <button class="inline-flex items-center gap-[7px] rounded-[6px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" data-dismiss>Dismiss</button>
         </div>
       </div>`;
-    }).join('') || '<div class="empty-note">No requests match this filter.</div>';
+    }).join('') || '<div class="py-[6px] text-[12px] italic text-text-muted">No requests match this filter.</div>';
     list.querySelectorAll('.reqlog-row').forEach(row => {
       row.addEventListener('click', (e) => { if (!e.target.closest('.reqlog-actions-row')) openReqDetail(parseInt(row.dataset.reqId)); });
     });
@@ -895,7 +785,7 @@
 
   function renderRdAttachments() {
     document.getElementById('rdAttachList').innerHTML = rdPendingAttachments.map((a, i) => `
-      <div class="attach-row"><svg class="icon icon-sm"><use href="#i-paperclip"/></svg><span>${a.name}</span><button data-remove-rd-attach="${i}"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div>`).join('');
+      <div class="flex items-center gap-[8px] rounded-[7px] border border-border bg-surface px-[10px] py-[7px] text-[12.5px]"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">${a.name}</span><button class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-text-muted hover:text-danger" data-remove-rd-attach="${i}"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button></div>`).join('');
     document.querySelectorAll('[data-remove-rd-attach]').forEach(btn => {
       btn.addEventListener('click', () => { rdPendingAttachments.splice(parseInt(btn.dataset.removeRdAttach), 1); renderRdAttachments(); });
     });
@@ -952,11 +842,12 @@
 
   function renderActivity() {
     const el = document.getElementById('activityList');
+    const colorMap = { '': 'bg-border', accent: 'bg-accent', success: 'bg-success' };
     el.innerHTML = (project.activity || []).map((a, i, arr) => `
-      <div class="feed-item">
-        <div class="feed-dot-wrap"><div class="feed-dot ${a.color}"></div>${i < arr.length - 1 ? '<div class="feed-line"></div>' : ''}</div>
-        <div><div class="feed-text">${a.text}</div><div class="feed-time">${a.time}</div></div>
-      </div>`).join('') || '<div class="empty-note">No activity yet.</div>';
+      <div class="flex gap-[12px] px-[4px] py-[11px]">
+        <div class="flex shrink-0 flex-col items-center pt-[3px]"><div class="h-[7px] w-[7px] rounded-full ${colorMap[a.color] || 'bg-border'}"></div>${i < arr.length - 1 ? '<div class="mt-[4px] w-px flex-1 bg-border"></div>' : ''}</div>
+        <div><div class="mb-[2px] text-[13px]">${a.text}</div><div class="text-[11.5px] text-text-muted">${a.time}</div></div>
+      </div>`).join('') || '<div class="py-[6px] text-[12px] italic text-text-muted">No activity yet.</div>';
   }
 
   const extractBackdrop = document.getElementById('extractBackdrop');
@@ -980,11 +871,11 @@
     if (!extractFile) { preview.innerHTML = ''; return; }
     const url = URL.createObjectURL(extractFile);
     if (extractFile.type.startsWith('image/')) {
-      preview.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; border-radius:8px; border:1px solid var(--border);">`;
+      preview.innerHTML = `<img src="${url}" class="max-w-full max-h-[180px] rounded-[8px] border border-border">`;
     } else if (extractFile.type.startsWith('audio/')) {
-      preview.innerHTML = `<audio src="${url}" controls style="width:100%;"></audio>`;
+      preview.innerHTML = `<audio src="${url}" controls class="w-full"></audio>`;
     } else {
-      preview.innerHTML = `<div class="attach-row"><svg class="icon icon-sm"><use href="#i-paperclip"/></svg><span>${extractFile.name}</span></div>`;
+      preview.innerHTML = `<div class="flex items-center gap-[8px] rounded-[7px] border border-border bg-surface px-[10px] py-[7px] text-[12.5px]"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-paperclip"/></svg><span>${extractFile.name}</span></div>`;
     }
   });
 
@@ -1012,10 +903,10 @@
   function showExtractCandidates(candidates) {
     const list = document.getElementById('extractList');
     list.innerHTML = candidates.map(c => `
-      <label class="extract-item">
-        <input type="checkbox" checked data-text="${c.replace(/"/g, '&quot;')}">
+      <label class="flex cursor-pointer items-center gap-[10px] border-b border-border py-[8px] last:border-b-0">
+        <input type="checkbox" class="h-[16px] w-[16px] shrink-0 accent-accent" checked data-text="${c.replace(/"/g, '&quot;')}">
         <span>${c}</span>
-      </label>`).join('') || '<div class="empty-note">Could not find clear tasks in that source, try adding more detail.</div>';
+      </label>`).join('') || '<div class="py-[6px] text-[12px] italic text-text-muted">Could not find clear tasks in that source, try adding more detail.</div>';
     document.getElementById('extractResultsWrap').style.display = 'block';
     extractRun.textContent = `Add ${candidates.length} task${candidates.length !== 1 ? 's' : ''} to Backlog`;
     extractRun.dataset.mode = 'add';
@@ -1036,8 +927,6 @@
       if (!extractFile) return;
       extractRun.textContent = extractFile.type.startsWith('audio/') ? 'Transcribing...' : 'Reading image...';
       extractRun.disabled = true;
-      // Simulasi: di app Laravel nanti, image dikirim ke model vision (Claude/GPT-4o) via Laravel AI SDK,
-      // audio ditranskrip dulu baru diekstrak. Di sini cuma contoh hasil, bukan OCR/transkripsi beneran.
       setTimeout(() => {
         const candidates = extractFile.type.startsWith('audio/')
           ? ['Send updated brand guideline PDF to client', 'Schedule follow-up call for next Tuesday', 'Revise tagline based on client feedback']

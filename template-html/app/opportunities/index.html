@@ -9,229 +9,73 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<style>
-  /* ================= reset ================= */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  a { color: inherit; text-decoration: none; }
-  ul { list-style: none; }
-  input, select, textarea { font: inherit; color: inherit; }
-
-  /* ================= tokens ================= */
-  :root {
-    --bg: #F6F7F9; --surface: #FFFFFF; --surface-raised: #FFFFFF; --border: #E4E6EB;
-    --text: #12161F; --text-muted: #6B7280; --accent: #C77F1F; --accent-text: #FFFFFF;
-    --success: #1F8A5F; --danger: #D6383D;
-    --accent-soft: rgba(199,127,31,0.1); --success-soft: rgba(31,138,95,0.1); --danger-soft: rgba(214,56,61,0.1);
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-bg: #F6F7F9;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-border: #E4E6EB;
+    --color-text: #12161F;
+    --color-text-muted: #6B7280;
+    --color-accent: #C77F1F;
+    --color-accent-text: #FFFFFF;
+    --color-success: #1F8A5F;
+    --color-danger: #D6383D;
+    --color-info: #2563EB;
+    --color-accent-soft: rgba(199,127,31,0.1);
+    --color-success-soft: rgba(31,138,95,0.1);
+    --color-danger-soft: rgba(214,56,61,0.1);
+    --color-info-soft: rgba(37,99,235,0.1);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
-    --font-display: 'Instrument Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Instrument Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
   [data-theme="dark"] {
-    --bg: #0B0E14; --surface: #12161F; --surface-raised: #1A1F2B; --border: #232838;
-    --text: #EDEFF3; --text-muted: #8B93A6; --accent: #E8A33D; --accent-text: #12161F;
-    --success: #34A87C; --danger: #E5484D;
-    --accent-soft: rgba(232,163,61,0.12); --success-soft: rgba(52,168,124,0.12); --danger-soft: rgba(229,72,77,0.12);
+    --color-bg: #0B0E14;
+    --color-surface: #12161F;
+    --color-surface-raised: #1A1F2B;
+    --color-border: #232838;
+    --color-text: #EDEFF3;
+    --color-text-muted: #8B93A6;
+    --color-accent: #E8A33D;
+    --color-accent-text: #12161F;
+    --color-success: #34A87C;
+    --color-danger: #E5484D;
+    --color-info: #60A5FA;
+    --color-accent-soft: rgba(232,163,61,0.12);
+    --color-success-soft: rgba(52,168,124,0.12);
+    --color-danger-soft: rgba(229,72,77,0.12);
+    --color-info-soft: rgba(96,165,250,0.12);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
   }
 
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
-  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .icon-sm { width: 15px; height: 15px; }
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-
-  /* ================= shell (sama seperti dashboard) ================= */
-  .app-shell { display: flex; height: 100vh; overflow: hidden; }
-
-  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: width 0.2s ease; }
-  .sidebar.collapsed { width: 68px; }
-  .sidebar-brand { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
-  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
-
-  .sidebar-toggle { position: absolute; top: 16px; right: -14px; width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-raised); z-index: 35; transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
-  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
-  .sidebar-toggle .icon { transition: transform 0.2s ease; }
-  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
-  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
-
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
-  .sidebar.collapsed .sidebar-nav { overflow: visible; }
-  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.12s ease, color 0.12s ease; }
-  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar.collapsed .nav-item { justify-content: center; }
-  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
-  .sidebar.collapsed .nav-item .badge { display: none; }
-  .sidebar.collapsed .nav-item .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40; box-shadow: var(--shadow-raised); }
-  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
-  .tooltip { display: none; }
-  .sidebar.collapsed .tooltip { display: block; }
-
-  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
-
-  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .topbar { height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg); }
-  .topbar-left { display: flex; align-items: center; gap: 14px; }
-  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
-  .content { flex: 1; display: flex; flex-direction: column; padding: 20px 32px 24px; overflow: hidden; min-height: 0; }
-  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); }
-  .page-description { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; flex-shrink: 0; }
-  .search-trigger { display: flex; align-items: center; gap: 10px; width: 280px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 13px; }
-  .search-trigger:hover { border-color: var(--accent); }
-  .search-trigger .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 11px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
-  .topbar-right { display: flex; align-items: center; gap: 8px; }
-  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); position: relative; }
-  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
-  .icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); border: 1.5px solid var(--bg); }
-  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
-  .avatar-btn:hover { background: var(--surface-raised); }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-  .dropdown-wrap { position: relative; }
-  .dropdown-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 240px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 50; opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease; }
-  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
-  .dropdown-item:hover { background: var(--bg); }
-  .dropdown-item.danger { color: var(--danger); }
-  .notif-item { padding: 10px; border-radius: 7px; } .notif-item:hover { background: var(--bg); }
-  .notif-item .notif-title { font-size: 12.5px; font-weight: 500; margin-bottom: 2px; }
-  .notif-item .notif-time { font-size: 11.5px; color: var(--text-muted); }
-  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
-  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
-
-
-
-  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  ::-webkit-scrollbar { width: 7px; height: 7px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease; }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: var(--accent-text); }
-  .btn-primary:hover { opacity: 0.88; }
-  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-  .btn-ghost:hover { background: var(--surface-raised); }
-
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
-  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .pill-accent { background: var(--accent-soft); color: var(--accent); } .pill-accent .dot { background: var(--accent); }
-  .pill-success { background: var(--success-soft); color: var(--success); } .pill-success .dot { background: var(--success); }
-  .pill-danger { background: var(--danger-soft); color: var(--danger); } .pill-danger .dot { background: var(--danger); }
-  .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); } .pill-muted .dot { background: var(--text-muted); }
-
-  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; flex-shrink: 0; }
-  .toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .view-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
-  .view-toggle button { padding: 6px 13px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
-  .search-box { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); width: 260px; color: var(--text-muted); }
-  .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; }
-
-  .view-area { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-
-  /* ================= board ================= */
-  .board { flex: 1; min-height: 0; display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; align-items: stretch; padding-bottom: 10px; }
-  .board-col { width: 272px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
-  .board-col-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 12px; }
-  .board-col-head .stage-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
-  .board-col-head .stage-label .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .board-col-head .count { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
-  .board-col-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 6px 4px 4px; border-radius: 10px; transition: background 0.12s ease; }
-  .board-col-body.drag-over { background: var(--accent-soft); }
-
-  .opp-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 10px; padding: 12px; cursor: grab; transition: border-color 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease; }
-  .opp-card:hover { border-color: var(--accent); box-shadow: var(--shadow-raised); }
-  .opp-card.dragging { opacity: 0.35; }
-
-  .opp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-  .opp-card-title { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
-  .opp-card-menu-wrap { position: relative; flex-shrink: 0; }
-  .opp-card-menu-btn { color: var(--text-muted); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
-  .opp-card-menu-btn:hover { background: var(--bg); color: var(--text); }
-  .card-menu-panel { position: absolute; top: 26px; right: 0; width: 170px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 20; opacity: 0; transform: translateY(-4px) scale(0.98); pointer-events: none; transition: opacity 0.12s ease, transform 0.12s ease; }
-  .card-menu-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-  .card-menu-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding: 6px 8px 4px; }
-  .opp-card-client { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
-  .opp-card-foot { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; }
-  .opp-card-source { color: var(--text-muted); }
-  .opp-card-value { font-family: var(--font-mono); font-weight: 600; }
-
-  /* ================= table / list view ================= */
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
-  .table-wrap { flex: 1; overflow-y: auto; min-height: 0; }
-  .data-table { width: 100%; border-collapse: collapse; }
-  .data-table thead { position: sticky; top: 0; background: var(--surface); z-index: 5; }
-  .data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border); user-select: none; }
-  .data-table th.sortable { cursor: pointer; display: table-cell; }
-  .data-table th .th-inner { display: inline-flex; align-items: center; gap: 4px; }
-  .data-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .data-table tbody tr { cursor: pointer; transition: background 0.1s ease; }
-  .data-table tbody tr:hover td { background: var(--bg); }
-  .data-table tbody tr:last-child td { border-bottom: none; }
-  .row-title { font-weight: 500; margin-bottom: 2px; }
-  .row-client { font-size: 12px; color: var(--text-muted); }
-  .cell-value { font-family: var(--font-mono); text-align: right; font-weight: 500; }
-  .cell-source { color: var(--text-muted); }
-
-  /* ================= slideover ================= */
-  .slideover-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
-  .slideover-backdrop.open { opacity: 1; pointer-events: auto; }
-  .slideover { position: fixed; top: 0; right: 0; height: 100vh; width: 400px; max-width: 90vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 40px rgba(0,0,0,0.3); transform: translateX(100%); transition: transform 0.2s cubic-bezier(0.16,1,0.3,1); z-index: 95; display: flex; flex-direction: column; }
-  .slideover-backdrop.open .slideover { transform: translateX(0); }
-  .slideover-head { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .slideover-head h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-  .slideover-head p { font-size: 12.5px; color: var(--text-muted); }
-  .slideover-close { color: var(--text-muted); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 7px; flex-shrink: 0; }
-  .slideover-close:hover { background: var(--bg); color: var(--text); }
-  .slideover-body { flex: 1; overflow-y: auto; padding: 20px; }
-  .field-group { margin-bottom: 18px; }
-  .field-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 7px; display: block; }
-  .field-value { font-size: 14px; }
-  .field-value.mono { font-family: var(--font-mono); }
-  select.field-select, input.field-input, textarea.field-input {
-    width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13.5px;
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    input, select, textarea { font: inherit; color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    * { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
   }
-  select.field-select:focus, input.field-input:focus, textarea.field-input:focus { border-color: var(--accent); }
-  .slideover-foot { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-  .slideover-foot .btn { flex: 1; justify-content: center; }
-
-  /* ================= generic modal ================= */
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
-  .modal-backdrop.open { opacity: 1; pointer-events: auto; }
-  .modal { width: 100%; max-width: 440px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,0.4); transform: translateY(-10px) scale(0.98); transition: transform 0.15s ease; }
-  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
-  .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .modal-head h3 { font-size: 15.5px; font-weight: 700; }
-  .modal-body { padding: 20px; }
-  .modal-body p { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; }
-  .modal-foot { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
-  .form-row { display: flex; gap: 10px; }
-  .form-row .field-group { flex: 1; }
-
-  @media (max-width: 1024px) { .search-trigger { display: none; } }
-  @media (max-width: 760px) {
-    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
-    .sidebar.mobile-open { left: 0; }
-    .sidebar.collapsed { width: 240px; }
-    .icon-btn.mobile-menu-btn { display: flex; }
-    .content { padding: 20px 16px 40px; }
-    .toolbar { flex-direction: column; align-items: stretch; }
-    .search-box { width: 100%; }
-    .slideover { width: 100%; max-width: 100%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <!-- Basic Icons -->
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
     <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></symbol>
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
@@ -259,212 +103,188 @@
   </defs>
 </svg>
 
-<div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-mark"><span></span></div>
-      <span class="brand-name">Biondesk</span>
+<div class="flex h-screen overflow-hidden">
+  <aside class="group/sidebar relative flex shrink-0 flex-col border-r border-border bg-surface [transition:width_0.2s_ease] [&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px] max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px] max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!" id="sidebar">
+    <div class="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-border px-[18px]">
+      <div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-border bg-surface-raised"><span class="h-[7px] w-[7px] rounded-full bg-accent"></span></div>
+      <span class="overflow-hidden text-[15px] font-semibold whitespace-nowrap group-[.collapsed]/sidebar:hidden">Biondesk</span>
     </div>
-    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
-      <svg class="icon icon-sm"><use href="#i-chevron-left"/></svg>
+    <button class="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-border bg-surface text-text-muted shadow-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-accent hover:text-text max-[760px]:hidden" id="sidebarToggle" title="Collapse sidebar">
+      <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] [transition:transform_0.2s_ease] group-[.collapsed]/sidebar:rotate-180"><use href="#i-chevron-left"/></svg>
     </button>
-
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-grid"/></svg>
-        <span class="nav-label">Dashboard</span>
-        <span class="tooltip">Dashboard</span>
+    <nav class="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[12px] py-[16px] group-[.collapsed]/sidebar:overflow-visible!">
+      <a href="../dashboard.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-grid"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Dashboard</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Dashboard</span>
       </a>
-      <a href="#" class="nav-item active">
-        <svg class="icon"><use href="#i-kanban"/></svg>
-        <span class="nav-label">Opportunities</span>
-        <span class="badge">8</span>
-        <span class="tooltip">Opportunities</span>
+      <a href="../opportunities/index.html" class="nav-item active group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap bg-accent-soft text-accent [transition:background_0.12s_ease,color_0.12s_ease] group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Opportunities</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">8</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Opportunities</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-briefcase"/></svg>
-        <span class="nav-label">Projects</span>
-        <span class="badge">4</span>
-        <span class="tooltip">Projects</span>
+      <a href="../projects/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Projects</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">4</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Projects</span>
       </a>
-
-      <div class="sidebar-section-label">Documents</div>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-file"/></svg>
-        <span class="nav-label">Proposals</span>
-        <span class="badge">2</span>
-        <span class="tooltip">Proposals</span>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Documents</div>
+      <a href="../proposals/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-file"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Proposals</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">2</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Proposals</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-quote"/></svg>
-        <span class="nav-label">Quotations</span>
-        <span class="badge">1</span>
-        <span class="tooltip">Quotations</span>
+      <a href="../quotations/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-quote"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Quotations</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">1</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Quotations</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-receipt"/></svg>
-        <span class="nav-label">Invoices</span>
-        <span class="badge">3</span>
-        <span class="tooltip">Invoices</span>
+      <a href="../invoices/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-receipt"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Invoices</span>
+        <span class="badge ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">3</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Invoices</span>
       </a>
-
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-users"/></svg>
-        <span class="nav-label">Contacts</span>
-        <span class="tooltip">Contacts</span>
+      <a href="../contacts/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-users"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Contacts</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Contacts</span>
       </a>
-
-      <div class="sidebar-section-label">Workspace</div>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-bell"/></svg>
-        <span class="nav-label">Reminders</span>
-        <span class="tooltip">Reminders</span>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Workspace</div>
+      <a href="../reminders/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Reminders</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Reminders</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-layers"/></svg>
-        <span class="nav-label">Profile Library</span>
-        <span class="tooltip">Profile Library</span>
+      <a href="../profiles/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-layers"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Profile Library</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Profile Library</span>
       </a>
     </nav>
-
-    <div class="sidebar-footer">
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-settings"/></svg>
-        <span class="nav-label">Settings</span>
-        <span class="tooltip">Settings</span>
+    <div class="shrink-0 border-t border-border px-[12px] py-[10px]">
+      <a href="../settings/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Settings</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Settings</span>
       </a>
     </div>
   </aside>
 
-  <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn">
-          <svg class="icon"><use href="#i-menu"/></svg>
-        </button>
-        <span class="breadcrumb">Opportunities</span>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-bg px-[24px]">
+      <div class="flex min-w-0 items-center gap-[10px]">
+        <button class="relative hidden h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text max-[760px]:flex" id="mobileMenuBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-menu"/></svg></button>
+        <span class="text-[13.5px] font-semibold text-text">Opportunities</span>
       </div>
-      <button class="search-trigger" id="cmdkTrigger">
-        <svg class="icon icon-sm"><use href="#i-search"/></svg>
-        <span>Search or jump to...</span>
-        <span class="kbd">⌘K</span>
+      <button class="flex w-[260px] shrink-0 items-center gap-[10px] rounded-[8px] border border-border bg-surface px-[10px] py-[7px] text-[13px] text-text-muted hover:border-accent max-[1024px]:hidden" id="cmdkTrigger">
+        <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg><span>Search or jump to...</span><span class="ml-auto rounded-[4px] border border-border bg-surface-raised px-[6px] py-px font-mono text-[11px]">⌘K</span>
       </button>
-      <div class="topbar-right">
-        <div class="theme-switch" id="themeSwitch">
-          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
-          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
-          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+      <div class="flex shrink-0 items-center gap-[8px]">
+        <div class="flex items-center gap-[2px] rounded-[8px] border border-border bg-surface p-[2px]" id="themeSwitch">
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="light" title="Light"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-sun"/></svg></button>
+          <button class="active flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="dark" title="Dark"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-moon"/></svg></button>
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="system" title="System"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-monitor"/></svg></button>
         </div>
-        <div class="dropdown-wrap">
-          <button class="icon-btn" id="notifBtn">
-            <svg class="icon"><use href="#i-bell"/></svg>
-            <span class="dot"></span>
-          </button>
-          <div class="dropdown-panel" id="notifPanel">
-            <div class="dropdown-header">Notifications</div>
-            <div class="notif-item"><div class="notif-title">Invoice INV-0043 is now overdue</div><div class="notif-time">2 hours ago</div></div>
-            <div class="notif-item"><div class="notif-title">New lead via public form: Retail Co</div><div class="notif-time">Yesterday</div></div>
-          </div>
+        <div class="relative">
+          <button class="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text" id="notifBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="notifPanel"><div class="mb-[4px] border-b border-border px-[10px] py-[8px] text-[12.5px] font-semibold">Notifications</div><div class="rounded-[7px] p-[10px] hover:bg-bg"><div class="mb-[2px] text-[12.5px] font-medium">Invoice INV-0043 is now overdue</div><div class="text-[11.5px] text-text-muted">2 hours ago</div></div><div class="rounded-[7px] p-[10px] hover:bg-bg"><div class="mb-[2px] text-[12.5px] font-medium">New lead via public form: Retail Co</div><div class="text-[11.5px] text-text-muted">Yesterday</div></div></div>
         </div>
-        <div class="dropdown-wrap">
-          <button class="avatar-btn" id="userBtn">
-            <div class="avatar">HI</div>
-            <svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg>
-          </button>
-          <div class="dropdown-panel" id="userPanel">
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
-            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+        <div class="relative">
+          <button class="flex items-center gap-[8px] rounded-[8px] pt-[4px] pr-[8px] pb-[4px] pl-[4px] hover:bg-surface-raised" id="userBtn"><div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-text">HI</div><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] text-text-muted"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="userPanel">
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-user"/></svg> Profile</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg" onclick="window.location.href='../settings/index.html'"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg> Settings</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-danger hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-logout"/></svg> Log out</button>
           </div>
         </div>
       </div>
     </header>
 
-    <main class="content">
-      <p class="page-description">Track leads from any source, from first contact to won or lost.</p>
+    <main class="flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]">
+      <p class="mb-[14px] shrink-0 text-[13px] text-text-muted">Track leads from any source, from first contact to won or lost.</p>
 
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="view-toggle" id="viewToggle">
-            <button data-view="board" class="active"><svg class="icon icon-sm"><use href="#i-kanban"/></svg> Board</button>
-            <button data-view="list"><svg class="icon icon-sm"><use href="#i-list"/></svg> List</button>
+      <div class="mb-[16px] flex shrink-0 flex-wrap items-center justify-between gap-[12px] max-[760px]:flex-col max-[760px]:items-stretch">
+        <div class="flex flex-wrap items-center gap-[12px]">
+          <div class="flex rounded-[8px] border border-border bg-surface p-[2px]" id="viewToggle">
+            <button data-view="board" class="active flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg> Board</button>
+            <button data-view="list" class="flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-list"/></svg> List</button>
           </div>
-          <div class="search-box">
-            <svg class="icon icon-sm"><use href="#i-search"/></svg>
-            <input type="text" id="oppSearch" placeholder="Search opportunities or clients...">
+          <div class="flex w-[260px] items-center gap-[8px] rounded-[8px] border border-border bg-surface px-[12px] py-[7px] text-text-muted max-[760px]:w-full">
+            <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg>
+            <input type="text" class="flex-1 border-none bg-transparent text-[13px] text-text outline-none" id="oppSearch" placeholder="Search opportunities or clients...">
           </div>
         </div>
-        <button class="btn btn-primary" id="newOppBtn">
-          <svg class="icon icon-sm"><use href="#i-plus"/></svg>
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="newOppBtn">
+          <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-plus"/></svg>
           New Opportunity
         </button>
       </div>
 
-      <div class="view-area">
-      <!-- ============ BOARD VIEW ============ -->
-      <div class="board" id="boardView">
-        <div class="board-col" data-stage="inbox">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--text-muted)"></span>Inbox</span><span class="count">2</span></div>
-          <div class="board-col-body" data-stage="inbox"></div>
+      <div class="flex min-h-0 flex-1 flex-col">
+      <div class="board flex min-h-0 flex-1 items-stretch gap-[14px] overflow-x-auto overflow-y-hidden pb-[10px]" id="boardView">
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="inbox">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-text-muted"></span>Inbox</span><span class="count font-mono text-[12px] text-text-muted">2</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="inbox"></div>
         </div>
-        <div class="board-col" data-stage="drafting">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--text-muted)"></span>Drafting</span><span class="count">1</span></div>
-          <div class="board-col-body" data-stage="drafting"></div>
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="drafting">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-text-muted"></span>Drafting</span><span class="count font-mono text-[12px] text-text-muted">1</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="drafting"></div>
         </div>
-        <div class="board-col" data-stage="sent">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--text-muted)"></span>Sent</span><span class="count">2</span></div>
-          <div class="board-col-body" data-stage="sent"></div>
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="sent">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-text-muted"></span>Sent</span><span class="count font-mono text-[12px] text-text-muted">2</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="sent"></div>
         </div>
-        <div class="board-col" data-stage="negotiation">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--accent)"></span>Negotiation</span><span class="count">1</span></div>
-          <div class="board-col-body" data-stage="negotiation"></div>
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="negotiation">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-accent"></span>Negotiation</span><span class="count font-mono text-[12px] text-text-muted">1</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="negotiation"></div>
         </div>
-        <div class="board-col" data-stage="won">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--success)"></span>Won</span><span class="count">1</span></div>
-          <div class="board-col-body" data-stage="won"></div>
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="won">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-success"></span>Won</span><span class="count font-mono text-[12px] text-text-muted">1</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="won"></div>
         </div>
-        <div class="board-col" data-stage="lost">
-          <div class="board-col-head"><span class="stage-label"><span class="dot" style="background:var(--danger)"></span>Lost</span><span class="count">1</span></div>
-          <div class="board-col-body" data-stage="lost"></div>
+        <div class="board-col flex w-[272px] shrink-0 flex-col min-h-0" data-stage="lost">
+          <div class="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]"><span class="flex items-center gap-[8px] text-[13px] font-semibold"><span class="h-[7px] w-[7px] rounded-full bg-danger"></span>Lost</span><span class="count font-mono text-[12px] text-text-muted">1</span></div>
+          <div class="board-col-body flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] px-[6px] py-[4px] pl-[4px] [transition:background_0.12s_ease] [&.drag-over]:bg-accent-soft!" data-stage="lost"></div>
         </div>
       </div>
 
-      <!-- ============ LIST VIEW ============ -->
-      <div class="panel" id="listView" style="display:none;">
-        <div class="table-wrap">
-        <table class="data-table">
+      <div class="flex min-h-0 flex-col overflow-hidden rounded-[12px] border border-border bg-surface" id="listView" style="display:none;">
+        <div class="min-h-0 flex-1 overflow-y-auto">
+        <table class="w-full border-collapse">
           <thead>
             <tr>
-              <th>Opportunity</th>
-              <th>Stage</th>
-              <th>Source</th>
-              <th class="sortable" data-sort="value"><span class="th-inner">Value <svg class="icon icon-sm"><use href="#i-chevron-down"/></svg></span></th>
-              <th class="sortable" data-sort="age"><span class="th-inner">Last Activity <svg class="icon icon-sm"><use href="#i-chevron-down"/></svg></span></th>
+              <th class="select-none border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]">Opportunity</th>
+              <th class="select-none border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]">Stage</th>
+              <th class="select-none border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]">Source</th>
+              <th class="sortable select-none cursor-pointer border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]" data-sort="value"><span class="inline-flex items-center gap-[4px]">Value <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-chevron-down"/></svg></span></th>
+              <th class="sortable select-none cursor-pointer border-b border-border px-[16px] py-[12px] text-left text-[11px] uppercase text-text-muted [letter-spacing:0.05em]" data-sort="age"><span class="inline-flex items-center gap-[4px]">Last Activity <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-chevron-down"/></svg></span></th>
             </tr>
           </thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="tableBody" class="[&_tr:last-child_td]:border-b-0"></tbody>
         </table>
         </div>
       </div>
       </div>
     </main>
-  </div>
-</div>
 
-<!-- ============ slideover detail ============ -->
-<div class="slideover-backdrop" id="slideoverBackdrop">
-  <aside class="slideover" id="slideover">
-    <div class="slideover-head">
+<div class="group/sv fixed inset-0 z-[90] bg-black/40 opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="slideoverBackdrop">
+  <aside class="fixed right-0 top-0 z-[95] flex h-screen w-[400px] max-w-[90vw] translate-x-full flex-col border-l border-border bg-surface shadow-[-8px_0_40px_rgba(0,0,0,0.3)] [transition:transform_0.2s_cubic-bezier(0.16,1,0.3,1)] group-[.open]/sv:translate-x-0 max-[760px]:w-full max-[760px]:max-w-full" id="slideover">
+    <div class="flex items-start justify-between gap-[12px] border-b border-border p-[20px]">
       <div>
-        <h2 id="svTitle">Opportunity title</h2>
-        <p id="svClient">Client name</p>
+        <h2 class="mb-[4px] text-[17px] font-bold" id="svTitle">Opportunity title</h2>
+        <p class="text-[12.5px] text-text-muted" id="svClient">Client name</p>
       </div>
-      <button class="slideover-close" id="svClose"><svg class="icon"><use href="#i-x"/></svg></button>
+      <button class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-text-muted hover:bg-bg hover:text-text" id="svClose"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button>
     </div>
-    <div class="slideover-body">
-      <div class="field-group">
-        <span class="field-label">Stage</span>
-        <select class="field-select" id="svStage">
+    <div class="flex-1 overflow-y-auto p-[20px]">
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Stage</span>
+        <select class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="svStage">
           <option value="inbox">Inbox</option>
           <option value="drafting">Drafting</option>
           <option value="sent">Sent</option>
@@ -473,85 +293,83 @@
           <option value="lost">Lost</option>
         </select>
       </div>
-      <div class="field-group">
-        <span class="field-label">Value</span>
-        <span class="field-value mono" id="svValue">$0</span>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Value</span>
+        <span class="font-mono text-[14px]" id="svValue">$0</span>
       </div>
-      <div class="field-group">
-        <span class="field-label">Source</span>
-        <span class="field-value" id="svSource">-</span>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Source</span>
+        <span class="text-[14px]" id="svSource">-</span>
       </div>
-      <div class="field-group">
-        <span class="field-label">Last activity</span>
-        <span class="field-value" id="svAge">-</span>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Last activity</span>
+        <span class="text-[14px]" id="svAge">-</span>
       </div>
-      <div class="field-group">
-        <span class="field-label">Notes</span>
-        <textarea class="field-input" rows="4" placeholder="Add a note about this opportunity...">Initial brief received, waiting on scope clarification from client before sending formal quote.</textarea>
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Notes</span>
+        <textarea class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" rows="4" placeholder="Add a note about this opportunity...">Initial brief received, waiting on scope clarification from client before sending formal quote.</textarea>
       </div>
     </div>
-    <div class="slideover-foot">
-      <button class="btn btn-ghost" id="svClose2">Close</button>
-      <button class="btn btn-primary" id="svSave">Save changes</button>
+    <div class="flex gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised flex-1 justify-center" id="svClose2">Close</button>
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88] flex-1 justify-center" id="svSave">Save changes</button>
     </div>
   </aside>
 </div>
 
-<!-- ============ new opportunity modal ============ -->
-<div class="modal-backdrop" id="newOppBackdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>New Opportunity</h3>
-      <button class="slideover-close" id="newOppClose"><svg class="icon"><use href="#i-x"/></svg></button>
+<div class="group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="newOppBackdrop">
+  <div class="w-full max-w-[440px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+    <div class="flex items-center justify-between border-b border-border px-[20px] py-[18px]">
+      <h3 class="text-[15.5px] font-bold">New Opportunity</h3>
+      <button class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-text-muted hover:bg-bg hover:text-text" id="newOppClose"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-x"/></svg></button>
     </div>
-    <div class="modal-body">
-      <div class="field-group">
-        <span class="field-label">Title</span>
-        <input class="field-input" id="formTitle" placeholder="e.g. Website Redesign">
+    <div class="p-[20px]">
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Title</span>
+        <input class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="formTitle" placeholder="e.g. Website Redesign">
       </div>
-      <div class="form-row">
-        <div class="field-group">
-          <span class="field-label">Client</span>
-          <input class="field-input" id="formClient" placeholder="Client name">
+      <div class="flex gap-[10px]">
+        <div class="mb-[18px] flex-1">
+          <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Client</span>
+          <input class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="formClient" placeholder="Client name">
         </div>
-        <div class="field-group">
-          <span class="field-label">Value</span>
-          <input class="field-input" id="formValue" placeholder="$0">
+        <div class="mb-[18px] flex-1">
+          <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Value</span>
+          <input class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="formValue" placeholder="$0">
         </div>
       </div>
-      <div class="field-group">
-        <span class="field-label">Source</span>
-        <select class="field-select" id="formSource">
+      <div class="mb-[18px]">
+        <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Source</span>
+        <select class="w-full rounded-[8px] border border-border bg-bg px-[11px] py-[9px] text-[13.5px] text-text focus:border-accent" id="formSource">
           <option>Upwork</option><option>Referral</option><option>LinkedIn</option><option>Direct</option><option>Other</option>
         </select>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="formCancel">Cancel</button>
-      <button class="btn btn-primary" id="formSubmit">Create Opportunity</button>
+    <div class="flex justify-end gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="formCancel">Cancel</button>
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="formSubmit">Create Opportunity</button>
     </div>
   </div>
 </div>
 
-<!-- ============ confirm create project modal ============ -->
-<div class="modal-backdrop" id="confirmProjectBackdrop">
-  <div class="modal">
-    <div class="modal-head"><h3>Nice, deal won! 🎉</h3></div>
-    <div class="modal-body">
-      <p>Want to create a Project for <strong id="cpOppTitle">this opportunity</strong> now, so you can start tracking tasks right away?</p>
+<div class="group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="confirmProjectBackdrop">
+  <div class="w-full max-w-[440px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+    <div class="flex items-center justify-between border-b border-border px-[20px] py-[18px]"><h3 class="text-[15.5px] font-bold">Nice, deal won! 🎉</h3></div>
+    <div class="p-[20px]">
+      <p class="text-[13.5px] leading-[1.6] text-text-muted">Want to create a Project for <strong id="cpOppTitle">this opportunity</strong> now, so you can start tracking tasks right away?</p>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="cpSkip">Not now</button>
-      <button class="btn btn-primary" id="cpCreate">Create Project</button>
+    <div class="flex justify-end gap-[10px] border-t border-border px-[20px] py-[16px]">
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-border bg-surface text-text hover:bg-surface-raised" id="cpSkip">Not now</button>
+      <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] bg-accent text-accent-text hover:opacity-[0.88]" id="cpCreate">Create Project</button>
     </div>
+  </div>
+</div>
   </div>
 </div>
 
 <script>
 (function () {
   const root = document.documentElement;
-
-  /* ---------- theme ---------- */
   const themeSwitch = document.getElementById('themeSwitch');
   const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
   function applyTheme(choice) {
@@ -564,7 +382,6 @@
   systemPref.addEventListener('change', () => { if (localStorage.getItem('biondesk-theme') === 'system') applyTheme('system'); });
   applyTheme(localStorage.getItem('biondesk-theme') || 'dark');
 
-  /* ---------- sidebar collapse ---------- */
   const sidebar = document.getElementById('sidebar');
   const sidebarToggle = document.getElementById('sidebarToggle');
   function setCollapsed(state) { sidebar.classList.toggle('collapsed', state); localStorage.setItem('biondesk-sidebar-collapsed', state ? '1' : '0'); }
@@ -572,26 +389,25 @@
   if (localStorage.getItem('biondesk-sidebar-collapsed') === '1') setCollapsed(true);
   document.getElementById('mobileMenuBtn').addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
 
-  /* ---------- topbar dropdowns ---------- */
   function setupDropdown(btnId, panelId) {
     const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isOpen = panel.classList.contains('open');
-      document.querySelectorAll('.dropdown-panel.open, .card-menu-panel.open').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open'));
       if (!isOpen) panel.classList.add('open');
     });
   }
   setupDropdown('notifBtn', 'notifPanel');
   setupDropdown('userBtn', 'userPanel');
-  document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel.open, .card-menu-panel.open').forEach(p => p.classList.remove('open')));
-  document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') e.preventDefault(); });
+  document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open')));
 
   /* ---------- sample data ---------- */
   const STAGES = ['inbox', 'drafting', 'sent', 'negotiation', 'won', 'lost'];
-  const STAGE_COLOR = { inbox: '--text-muted', drafting: '--text-muted', sent: '--text-muted', negotiation: '--accent', won: '--success', lost: '--danger' };
-  const STAGE_PILL = { inbox: 'pill-muted', drafting: 'pill-muted', sent: 'pill-muted', negotiation: 'pill-accent', won: 'pill-success', lost: 'pill-danger' };
+  const STAGE_COLOR_CLS = { inbox: 'bg-text-muted', drafting: 'bg-text-muted', sent: 'bg-text-muted', negotiation: 'bg-accent', won: 'bg-success', lost: 'bg-danger' };
+  const STAGE_PILL_CLS = { inbox: 'border border-border bg-surface-raised text-text-muted', drafting: 'border border-border bg-surface-raised text-text-muted', sent: 'border border-border bg-surface-raised text-text-muted', negotiation: 'bg-accent-soft text-accent', won: 'bg-success-soft text-success', lost: 'bg-danger-soft text-danger' };
   const STAGE_LABEL = { inbox: 'Inbox', drafting: 'Drafting', sent: 'Sent', negotiation: 'Negotiation', won: 'Won', lost: 'Lost' };
+  const PILL_BASE = 'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
 
   let opportunities = [
     { id: 1, title: 'Web App Redesign', client: 'Acme Corp', source: 'Upwork', value: 5000, age: '2d ago', ageSort: 2, stage: 'inbox' },
@@ -610,26 +426,26 @@
     document.querySelectorAll('.board-col-body').forEach(col => col.innerHTML = '');
     opportunities.forEach(o => {
       const card = document.createElement('div');
-      card.className = 'opp-card';
+      card.className = "opp-card cursor-grab rounded-[10px] border border-border border-l-[3px] bg-surface p-[12px] [transition:border-color_0.12s_ease,box-shadow_0.12s_ease,opacity_0.12s_ease] hover:border-accent hover:shadow-raised [&.dragging]:opacity-35!";
       card.draggable = true;
       card.dataset.id = o.id;
       card.innerHTML = `
-        <div class="opp-card-head">
-          <span class="opp-card-title">${o.title}</span>
-          <div class="opp-card-menu-wrap">
-            <button class="opp-card-menu-btn" data-menu-btn><svg class="icon icon-sm"><use href="#i-more"/></svg></button>
-            <div class="card-menu-panel">
-              <div class="card-menu-label">Move to</div>
-              ${STAGES.map(s => `<button class="dropdown-item" data-move="${s}">${STAGE_LABEL[s]}</button>`).join('')}
+        <div class="mb-[8px] flex items-start justify-between gap-[8px]">
+          <span class="text-[13.5px] font-semibold leading-[1.35]">${o.title}</span>
+          <div class="opp-card-menu-wrap relative shrink-0">
+            <button class="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-text-muted hover:bg-bg hover:text-text" data-menu-btn><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-more"/></svg></button>
+            <div class="card-menu-panel absolute right-0 top-[26px] z-20 w-[170px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-4px)_scale(0.98)] [transition:opacity_0.12s_ease,transform_0.12s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!">
+              <div class="px-[8px] pb-[4px] pt-[6px] text-[11px] uppercase text-text-muted">Move to</div>
+              ${STAGES.map(s => `<button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg" data-move="${s}">${STAGE_LABEL[s]}</button>`).join('')}
             </div>
           </div>
         </div>
-        <div class="opp-card-client">${o.client}</div>
-        <div class="opp-card-foot">
-          <span class="opp-card-source">${o.source}</span>
-          <span class="opp-card-value">${fmtMoney(o.value)}</span>
+        <div class="mb-[12px] text-[12px] text-text-muted">${o.client}</div>
+        <div class="flex items-center justify-between text-[11.5px]">
+          <span class="text-text-muted">${o.source}</span>
+          <span class="font-mono font-semibold">${fmtMoney(o.value)}</span>
         </div>`;
-      card.style.borderLeftColor = `var(${STAGE_COLOR[o.stage]})`;
+      card.style.borderLeftColor = 'var(--color-' + (o.stage === 'negotiation' ? 'accent' : o.stage === 'won' ? 'success' : o.stage === 'lost' ? 'danger' : 'text-muted') + ')';
       document.querySelector(`.board-col-body[data-stage="${o.stage}"]`).appendChild(card);
     });
     updateCounts();
@@ -648,12 +464,12 @@
   function renderTable() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = opportunities.map(o => `
-      <tr data-id="${o.id}">
-        <td><div class="row-title">${o.title}</div><div class="row-client">${o.client}</div></td>
-        <td><span class="pill ${STAGE_PILL[o.stage]}"><span class="dot"></span>${STAGE_LABEL[o.stage]}</span></td>
-        <td class="cell-source">${o.source}</td>
-        <td class="cell-value">${fmtMoney(o.value)}</td>
-        <td class="cell-source">${o.age}</td>
+      <tr data-id="${o.id}" class="group cursor-pointer [transition:background_0.1s_ease]">
+        <td class="border-b border-border px-[16px] py-[13px] text-[13px] group-hover:bg-bg"><div class="mb-[2px] font-medium">${o.title}</div><div class="text-[12px] text-text-muted">${o.client}</div></td>
+        <td class="border-b border-border px-[16px] py-[13px] text-[13px] group-hover:bg-bg"><span class="${PILL_BASE} ${STAGE_PILL_CLS[o.stage]}"><span class="h-[6px] w-[6px] rounded-full ${STAGE_COLOR_CLS[o.stage]}"></span>${STAGE_LABEL[o.stage]}</span></td>
+        <td class="border-b border-border px-[16px] py-[13px] text-[13px] text-text-muted group-hover:bg-bg">${o.source}</td>
+        <td class="border-b border-border px-[16px] py-[13px] text-[13px] text-right font-mono font-medium group-hover:bg-bg">${fmtMoney(o.value)}</td>
+        <td class="border-b border-border px-[16px] py-[13px] text-[13px] text-text-muted group-hover:bg-bg">${o.age}</td>
       </tr>`).join('');
     tbody.querySelectorAll('tr').forEach(tr => tr.addEventListener('click', () => openDetail(parseInt(tr.dataset.id))));
   }
