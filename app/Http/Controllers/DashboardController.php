@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\TeamInvitation;
+use App\Support\Biondesk\StubWorkspaceData;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, StubWorkspaceData $stubWorkspaceData): Response
     {
         $email = strtolower($request->user()->email);
 
@@ -32,6 +33,7 @@ class DashboardController extends Controller
             ]);
 
         return Inertia::render('dashboard', [
+            ...$stubWorkspaceData->dashboard($request->user()->currentTeam),
             'pendingInvitations' => $pendingInvitations,
         ]);
     }

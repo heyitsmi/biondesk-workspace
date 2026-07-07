@@ -1,390 +1,1224 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login } from '@/routes';
-import { register } from '@/routes';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import {
+    AlertCircle,
+    ArrowRight,
+    Check,
+    CreditCard,
+    FolderKanban,
+    Globe,
+    Inbox,
+    KanbanSquare,
+    LayoutDashboard,
+    Linkedin,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    ReceiptText,
+    Sparkles,
+    X,
+} from 'lucide-react';
+import { dashboard, login, register } from '@/routes';
+
+const landingStyles = `
+    .fluid-transition {
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .app-reveal-container {
+        perspective: 2000px;
+    }
+
+    .app-mockup {
+        transform: rotateX(15deg) scale(0.9) translateY(40px);
+        opacity: 0;
+        transform-style: preserve-3d;
+        transition:
+            transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+            opacity 1.2s ease-out;
+        will-change: transform, opacity;
+    }
+
+    .app-mockup.revealed {
+        transform: rotateX(0deg) scale(1) translateY(0);
+        opacity: 1;
+    }
+
+    .fade-up {
+        opacity: 0;
+        transform: translateY(30px);
+        transition:
+            opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fade-up.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .delay-100 {
+        transition-delay: 100ms;
+    }
+
+    .delay-200 {
+        transition-delay: 200ms;
+    }
+
+    .delay-300 {
+        transition-delay: 300ms;
+    }
+
+    .step-text {
+        opacity: 0.3;
+        transition: opacity 0.5s ease;
+    }
+
+    .step-text.is-active {
+        opacity: 1;
+    }
+
+    .step-visual {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transform: scale(0.96) translateY(10px);
+        transition:
+            opacity 0.6s ease,
+            transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+    }
+
+    .step-visual.is-active {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        pointer-events: auto;
+        z-index: 10;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 9999px;
+    }
+
+    .landing-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .landing-scrollbar::-webkit-scrollbar-track {
+        background: #0b0e14;
+    }
+
+    .landing-scrollbar::-webkit-scrollbar-thumb {
+        background: #232838;
+        border-radius: 9999px;
+    }
+`;
+
+const pricingPlans = [
+    {
+        name: 'Core',
+        description: 'For the solo freelancer establishing process.',
+        price: 'Rp0',
+        suffix: '/month',
+        features: [
+            '3 Active Projects',
+            'Basic Proposal Editor',
+            'Manual Invoice Tracking',
+        ],
+        cta: 'Create Free Account',
+        highlighted: false,
+    },
+    {
+        name: 'Professional',
+        description: 'The complete suite for high-volume independents.',
+        price: 'Rp79k',
+        suffix: '/month',
+        features: [
+            'Unlimited Projects',
+            'Profile Library AI Generation',
+            'Custom Public Lead Form',
+            'Automated Reminder Rules',
+        ],
+        cta: 'Upgrade to Pro',
+        highlighted: true,
+    },
+] as const;
+
+const landingThemeStyle = {
+    '--background': '#0b0e14',
+    '--foreground': '#edeff3',
+    '--card': '#12161f',
+    '--card-foreground': '#edeff3',
+    '--popover': '#12161f',
+    '--popover-foreground': '#edeff3',
+    '--primary': '#edeff3',
+    '--primary-foreground': '#12161f',
+    '--secondary': '#1a1f2b',
+    '--secondary-foreground': '#edeff3',
+    '--muted': '#1a1f2b',
+    '--muted-foreground': '#8b93a6',
+    '--accent': '#1a1f2b',
+    '--accent-foreground': '#edeff3',
+    '--border': '#232838',
+    '--input': '#232838',
+    '--ring': '#3b4459',
+    '--sidebar': '#12161f',
+    '--sidebar-foreground': '#edeff3',
+    '--sidebar-primary': '#edeff3',
+    '--sidebar-primary-foreground': '#12161f',
+    '--sidebar-accent': '#1a1f2b',
+    '--sidebar-accent-foreground': '#edeff3',
+    '--sidebar-border': '#232838',
+    '--sidebar-ring': '#3b4459',
+    '--bion-bg': '#0b0e14',
+    '--bion-surface': '#12161f',
+    '--bion-surface-raised': '#1a1f2b',
+    '--bion-border': '#232838',
+    '--bion-text': '#edeff3',
+    '--bion-text-muted': '#8b93a6',
+    '--bion-accent': '#e8a33d',
+    '--bion-accent-text': '#12161f',
+    '--bion-success': '#34a87c',
+    '--bion-danger': '#e5484d',
+    '--bion-accent-soft': 'rgb(232 163 61 / 0.12)',
+    '--bion-success-soft': 'rgb(52 168 124 / 0.12)',
+    '--bion-danger-soft': 'rgb(229 72 77 / 0.12)',
+    '--bion-shadow-raised': '0 4px 16px rgb(0 0 0 / 0.24)',
+    '--bion-shadow-panel': '0 24px 80px -12px rgb(0 0 0 / 0.56)',
+    '--bion-shadow-glow': '0 0 50px -10px rgb(232 163 61 / 0.22)',
+    '--color-background': '#0b0e14',
+    '--color-foreground': '#edeff3',
+    '--color-card': '#12161f',
+    '--color-card-foreground': '#edeff3',
+    '--color-popover': '#12161f',
+    '--color-popover-foreground': '#edeff3',
+    '--color-primary': '#edeff3',
+    '--color-primary-foreground': '#12161f',
+    '--color-secondary': '#1a1f2b',
+    '--color-secondary-foreground': '#edeff3',
+    '--color-muted': '#1a1f2b',
+    '--color-muted-foreground': '#8b93a6',
+    '--color-accent': '#1a1f2b',
+    '--color-accent-foreground': '#edeff3',
+    '--color-border': '#232838',
+    '--color-input': '#232838',
+    '--color-ring': '#3b4459',
+    '--color-sidebar': '#12161f',
+    '--color-sidebar-foreground': '#edeff3',
+    '--color-sidebar-primary': '#edeff3',
+    '--color-sidebar-primary-foreground': '#12161f',
+    '--color-sidebar-accent': '#1a1f2b',
+    '--color-sidebar-accent-foreground': '#edeff3',
+    '--color-sidebar-border': '#232838',
+    '--color-sidebar-ring': '#3b4459',
+    '--color-bion-bg': '#0b0e14',
+    '--color-bion-surface': '#12161f',
+    '--color-bion-surface-raised': '#1a1f2b',
+    '--color-bion-border': '#232838',
+    '--color-bion-text': '#edeff3',
+    '--color-bion-text-muted': '#8b93a6',
+    '--color-bion-accent': '#e8a33d',
+    '--color-bion-accent-text': '#12161f',
+    '--color-bion-success': '#34a87c',
+    '--color-bion-danger': '#e5484d',
+    '--color-bion-accent-soft': 'rgb(232 163 61 / 0.12)',
+    '--color-bion-success-soft': 'rgb(52 168 124 / 0.12)',
+    '--color-bion-danger-soft': 'rgb(229 72 77 / 0.12)',
+    '--shadow-bion-raised': '0 4px 16px rgb(0 0 0 / 0.24)',
+    '--shadow-bion-panel': '0 24px 80px -12px rgb(0 0 0 / 0.56)',
+    '--shadow-bion-glow': '0 0 50px -10px rgb(232 163 61 / 0.22)',
+} as CSSProperties;
 
 export default function Welcome() {
     const { auth, currentTeam } = usePage().props;
-    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
+    const workspaceHref = currentTeam ? dashboard(currentTeam.slug) : login();
+    const primaryCtaHref = auth.user ? workspaceHref : register();
+    const year = new Date().getFullYear();
+
+    useEffect(() => {
+        const root = document.documentElement;
+        const body = document.body;
+        const rootHadDark = root.classList.contains('dark');
+        const bodyHadDark = body.classList.contains('dark');
+        const previousBodyBackgroundColor = body.style.backgroundColor;
+        const previousBodyColor = body.style.color;
+
+        root.classList.add('dark');
+        body.classList.add('dark');
+        body.style.backgroundColor = '#0b0e14';
+        body.style.color = '#edeff3';
+
+        const prefersReducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches;
+        const mockup = document.querySelector<HTMLElement>('[data-app-mockup]');
+        const fadeElements = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-fade-up]'),
+        );
+        const stepTriggers = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-step-trigger]'),
+        );
+        const stepVisuals = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-step-visual]'),
+        );
+
+        let activeStep = '1';
+        let revealTimeout: number | null = null;
+        let fadeObserver: IntersectionObserver | null = null;
+        let scrollObserver: IntersectionObserver | null = null;
+
+        const activateStep = (step: string): void => {
+            activeStep = step;
+
+            stepTriggers.forEach((trigger) => {
+                const isActive = trigger.dataset.step === step;
+
+                trigger.classList.toggle('is-active', isActive);
+                trigger.classList.toggle('opacity-100', isActive);
+
+                if (window.innerWidth >= 1024) {
+                    trigger.classList.toggle('opacity-30', !isActive);
+                }
+            });
+
+            stepVisuals.forEach((visual) => {
+                visual.classList.toggle('is-active', visual.dataset.step === step);
+            });
+        };
+
+        stepTriggers.forEach((trigger, index) => {
+            trigger.classList.add('transition-opacity', 'duration-500');
+
+            if (index === 0) {
+                trigger.classList.add('is-active', 'opacity-100');
+            } else {
+                trigger.classList.add('opacity-30');
+            }
+        });
+
+        if (mockup) {
+            if (prefersReducedMotion) {
+                mockup.style.transition = 'none';
+                mockup.classList.add('revealed');
+            } else {
+                revealTimeout = window.setTimeout(() => {
+                    mockup.classList.add('revealed');
+                }, 100);
+            }
+        }
+
+        if (prefersReducedMotion) {
+            fadeElements.forEach((element) => {
+                element.style.transition = 'none';
+                element.classList.add('is-visible');
+            });
+        } else {
+            fadeObserver = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (!entry.isIntersecting) {
+                            return;
+                        }
+
+                        entry.target.classList.add('is-visible');
+                        fadeObserver?.unobserve(entry.target);
+                    });
+                },
+                {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px',
+                },
+            );
+
+            fadeElements.forEach((element) => {
+                fadeObserver?.observe(element);
+            });
+        }
+
+        scrollObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+
+                    const step = entry.target.getAttribute('data-step');
+
+                    if (step) {
+                        activateStep(step);
+                    }
+                });
+            },
+            {
+                rootMargin: '-40% 0px -40% 0px',
+                threshold: 0,
+            },
+        );
+
+        const syncStepObservers = (): void => {
+            if (!scrollObserver) {
+                return;
+            }
+
+            if (window.innerWidth >= 1024) {
+                activateStep(activeStep);
+                stepTriggers.forEach((trigger) => {
+                    scrollObserver?.observe(trigger);
+                });
+            } else {
+                stepTriggers.forEach((trigger) => {
+                    scrollObserver?.unobserve(trigger);
+                    trigger.classList.remove('opacity-30');
+                    trigger.classList.add('opacity-100');
+                });
+            }
+        };
+
+        syncStepObservers();
+        window.addEventListener('resize', syncStepObservers);
+
+        return () => {
+            if (!rootHadDark) {
+                root.classList.remove('dark');
+            }
+
+            if (!bodyHadDark) {
+                body.classList.remove('dark');
+            }
+
+            body.style.backgroundColor = previousBodyBackgroundColor;
+            body.style.color = previousBodyColor;
+
+            if (revealTimeout) {
+                window.clearTimeout(revealTimeout);
+            }
+
+            fadeObserver?.disconnect();
+            scrollObserver?.disconnect();
+            window.removeEventListener('resize', syncStepObservers);
+        };
+    }, []);
 
     return (
         <>
-            <Head title="Welcome" />
-            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]">
-                <header className="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
-                    <nav className="flex items-center justify-end gap-4">
-                        {auth.user ? (
-                            <Link
-                                href={dashboardUrl}
-                                className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+            <Head title="Biondesk" />
+            <style>{landingStyles}</style>
+
+            <div
+                style={landingThemeStyle}
+                className="landing-scrollbar dark min-h-screen scroll-smooth bg-[#0b0e14] font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text"
+            >
+                <header className="fixed top-0 z-50 w-full border-b border-bion-border/50 bg-bion-bg/60 backdrop-blur-xl">
+                    <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-6 items-center justify-center rounded-md border border-bion-border bg-bion-surface-raised">
+                                <div className="size-1.5 rounded-full bg-bion-accent" />
+                            </div>
+                            <span className="text-sm font-semibold tracking-wide text-bion-text">
+                                Biondesk
+                            </span>
+                        </div>
+
+                        <nav className="hidden items-center gap-8 md:flex">
+                            <a
+                                href="#platform"
+                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
                             >
-                                Dashboard
-                            </Link>
-                        ) : (
-                            <>
+                                Platform
+                            </a>
+                            <a
+                                href="#workflow"
+                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
+                            >
+                                Workflow
+                            </a>
+                            <a
+                                href="#pricing"
+                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
+                            >
+                                Pricing
+                            </a>
+                        </nav>
+
+                        <div className="flex items-center gap-4">
+                            {!auth.user ? (
                                 <Link
                                     href={login()}
-                                    className="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
+                                    className="fluid-transition hidden text-xs font-medium text-bion-text-muted hover:text-bion-text sm:block"
                                 >
-                                    Log in
+                                    Sign in
                                 </Link>
-                                <Link
-                                    href={register()}
-                                    className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                                >
-                                    Register
-                                </Link>
-                            </>
-                        )}
-                    </nav>
+                            ) : null}
+
+                            <Link
+                                href={primaryCtaHref}
+                                className="fluid-transition inline-flex items-center rounded bg-bion-text px-4 py-1.5 text-xs font-semibold text-bion-bg hover:bg-bion-text-muted"
+                            >
+                                {auth.user ? 'Open Workspace' : 'Get Access'}
+                            </Link>
+                        </div>
+                    </div>
                 </header>
-                <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
-                    <main className="flex w-full max-w-[335px] flex-col-reverse lg:max-w-4xl lg:flex-row">
-                        <div className="flex-1 rounded-br-lg rounded-bl-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
-                            <h1 className="mb-1 font-medium">
-                                Let's get started
-                            </h1>
-                            <p className="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                                Laravel has an incredibly rich ecosystem.
-                                <br />
-                                We suggest starting with the following.
-                            </p>
-                            <ul className="mb-4 flex flex-col lg:mb-6">
-                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-1/2 before:bottom-0 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
-                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
-                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
-                                        </span>
-                                    </span>
-                                    <span>
-                                        Read the
-                                        <a
-                                            href="https://laravel.com/docs"
-                                            target="_blank"
-                                            className="ml-1 inline-flex items-center space-x-1 font-medium text-[#f53003] underline underline-offset-4 dark:text-[#FF4433]"
-                                        >
-                                            <span>Documentation</span>
-                                            <svg
-                                                width={10}
-                                                height={11}
-                                                viewBox="0 0 10 11"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-2.5 w-2.5"
-                                            >
-                                                <path
-                                                    d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="square"
-                                                />
-                                            </svg>
-                                        </a>
-                                    </span>
-                                </li>
-                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-0 before:bottom-1/2 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
-                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
-                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
-                                        </span>
-                                    </span>
-                                    <span>
-                                        Watch video tutorials at
-                                        <a
-                                            href="https://laracasts.com"
-                                            target="_blank"
-                                            className="ml-1 inline-flex items-center space-x-1 font-medium text-[#f53003] underline underline-offset-4 dark:text-[#FF4433]"
-                                        >
-                                            <span>Laracasts</span>
-                                            <svg
-                                                width={10}
-                                                height={11}
-                                                viewBox="0 0 10 11"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-2.5 w-2.5"
-                                            >
-                                                <path
-                                                    d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="square"
-                                                />
-                                            </svg>
-                                        </a>
-                                    </span>
-                                </li>
-                            </ul>
-                            <ul className="flex gap-3 text-sm leading-normal">
-                                <li>
-                                    <a
-                                        href="https://cloud.laravel.com"
-                                        target="_blank"
-                                        className="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
-                                    >
-                                        Deploy now
-                                    </a>
-                                </li>
-                            </ul>
+
+                <main className="relative flex flex-col items-center overflow-hidden pt-32 pb-20 md:pt-40 md:pb-32">
+                    <div className="pointer-events-none absolute top-0 h-[600px] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(232,163,61,0.08)_0%,transparent_60%)]" />
+
+                    <div
+                        data-fade-up
+                        className="fade-up is-visible z-10 mx-auto max-w-4xl px-6 text-center"
+                    >
+                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-bion-border bg-bion-surface px-3 py-1">
+                            <span className="relative flex size-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-bion-accent opacity-75" />
+                                <span className="relative inline-flex size-2 rounded-full bg-bion-accent" />
+                            </span>
+                            <span className="text-[11px] font-medium tracking-widest text-bion-text uppercase">
+                                Biondesk Core v1.0
+                            </span>
                         </div>
-                        <div className="relative -mb-px aspect-[335/364] w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]">
-                            {/* Laravel Logo */}
-                            <svg
-                                className="w-full max-w-none translate-y-0 text-[#F53003] opacity-100 transition-all duration-750 dark:text-[#F61500] starting:opacity-0 motion-safe:starting:translate-y-6"
-                                viewBox="0 0 438 104"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
+
+                        <h1 className="mb-6 text-5xl leading-[1.05] font-bold tracking-tight text-bion-text md:text-7xl">
+                            The independent&apos;s
+                            <br />
+                            <span className="text-bion-text-muted">
+                                command center.
+                            </span>
+                        </h1>
+
+                        <p className="mx-auto mb-10 max-w-2xl text-lg font-medium text-bion-text-muted md:text-xl">
+                            Manage your entire cycle, from external leads and
+                            active projects to proposals and final invoices,
+                            without being locked to a single platform.
+                        </p>
+
+                        <div className="flex items-center justify-center gap-4">
+                            <Link
+                                href={primaryCtaHref}
+                                className="fluid-transition inline-flex items-center gap-2 rounded-lg bg-bion-accent px-8 py-3.5 text-sm font-semibold text-bion-accent-text shadow-bion-glow hover:opacity-90"
                             >
-                                <path
-                                    d="M17.2036 -3H0V102.197H49.5189V86.7187H17.2036V-3Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M110.256 41.6337C108.061 38.1275 104.945 35.3731 100.905 33.3681C96.8667 31.3647 92.8016 30.3618 88.7131 30.3618C83.4247 30.3618 78.5885 31.3389 74.201 33.2923C69.8111 35.2456 66.0474 37.928 62.9059 41.3333C59.7643 44.7401 57.3198 48.6726 55.5754 53.1293C53.8287 57.589 52.9572 62.274 52.9572 67.1813C52.9572 72.1925 53.8287 76.8995 55.5754 81.3069C57.3191 85.7173 59.7636 89.6241 62.9059 93.0293C66.0474 96.4361 69.8119 99.1155 74.201 101.069C78.5885 103.022 83.4247 103.999 88.7131 103.999C92.8016 103.999 96.8667 102.997 100.905 100.994C104.945 98.9911 108.061 96.2359 110.256 92.7282V102.195H126.563V32.1642H110.256V41.6337ZM108.76 75.7472C107.762 78.4531 106.366 80.8078 104.572 82.8112C102.776 84.8161 100.606 86.4183 98.0637 87.6206C95.5202 88.823 92.7004 89.4238 89.6103 89.4238C86.5178 89.4238 83.7252 88.823 81.2324 87.6206C78.7388 86.4183 76.5949 84.8161 74.7998 82.8112C73.004 80.8078 71.6319 78.4531 70.6856 75.7472C69.7356 73.0421 69.2644 70.1868 69.2644 67.1821C69.2644 64.1758 69.7356 61.3205 70.6856 58.6154C71.6319 55.9102 73.004 53.5571 74.7998 51.5522C76.5949 49.5495 78.738 47.9451 81.2324 46.7427C83.7252 45.5404 86.5178 44.9396 89.6103 44.9396C92.7012 44.9396 95.5202 45.5404 98.0637 46.7427C100.606 47.9451 102.776 49.5487 104.572 51.5522C106.367 53.5571 107.762 55.9102 108.76 58.6154C109.756 61.3205 110.256 64.1758 110.256 67.1821C110.256 70.1868 109.756 73.0421 108.76 75.7472Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M242.805 41.6337C240.611 38.1275 237.494 35.3731 233.455 33.3681C229.416 31.3647 225.351 30.3618 221.262 30.3618C215.974 30.3618 211.138 31.3389 206.75 33.2923C202.36 35.2456 198.597 37.928 195.455 41.3333C192.314 44.7401 189.869 48.6726 188.125 53.1293C186.378 57.589 185.507 62.274 185.507 67.1813C185.507 72.1925 186.378 76.8995 188.125 81.3069C189.868 85.7173 192.313 89.6241 195.455 93.0293C198.597 96.4361 202.361 99.1155 206.75 101.069C211.138 103.022 215.974 103.999 221.262 103.999C225.351 103.999 229.416 102.997 233.455 100.994C237.494 98.9911 240.611 96.2359 242.805 92.7282V102.195H259.112V32.1642H242.805V41.6337ZM241.31 75.7472C240.312 78.4531 238.916 80.8078 237.122 82.8112C235.326 84.8161 233.156 86.4183 230.614 87.6206C228.07 88.823 225.251 89.4238 222.16 89.4238C219.068 89.4238 216.275 88.823 213.782 87.6206C211.289 86.4183 209.145 84.8161 207.35 82.8112C205.554 80.8078 204.182 78.4531 203.236 75.7472C202.286 73.0421 201.814 70.1868 201.814 67.1821C201.814 64.1758 202.286 61.3205 203.236 58.6154C204.182 55.9102 205.554 53.5571 207.35 51.5522C209.145 49.5495 211.288 47.9451 213.782 46.7427C216.275 45.5404 219.068 44.9396 222.16 44.9396C225.251 44.9396 228.07 45.5404 230.614 46.7427C233.156 47.9451 235.326 49.5487 237.122 51.5522C238.917 53.5571 240.312 55.9102 241.31 58.6154C242.306 61.3205 242.806 64.1758 242.806 67.1821C242.805 70.1868 242.305 73.0421 241.31 75.7472Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M438 -3H421.694V102.197H438V-3Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M139.43 102.197H155.735V48.2834H183.712V32.1665H139.43V102.197Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M324.49 32.1665L303.995 85.794L283.498 32.1665H266.983L293.748 102.197H314.242L341.006 32.1665H324.49Z"
-                                    fill="currentColor"
-                                />
-                                <path
-                                    d="M376.571 30.3656C356.603 30.3656 340.797 46.8497 340.797 67.1828C340.797 89.6597 356.094 104 378.661 104C391.29 104 399.354 99.1488 409.206 88.5848L398.189 80.0226C398.183 80.031 389.874 90.9895 377.468 90.9895C363.048 90.9895 356.977 79.3111 356.977 73.269H411.075C413.917 50.1328 398.775 30.3656 376.571 30.3656ZM357.02 61.0967C357.145 59.7487 359.023 43.3761 376.442 43.3761C393.861 43.3761 395.978 59.7464 396.099 61.0967H357.02Z"
-                                    fill="currentColor"
-                                />
-                            </svg>
-
-                            {/* 13 */}
-                            <svg
-                                className="relative -mt-[6.6rem] -ml-8 w-[438px] max-w-none [--stroke-color:#1B1B18] lg:ml-0 dark:[--stroke-color:#FF750F]"
-                                viewBox="0 0 440 392"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <g className="text-[#1B1B18] opacity-100 mix-blend-darken transition-all delay-300 duration-750 dark:text-black dark:mix-blend-normal starting:opacity-0">
-                                    <mask
-                                        id="path-1-mask"
-                                        maskUnits="userSpaceOnUse"
-                                        x="-0.328613"
-                                        y="103"
-                                        width="338"
-                                        height="299"
-                                        fill="black"
-                                    >
-                                        <rect
-                                            fill="white"
-                                            x="-0.328613"
-                                            y="103"
-                                            width="338"
-                                            height="299"
-                                        />
-                                        <path d="M234.936 400.8C204.136 400.8 178.936 392.4 159.336 375.6C140.136 358.8 130.536 337 130.536 310.2H200.736C200.736 318.2 203.736 324.8 209.736 330C215.736 335.2 223.736 337.8 233.736 337.8C243.336 337.8 251.136 335 257.136 329.4C263.536 323.8 266.736 316.6 266.736 307.8C266.736 299.8 263.936 293.2 258.336 288C252.736 282.8 245.536 280.2 236.736 280.2H199.536V218.4H236.736C243.536 218.4 249.336 216 254.136 211.2C258.936 206.4 261.336 200.4 261.336 193.2C261.336 184.8 258.736 178.2 253.536 173.4C248.336 168.6 241.736 166.2 233.736 166.2C226.536 166.2 220.336 168.4 215.136 172.8C210.336 177.2 207.936 182.8 207.936 189.6H141.336C141.336 164.8 150.136 144.6 167.736 129C185.336 113 207.936 105 235.536 105C263.136 105 285.536 112.2 302.736 126.6C320.336 141 329.136 160 329.136 183.6C329.136 200.8 324.536 214.8 315.336 225.6C306.136 236 294.336 243.2 279.936 247.2C297.136 252 310.736 260.2 320.736 271.8C331.136 283.4 336.336 298 336.336 315.6C336.336 340.4 326.936 360.8 308.136 376.8C289.336 392.8 264.936 400.8 234.936 400.8Z" />
-                                        <path d="M26.8714 167.6H1.67139V105.2H94.6714V400.2H26.8714V167.6Z" />
-                                    </mask>
-                                    <path
-                                        d="M234.936 400.8C204.136 400.8 178.936 392.4 159.336 375.6C140.136 358.8 130.536 337 130.536 310.2H200.736C200.736 318.2 203.736 324.8 209.736 330C215.736 335.2 223.736 337.8 233.736 337.8C243.336 337.8 251.136 335 257.136 329.4C263.536 323.8 266.736 316.6 266.736 307.8C266.736 299.8 263.936 293.2 258.336 288C252.736 282.8 245.536 280.2 236.736 280.2H199.536V218.4H236.736C243.536 218.4 249.336 216 254.136 211.2C258.936 206.4 261.336 200.4 261.336 193.2C261.336 184.8 258.736 178.2 253.536 173.4C248.336 168.6 241.736 166.2 233.736 166.2C226.536 166.2 220.336 168.4 215.136 172.8C210.336 177.2 207.936 182.8 207.936 189.6H141.336C141.336 164.8 150.136 144.6 167.736 129C185.336 113 207.936 105 235.536 105C263.136 105 285.536 112.2 302.736 126.6C320.336 141 329.136 160 329.136 183.6C329.136 200.8 324.536 214.8 315.336 225.6C306.136 236 294.336 243.2 279.936 247.2C297.136 252 310.736 260.2 320.736 271.8C331.136 283.4 336.336 298 336.336 315.6C336.336 340.4 326.936 360.8 308.136 376.8C289.336 392.8 264.936 400.8 234.936 400.8Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M26.8714 167.6H1.67139V105.2H94.6714V400.2H26.8714V167.6Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M234.936 400.8C204.136 400.8 178.936 392.4 159.336 375.6C140.136 358.8 130.536 337 130.536 310.2H200.736C200.736 318.2 203.736 324.8 209.736 330C215.736 335.2 223.736 337.8 233.736 337.8C243.336 337.8 251.136 335 257.136 329.4C263.536 323.8 266.736 316.6 266.736 307.8C266.736 299.8 263.936 293.2 258.336 288C252.736 282.8 245.536 280.2 236.736 280.2H199.536V218.4H236.736C243.536 218.4 249.336 216 254.136 211.2C258.936 206.4 261.336 200.4 261.336 193.2C261.336 184.8 258.736 178.2 253.536 173.4C248.336 168.6 241.736 166.2 233.736 166.2C226.536 166.2 220.336 168.4 215.136 172.8C210.336 177.2 207.936 182.8 207.936 189.6H141.336C141.336 164.8 150.136 144.6 167.736 129C185.336 113 207.936 105 235.536 105C263.136 105 285.536 112.2 302.736 126.6C320.336 141 329.136 160 329.136 183.6C329.136 200.8 324.536 214.8 315.336 225.6C306.136 236 294.336 243.2 279.936 247.2C297.136 252 310.736 260.2 320.736 271.8C331.136 283.4 336.336 298 336.336 315.6C336.336 340.4 326.936 360.8 308.136 376.8C289.336 392.8 264.936 400.8 234.936 400.8Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-1-mask)"
-                                    />
-                                    <path
-                                        d="M26.8714 167.6H1.67139V105.2H94.6714V400.2H26.8714V167.6Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-1-mask)"
-                                    />
-                                </g>
-
-                                <g className="text-[#F3BEC7] opacity-100 transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-[26px]">
-                                    <mask
-                                        id="path-2-mask"
-                                        maskUnits="userSpaceOnUse"
-                                        x="25.3357"
-                                        y="103"
-                                        width="338"
-                                        height="299"
-                                        fill="black"
-                                    >
-                                        <rect
-                                            fill="white"
-                                            x="25.3357"
-                                            y="103"
-                                            width="338"
-                                            height="299"
-                                        />
-                                        <path d="M260.6 400.8C229.8 400.8 204.6 392.4 185 375.6C165.8 358.8 156.2 337 156.2 310.2H226.4C226.4 318.2 229.4 324.8 235.4 330C241.4 335.2 249.4 337.8 259.4 337.8C269 337.8 276.8 335 282.8 329.4C289.2 323.8 292.4 316.6 292.4 307.8C292.4 299.8 289.6 293.2 284 288C278.4 282.8 271.2 280.2 262.4 280.2H225.2V218.4H262.4C269.2 218.4 275 216 279.8 211.2C284.6 206.4 287 200.4 287 193.2C287 184.8 284.4 178.2 279.2 173.4C274 168.6 267.4 166.2 259.4 166.2C252.2 166.2 246 168.4 240.8 172.8C236 177.2 233.6 182.8 233.6 189.6H167C167 164.8 175.8 144.6 193.4 129C211 113 233.6 105 261.2 105C288.8 105 311.2 112.2 328.4 126.6C346 141 354.8 160 354.8 183.6C354.8 200.8 350.2 214.8 341 225.6C331.8 236 320 243.2 305.6 247.2C322.8 252 336.4 260.2 346.4 271.8C356.8 283.4 362 298 362 315.6C362 340.4 352.6 360.8 333.8 376.8C315 392.8 290.6 400.8 260.6 400.8Z" />
-                                        <path d="M52.5357 167.6H27.3357V105.2H120.336V400.2H52.5357V167.6Z" />
-                                    </mask>
-                                    <path
-                                        d="M260.6 400.8C229.8 400.8 204.6 392.4 185 375.6C165.8 358.8 156.2 337 156.2 310.2H226.4C226.4 318.2 229.4 324.8 235.4 330C241.4 335.2 249.4 337.8 259.4 337.8C269 337.8 276.8 335 282.8 329.4C289.2 323.8 292.4 316.6 292.4 307.8C292.4 299.8 289.6 293.2 284 288C278.4 282.8 271.2 280.2 262.4 280.2H225.2V218.4H262.4C269.2 218.4 275 216 279.8 211.2C284.6 206.4 287 200.4 287 193.2C287 184.8 284.4 178.2 279.2 173.4C274 168.6 267.4 166.2 259.4 166.2C252.2 166.2 246 168.4 240.8 172.8C236 177.2 233.6 182.8 233.6 189.6H167C167 164.8 175.8 144.6 193.4 129C211 113 233.6 105 261.2 105C288.8 105 311.2 112.2 328.4 126.6C346 141 354.8 160 354.8 183.6C354.8 200.8 350.2 214.8 341 225.6C331.8 236 320 243.2 305.6 247.2C322.8 252 336.4 260.2 346.4 271.8C356.8 283.4 362 298 362 315.6C362 340.4 352.6 360.8 333.8 376.8C315 392.8 290.6 400.8 260.6 400.8Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M52.5357 167.6H27.3357V105.2H120.336V400.2H52.5357V167.6Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M260.6 400.8C229.8 400.8 204.6 392.4 185 375.6C165.8 358.8 156.2 337 156.2 310.2H226.4C226.4 318.2 229.4 324.8 235.4 330C241.4 335.2 249.4 337.8 259.4 337.8C269 337.8 276.8 335 282.8 329.4C289.2 323.8 292.4 316.6 292.4 307.8C292.4 299.8 289.6 293.2 284 288C278.4 282.8 271.2 280.2 262.4 280.2H225.2V218.4H262.4C269.2 218.4 275 216 279.8 211.2C284.6 206.4 287 200.4 287 193.2C287 184.8 284.4 178.2 279.2 173.4C274 168.6 267.4 166.2 259.4 166.2C252.2 166.2 246 168.4 240.8 172.8C236 177.2 233.6 182.8 233.6 189.6H167C167 164.8 175.8 144.6 193.4 129C211 113 233.6 105 261.2 105C288.8 105 311.2 112.2 328.4 126.6C346 141 354.8 160 354.8 183.6C354.8 200.8 350.2 214.8 341 225.6C331.8 236 320 243.2 305.6 247.2C322.8 252 336.4 260.2 346.4 271.8C356.8 283.4 362 298 362 315.6C362 340.4 352.6 360.8 333.8 376.8C315 392.8 290.6 400.8 260.6 400.8Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-2-mask)"
-                                    />
-                                    <path
-                                        d="M52.5357 167.6H27.3357V105.2H120.336V400.2H52.5357V167.6Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-2-mask)"
-                                    />
-                                </g>
-
-                                <g className="text-[#F8B803] opacity-100 mix-blend-color transition-all delay-400 duration-750 dark:text-[#391800] dark:mix-blend-hard-light starting:opacity-0 motion-safe:starting:-translate-x-[51px]">
-                                    <mask
-                                        id="path-3-mask"
-                                        maskUnits="userSpaceOnUse"
-                                        x="51"
-                                        y="103"
-                                        width="338"
-                                        height="299"
-                                        fill="black"
-                                    >
-                                        <rect
-                                            fill="white"
-                                            x="51"
-                                            y="103"
-                                            width="338"
-                                            height="299"
-                                        />
-                                        <path d="M286.264 400.8C255.464 400.8 230.264 392.4 210.664 375.6C191.464 358.8 181.864 337 181.864 310.2H252.064C252.064 318.2 255.064 324.8 261.064 330C267.064 335.2 275.064 337.8 285.064 337.8C294.664 337.8 302.464 335 308.464 329.4C314.864 323.8 318.064 316.6 318.064 307.8C318.064 299.8 315.264 293.2 309.664 288C304.064 282.8 296.864 280.2 288.064 280.2H250.864V218.4H288.064C294.864 218.4 300.664 216 305.464 211.2C310.264 206.4 312.664 200.4 312.664 193.2C312.664 184.8 310.064 178.2 304.864 173.4C299.664 168.6 293.064 166.2 285.064 166.2C277.864 166.2 271.664 168.4 266.464 172.8C261.664 177.2 259.264 182.8 259.264 189.6H192.664C192.664 164.8 201.464 144.6 219.064 129C236.664 113 259.264 105 286.864 105C314.464 105 336.864 112.2 354.064 126.6C371.664 141 380.464 160 380.464 183.6C380.464 200.8 375.864 214.8 366.664 225.6C357.464 236 345.664 243.2 331.264 247.2C348.464 252 362.064 260.2 372.064 271.8C382.464 283.4 387.664 298 387.664 315.6C387.664 340.4 378.264 360.8 359.464 376.8C340.664 392.8 316.264 400.8 286.264 400.8Z" />
-                                        <path d="M78.2 167.6H53V105.2H146V400.2H78.2V167.6Z" />
-                                    </mask>
-                                    <path
-                                        d="M286.264 400.8C255.464 400.8 230.264 392.4 210.664 375.6C191.464 358.8 181.864 337 181.864 310.2H252.064C252.064 318.2 255.064 324.8 261.064 330C267.064 335.2 275.064 337.8 285.064 337.8C294.664 337.8 302.464 335 308.464 329.4C314.864 323.8 318.064 316.6 318.064 307.8C318.064 299.8 315.264 293.2 309.664 288C304.064 282.8 296.864 280.2 288.064 280.2H250.864V218.4H288.064C294.864 218.4 300.664 216 305.464 211.2C310.264 206.4 312.664 200.4 312.664 193.2C312.664 184.8 310.064 178.2 304.864 173.4C299.664 168.6 293.064 166.2 285.064 166.2C277.864 166.2 271.664 168.4 266.464 172.8C261.664 177.2 259.264 182.8 259.264 189.6H192.664C192.664 164.8 201.464 144.6 219.064 129C236.664 113 259.264 105 286.864 105C314.464 105 336.864 112.2 354.064 126.6C371.664 141 380.464 160 380.464 183.6C380.464 200.8 375.864 214.8 366.664 225.6C357.464 236 345.664 243.2 331.264 247.2C348.464 252 362.064 260.2 372.064 271.8C382.464 283.4 387.664 298 387.664 315.6C387.664 340.4 378.264 360.8 359.464 376.8C340.664 392.8 316.264 400.8 286.264 400.8Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M78.2 167.6H53V105.2H146V400.2H78.2V167.6Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M286.264 400.8C255.464 400.8 230.264 392.4 210.664 375.6C191.464 358.8 181.864 337 181.864 310.2H252.064C252.064 318.2 255.064 324.8 261.064 330C267.064 335.2 275.064 337.8 285.064 337.8C294.664 337.8 302.464 335 308.464 329.4C314.864 323.8 318.064 316.6 318.064 307.8C318.064 299.8 315.264 293.2 309.664 288C304.064 282.8 296.864 280.2 288.064 280.2H250.864V218.4H288.064C294.864 218.4 300.664 216 305.464 211.2C310.264 206.4 312.664 200.4 312.664 193.2C312.664 184.8 310.064 178.2 304.864 173.4C299.664 168.6 293.064 166.2 285.064 166.2C277.864 166.2 271.664 168.4 266.464 172.8C261.664 177.2 259.264 182.8 259.264 189.6H192.664C192.664 164.8 201.464 144.6 219.064 129C236.664 113 259.264 105 286.864 105C314.464 105 336.864 112.2 354.064 126.6C371.664 141 380.464 160 380.464 183.6C380.464 200.8 375.864 214.8 366.664 225.6C357.464 236 345.664 243.2 331.264 247.2C348.464 252 362.064 260.2 372.064 271.8C382.464 283.4 387.664 298 387.664 315.6C387.664 340.4 378.264 360.8 359.464 376.8C340.664 392.8 316.264 400.8 286.264 400.8Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-3-mask)"
-                                    />
-                                    <path
-                                        d="M78.2 167.6H53V105.2H146V400.2H78.2V167.6Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-3-mask)"
-                                    />
-                                </g>
-
-                                <g className="text-[#F3BEC7] opacity-100 mix-blend-multiply transition-all delay-400 duration-750 dark:text-[#733000] dark:mix-blend-normal starting:opacity-0 motion-safe:starting:-translate-x-[78px]">
-                                    <mask
-                                        id="path-4-mask"
-                                        maskUnits="userSpaceOnUse"
-                                        x="76.6643"
-                                        y="103"
-                                        width="338"
-                                        height="299"
-                                        fill="black"
-                                    >
-                                        <rect
-                                            fill="white"
-                                            x="76.6643"
-                                            y="103"
-                                            width="338"
-                                            height="299"
-                                        />
-                                        <path d="M311.929 400.8C281.129 400.8 255.929 392.4 236.329 375.6C217.129 358.8 207.529 337 207.529 310.2H277.729C277.729 318.2 280.729 324.8 286.729 330C292.729 335.2 300.729 337.8 310.729 337.8C320.329 337.8 328.129 335 334.129 329.4C340.529 323.8 343.729 316.6 343.729 307.8C343.729 299.8 340.929 293.2 335.329 288C329.729 282.8 322.529 280.2 313.729 280.2H276.529V218.4H313.729C320.529 218.4 326.329 216 331.129 211.2C335.929 206.4 338.329 200.4 338.329 193.2C338.329 184.8 335.729 178.2 330.529 173.4C325.329 168.6 318.729 166.2 310.729 166.2C303.529 166.2 297.329 168.4 292.129 172.8C287.329 177.2 284.929 182.8 284.929 189.6H218.329C218.329 164.8 227.129 144.6 244.729 129C262.329 113 284.929 105 312.529 105C340.129 105 362.529 112.2 379.729 126.6C397.329 141 406.129 160 406.129 183.6C406.129 200.8 401.529 214.8 392.329 225.6C383.129 236 371.329 243.2 356.929 247.2C374.129 252 387.729 260.2 397.729 271.8C408.129 283.4 413.329 298 413.329 315.6C413.329 340.4 403.929 360.8 385.129 376.8C366.329 392.8 341.929 400.8 311.929 400.8Z" />
-                                        <path d="M103.864 167.6H78.6643V105.2H171.664V400.2H103.864V167.6Z" />
-                                    </mask>
-                                    <path
-                                        d="M311.929 400.8C281.129 400.8 255.929 392.4 236.329 375.6C217.129 358.8 207.529 337 207.529 310.2H277.729C277.729 318.2 280.729 324.8 286.729 330C292.729 335.2 300.729 337.8 310.729 337.8C320.329 337.8 328.129 335 334.129 329.4C340.529 323.8 343.729 316.6 343.729 307.8C343.729 299.8 340.929 293.2 335.329 288C329.729 282.8 322.529 280.2 313.729 280.2H276.529V218.4H313.729C320.529 218.4 326.329 216 331.129 211.2C335.929 206.4 338.329 200.4 338.329 193.2C338.329 184.8 335.729 178.2 330.529 173.4C325.329 168.6 318.729 166.2 310.729 166.2C303.529 166.2 297.329 168.4 292.129 172.8C287.329 177.2 284.929 182.8 284.929 189.6H218.329C218.329 164.8 227.129 144.6 244.729 129C262.329 113 284.929 105 312.529 105C340.129 105 362.529 112.2 379.729 126.6C397.329 141 406.129 160 406.129 183.6C406.129 200.8 401.529 214.8 392.329 225.6C383.129 236 371.329 243.2 356.929 247.2C374.129 252 387.729 260.2 397.729 271.8C408.129 283.4 413.329 298 413.329 315.6C413.329 340.4 403.929 360.8 385.129 376.8C366.329 392.8 341.929 400.8 311.929 400.8Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M103.864 167.6H78.6643V105.2H171.664V400.2H103.864V167.6Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M311.929 400.8C281.129 400.8 255.929 392.4 236.329 375.6C217.129 358.8 207.529 337 207.529 310.2H277.729C277.729 318.2 280.729 324.8 286.729 330C292.729 335.2 300.729 337.8 310.729 337.8C320.329 337.8 328.129 335 334.129 329.4C340.529 323.8 343.729 316.6 343.729 307.8C343.729 299.8 340.929 293.2 335.329 288C329.729 282.8 322.529 280.2 313.729 280.2H276.529V218.4H313.729C320.529 218.4 326.329 216 331.129 211.2C335.929 206.4 338.329 200.4 338.329 193.2C338.329 184.8 335.729 178.2 330.529 173.4C325.329 168.6 318.729 166.2 310.729 166.2C303.529 166.2 297.329 168.4 292.129 172.8C287.329 177.2 284.929 182.8 284.929 189.6H218.329C218.329 164.8 227.129 144.6 244.729 129C262.329 113 284.929 105 312.529 105C340.129 105 362.529 112.2 379.729 126.6C397.329 141 406.129 160 406.129 183.6C406.129 200.8 401.529 214.8 392.329 225.6C383.129 236 371.329 243.2 356.929 247.2C374.129 252 387.729 260.2 397.729 271.8C408.129 283.4 413.329 298 413.329 315.6C413.329 340.4 403.929 360.8 385.129 376.8C366.329 392.8 341.929 400.8 311.929 400.8Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-4-mask)"
-                                    />
-                                    <path
-                                        d="M103.864 167.6H78.6643V105.2H171.664V400.2H103.864V167.6Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-4-mask)"
-                                    />
-                                </g>
-
-                                <g className="text-[#F3BEC7] opacity-100 mix-blend-hard-light transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-[102px]">
-                                    <mask
-                                        id="path-5-mask"
-                                        maskUnits="userSpaceOnUse"
-                                        x="102.329"
-                                        y="103"
-                                        width="338"
-                                        height="299"
-                                        fill="black"
-                                    >
-                                        <rect
-                                            fill="white"
-                                            x="102.329"
-                                            y="103"
-                                            width="338"
-                                            height="299"
-                                        />
-                                        <path d="M337.593 400.8C306.793 400.8 281.593 392.4 261.993 375.6C242.793 358.8 233.193 337 233.193 310.2H303.393C303.393 318.2 306.393 324.8 312.393 330C318.393 335.2 326.393 337.8 336.393 337.8C345.993 337.8 353.793 335 359.793 329.4C366.193 323.8 369.393 316.6 369.393 307.8C369.393 299.8 366.593 293.2 360.993 288C355.393 282.8 348.193 280.2 339.393 280.2H302.193V218.4H339.393C346.193 218.4 351.993 216 356.793 211.2C361.593 206.4 363.993 200.4 363.993 193.2C363.993 184.8 361.393 178.2 356.193 173.4C350.993 168.6 344.393 166.2 336.393 166.2C329.193 166.2 322.993 168.4 317.793 172.8C312.993 177.2 310.593 182.8 310.593 189.6H243.993C243.993 164.8 252.793 144.6 270.393 129C287.993 113 310.593 105 338.193 105C365.793 105 388.193 112.2 405.393 126.6C422.993 141 431.793 160 431.793 183.6C431.793 200.8 427.193 214.8 417.993 225.6C408.793 236 396.993 243.2 382.593 247.2C399.793 252 413.393 260.2 423.393 271.8C433.793 283.4 438.993 298 438.993 315.6C438.993 340.4 429.593 360.8 410.793 376.8C391.993 392.8 367.593 400.8 337.593 400.8Z" />
-                                        <path d="M129.529 167.6H104.329V105.2H197.329V400.2H129.529V167.6Z" />
-                                    </mask>
-                                    <path
-                                        d="M337.593 400.8C306.793 400.8 281.593 392.4 261.993 375.6C242.793 358.8 233.193 337 233.193 310.2H303.393C303.393 318.2 306.393 324.8 312.393 330C318.393 335.2 326.393 337.8 336.393 337.8C345.993 337.8 353.793 335 359.793 329.4C366.193 323.8 369.393 316.6 369.393 307.8C369.393 299.8 366.593 293.2 360.993 288C355.393 282.8 348.193 280.2 339.393 280.2H302.193V218.4H339.393C346.193 218.4 351.993 216 356.793 211.2C361.593 206.4 363.993 200.4 363.993 193.2C363.993 184.8 361.393 178.2 356.193 173.4C350.993 168.6 344.393 166.2 336.393 166.2C329.193 166.2 322.993 168.4 317.793 172.8C312.993 177.2 310.593 182.8 310.593 189.6H243.993C243.993 164.8 252.793 144.6 270.393 129C287.993 113 310.593 105 338.193 105C365.793 105 388.193 112.2 405.393 126.6C422.993 141 431.793 160 431.793 183.6C431.793 200.8 427.193 214.8 417.993 225.6C408.793 236 396.993 243.2 382.593 247.2C399.793 252 413.393 260.2 423.393 271.8C433.793 283.4 438.993 298 438.993 315.6C438.993 340.4 429.593 360.8 410.793 376.8C391.993 392.8 367.593 400.8 337.593 400.8Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M129.529 167.6H104.329V105.2H197.329V400.2H129.529V167.6Z"
-                                        fill="currentColor"
-                                    />
-                                    <path
-                                        d="M337.593 400.8C306.793 400.8 281.593 392.4 261.993 375.6C242.793 358.8 233.193 337 233.193 310.2H303.393C303.393 318.2 306.393 324.8 312.393 330C318.393 335.2 326.393 337.8 336.393 337.8C345.993 337.8 353.793 335 359.793 329.4C366.193 323.8 369.393 316.6 369.393 307.8C369.393 299.8 366.593 293.2 360.993 288C355.393 282.8 348.193 280.2 339.393 280.2H302.193V218.4H339.393C346.193 218.4 351.993 216 356.793 211.2C361.593 206.4 363.993 200.4 363.993 193.2C363.993 184.8 361.393 178.2 356.193 173.4C350.993 168.6 344.393 166.2 336.393 166.2C329.193 166.2 322.993 168.4 317.793 172.8C312.993 177.2 310.593 182.8 310.593 189.6H243.993C243.993 164.8 252.793 144.6 270.393 129C287.993 113 310.593 105 338.193 105C365.793 105 388.193 112.2 405.393 126.6C422.993 141 431.793 160 431.793 183.6C431.793 200.8 427.193 214.8 417.993 225.6C408.793 236 396.993 243.2 382.593 247.2C399.793 252 413.393 260.2 423.393 271.8C433.793 283.4 438.993 298 438.993 315.6C438.993 340.4 429.593 360.8 410.793 376.8C391.993 392.8 367.593 400.8 337.593 400.8Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-5-mask)"
-                                    />
-                                    <path
-                                        d="M129.529 167.6H104.329V105.2H197.329V400.2H129.529V167.6Z"
-                                        stroke="var(--stroke-color)"
-                                        strokeWidth="2.4"
-                                        mask="url(#path-5-mask)"
-                                    />
-                                </g>
-                            </svg>
-                            <div className="absolute inset-0 rounded-t-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-t-none lg:rounded-r-lg dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"></div>
+                                {auth.user
+                                    ? 'Open your workspace'
+                                    : 'Start your workspace'}
+                                <ArrowRight className="size-4" />
+                            </Link>
                         </div>
-                    </main>
-                </div>
-                <div className="hidden h-14.5 lg:block"></div>
+                    </div>
+
+                    <div className="app-reveal-container z-20 mx-auto mt-20 w-full max-w-[1200px] px-4">
+                        <div
+                            data-app-mockup
+                            className="app-mockup relative flex h-[600px] w-full flex-col overflow-hidden rounded-2xl border border-bion-border bg-bion-bg shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] md:h-[700px]"
+                        >
+                            <div className="flex h-12 shrink-0 items-center justify-between border-b border-bion-border bg-bion-surface px-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex gap-1.5">
+                                        <div className="size-3 rounded-full border border-bion-border bg-bion-surface-raised" />
+                                        <div className="size-3 rounded-full border border-bion-border bg-bion-surface-raised" />
+                                        <div className="size-3 rounded-full border border-bion-border bg-bion-surface-raised" />
+                                    </div>
+                                    <div className="h-4 w-px bg-bion-border" />
+                                    <span className="text-xs font-medium text-bion-text-muted">
+                                        <LayoutDashboard className="mr-1 inline size-3" />
+                                        Studio Workflow
+                                    </span>
+                                </div>
+                                <div className="hidden h-7 w-64 items-center rounded border border-bion-border bg-bion-bg px-3 text-xs text-bion-text-muted md:flex">
+                                    Search commands...
+                                    <span className="ml-auto rounded bg-bion-surface-raised px-1 font-mono text-[10px]">
+                                        ⌘K
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-1 overflow-hidden">
+                                <div className="flex w-16 shrink-0 flex-col items-center gap-6 border-r border-bion-border bg-bion-surface py-4">
+                                    <div className="flex size-8 items-center justify-center rounded-lg border border-bion-border bg-bion-surface-raised">
+                                        <div className="size-2 rounded-full bg-bion-accent" />
+                                    </div>
+
+                                    <div className="flex w-full flex-col items-center gap-4 text-bion-text-muted">
+                                        <Inbox className="size-5" />
+                                        <div className="relative">
+                                            <KanbanSquare className="size-5 text-bion-text" />
+                                            <div className="absolute -top-1 -right-1 size-2 rounded-full bg-bion-accent" />
+                                        </div>
+                                        <FolderKanban className="size-5" />
+                                        <ReceiptText className="size-5" />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-1 gap-4 overflow-hidden bg-bion-bg p-6">
+                                    <div className="flex w-[300px] shrink-0 flex-col">
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <span className="text-sm font-semibold">
+                                                Active Projects
+                                            </span>
+                                            <span className="font-mono text-xs text-bion-text-muted">
+                                                2
+                                            </span>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3">
+                                            <div className="rounded-lg border border-bion-border bg-bion-surface p-4">
+                                                <div className="mb-3 flex items-start justify-between">
+                                                    <span className="text-sm font-medium">
+                                                        Fintech Brand Identity
+                                                    </span>
+                                                    <StatusPill
+                                                        className="bg-bion-accent/10 text-bion-accent"
+                                                        dotClassName="bg-bion-accent"
+                                                        label="In Progress"
+                                                    />
+                                                </div>
+                                                <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-bion-surface-raised">
+                                                    <div className="h-full w-3/4 rounded-full bg-bion-accent" />
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-bion-text-muted">
+                                                        Nexus Corp
+                                                    </span>
+                                                    <span className="font-mono font-medium text-bion-text">
+                                                        $8,500
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-lg border border-bion-border bg-bion-surface p-4 opacity-75">
+                                                <div className="mb-3 flex items-start justify-between">
+                                                    <span className="text-sm font-medium">
+                                                        E-commerce Backend
+                                                    </span>
+                                                    <StatusPill
+                                                        className="border border-bion-danger/20 bg-bion-danger/10 text-bion-danger"
+                                                        dotClassName="bg-bion-danger"
+                                                        label="Blocked"
+                                                    />
+                                                </div>
+                                                <div className="mb-4 flex items-center gap-2">
+                                                    <MessageSquare className="size-3 text-bion-text-muted" />
+                                                    <span className="text-[10px] text-bion-text-muted">
+                                                        Awaiting API keys from
+                                                        client
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-bion-text-muted">
+                                                        Retail Co
+                                                    </span>
+                                                    <span className="font-mono font-medium text-bion-text">
+                                                        $12,000
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex w-[300px] shrink-0 flex-col">
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <span className="text-sm font-semibold">
+                                                In Review
+                                            </span>
+                                            <span className="font-mono text-xs text-bion-text-muted">
+                                                1
+                                            </span>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3">
+                                            <div className="-translate-y-1 rounded-lg border border-bion-accent bg-bion-surface p-4 shadow-bion-raised">
+                                                <div className="mb-3 flex items-start justify-between">
+                                                    <span className="text-sm font-medium">
+                                                        Landing Page Redesign
+                                                    </span>
+                                                    <StatusPill
+                                                        className="bg-bion-text/10 text-bion-text"
+                                                        dotClassName="bg-bion-text"
+                                                        label="In Review"
+                                                    />
+                                                </div>
+                                                <div className="mb-4 flex items-center gap-2 rounded border border-bion-border bg-bion-bg p-2">
+                                                    <div className="size-1.5 rounded-full bg-bion-danger" />
+                                                    <span className="text-[10px] font-medium text-bion-text-muted">
+                                                        1 Active Request Log
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-bion-text-muted">
+                                                        Wayne Ent
+                                                    </span>
+                                                    <span className="font-mono font-medium text-bion-text">
+                                                        $4,200
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="absolute top-12 right-0 bottom-0 flex w-[400px] origin-right translate-x-4 scale-95 flex-col border-l border-bion-border bg-bion-surface opacity-90 shadow-2xl">
+                                    <div className="flex items-center justify-between border-b border-bion-border p-5">
+                                        <div>
+                                            <div className="mb-1 text-[10px] tracking-wider text-bion-text-muted uppercase">
+                                                Request Log
+                                            </div>
+                                            <h3 className="text-sm font-semibold">
+                                                Landing Page Redesign
+                                            </h3>
+                                        </div>
+                                        <X className="size-4 text-bion-text-muted" />
+                                    </div>
+
+                                    <div className="flex-1 space-y-4 overflow-y-auto p-5">
+                                        <div className="rounded border border-bion-border bg-bion-bg p-3">
+                                            <div className="mb-2 flex justify-between text-xs">
+                                                <span className="font-medium">
+                                                    Client Note
+                                                </span>
+                                                <span className="font-mono text-bion-text-muted">
+                                                    Today, 09:41
+                                                </span>
+                                            </div>
+                                            <p className="text-xs leading-relaxed text-bion-text-muted">
+                                                &quot;Can we change the hero
+                                                section color to match our new
+                                                brand guidelines? Also, the logo
+                                                needs to be slightly larger on
+                                                mobile.&quot;
+                                            </p>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                className="flex-1 rounded border border-bion-border bg-bion-surface-raised py-1.5 text-xs font-medium hover:text-bion-text"
+                                            >
+                                                Decline
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="flex-1 rounded bg-bion-text py-1.5 text-xs font-semibold text-bion-bg hover:bg-bion-text-muted"
+                                            >
+                                                Convert to Task
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <section
+                    id="platform"
+                    className="relative z-10 border-y border-bion-border bg-bion-surface py-32"
+                >
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="grid items-center gap-16 lg:grid-cols-2">
+                            <div data-fade-up className="fade-up">
+                                <h2 className="mb-6 text-3xl font-bold md:text-4xl">
+                                    Built for the borderless independent.
+                                </h2>
+                                <p className="mb-8 text-lg leading-relaxed text-bion-text-muted">
+                                    We don&apos;t care where you found your
+                                    client or how they prefer to pay. Biondesk
+                                    is platform-agnostic, giving you a
+                                    centralized source of truth regardless of
+                                    origin.
+                                </p>
+
+                                <ul className="space-y-6">
+                                    <FeatureListItem
+                                        icon={<Globe className="size-5 text-bion-text" />}
+                                        title="Bring Your Own Pipeline"
+                                        description="Log opportunities from Upwork, LinkedIn, or direct referrals. Create custom public forms that feed directly into your inbox."
+                                    />
+                                    <FeatureListItem
+                                        icon={<CreditCard className="size-5 text-bion-text" />}
+                                        title="Agnostic Invoicing"
+                                        description="Bill in any currency. Provide your own Stripe link, Wise details, or bank transfer instructions. Track multiple partial payments per invoice."
+                                    />
+                                </ul>
+                            </div>
+
+                            <div
+                                data-fade-up
+                                className="fade-up delay-200 relative h-[400px] overflow-hidden rounded-2xl border border-bion-border bg-bion-bg"
+                            >
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(232,163,61,0.08)_0%,transparent_60%)] opacity-50" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="absolute size-24 rounded-full border border-bion-accent/30 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                                    <div className="absolute size-48 rounded-full border border-bion-accent/20 animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]" />
+
+                                    <div className="relative z-10 flex size-16 items-center justify-center rounded-xl border border-bion-accent bg-bion-surface shadow-bion-glow">
+                                        <div className="size-3 rounded-full bg-bion-accent" />
+                                    </div>
+
+                                    <div className="absolute top-1/4 left-1/4 flex size-10 items-center justify-center rounded-lg border border-bion-border bg-bion-surface-raised">
+                                        <Mail className="size-4 text-bion-text-muted" />
+                                    </div>
+                                    <div className="absolute right-1/4 bottom-1/3 flex size-10 items-center justify-center rounded-lg border border-bion-border bg-bion-surface-raised">
+                                        <MessageCircle className="size-4 text-bion-text-muted" />
+                                    </div>
+                                    <div className="absolute top-1/3 right-1/3 flex size-10 items-center justify-center rounded-lg border border-bion-border bg-bion-surface-raised">
+                                        <Linkedin className="size-4 text-bion-text-muted" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    id="workflow"
+                    className="relative border-b border-bion-border bg-bion-bg"
+                >
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="relative flex flex-col lg:flex-row">
+                            <div className="py-[20vh] lg:w-5/12 lg:py-[30vh]">
+                                <div className="space-y-[30vh]">
+                                    <WorkflowStep
+                                        step="1"
+                                        eyebrow="01 / Lead Capture"
+                                        title="Capture without friction."
+                                        description={
+                                            <>
+                                                Share your personal{' '}
+                                                <code>
+                                                    biondesk.com/p/your-name
+                                                </code>{' '}
+                                                link. Custom forms bypass the
+                                                back-and-forth and drop highly
+                                                qualified leads directly into
+                                                your Opportunity board.
+                                            </>
+                                        }
+                                    />
+                                    <WorkflowStep
+                                        step="2"
+                                        eyebrow="02 / AI Proposal"
+                                        title="Proposals that sound like you."
+                                        description="Generate proposals instantly from discovery calls. Our AI doesn't use generic templates—it reads from your personal Profile Library of past portfolios and testimonials."
+                                    />
+                                    <WorkflowStep
+                                        step="3"
+                                        eyebrow="03 / Execution"
+                                        title="Project management is core."
+                                        description="Unlike other billing tools, task management isn't an afterthought here. Track project statuses, manage task breakdowns, and log ad-hoc client requests in one place."
+                                    />
+                                    <WorkflowStep
+                                        step="4"
+                                        eyebrow="04 / Billing"
+                                        title="Get paid. Track everything."
+                                        description="Convert accepted terms directly into invoices. Set automated rules for overdue reminders, and track deposits and final payments on the same document."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="relative hidden lg:block lg:w-7/12">
+                                <div className="sticky top-0 flex h-screen items-center justify-center pl-12">
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-bion-border bg-bion-surface shadow-bion-raised">
+                                        <div
+                                            data-step-visual
+                                            data-step="1"
+                                            className="step-visual is-active flex flex-col bg-bion-bg"
+                                        >
+                                            <div className="flex h-10 shrink-0 items-center justify-center border-b border-bion-border bg-bion-surface px-4">
+                                                <span className="text-xs text-bion-text-muted">
+                                                    biondesk.com/p/studio
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-1 items-center justify-center p-8">
+                                                <div className="w-full max-w-sm rounded-lg border border-bion-border bg-bion-surface p-6">
+                                                    <div className="mb-4 size-12 rounded border border-bion-border bg-bion-surface-raised" />
+                                                    <h4 className="mb-1 text-sm font-semibold">
+                                                        Project Inquiry
+                                                    </h4>
+                                                    <p className="mb-6 text-[10px] text-bion-text-muted">
+                                                        Let&apos;s build
+                                                        something great
+                                                        together.
+                                                    </p>
+                                                    <div className="space-y-3">
+                                                        <div className="h-8 rounded border border-bion-border bg-bion-bg" />
+                                                        <div className="h-20 rounded border border-bion-border bg-bion-bg" />
+                                                        <div className="mt-4 flex h-8 items-center justify-center rounded bg-bion-accent">
+                                                            <span className="text-[10px] font-bold text-bion-accent-text">
+                                                                Submit Form
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            data-step-visual
+                                            data-step="2"
+                                            className="step-visual flex flex-col p-6"
+                                        >
+                                            <div className="mb-6 flex items-center gap-2">
+                                                <Sparkles className="size-4 text-bion-accent" />
+                                                <span className="text-sm font-semibold">
+                                                    Generating Proposal...
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <div className="w-1/3 space-y-2">
+                                                    <div className="mb-2 text-[10px] text-bion-text-muted uppercase">
+                                                        Sources
+                                                    </div>
+                                                    <div className="rounded border border-bion-border bg-bion-surface-raised p-2 text-xs text-bion-text-muted">
+                                                        Discovery Call.txt
+                                                    </div>
+                                                    <div className="rounded border border-bion-border bg-bion-surface-raised p-2 text-xs text-bion-text-muted">
+                                                        Profile: Web Portfolio
+                                                    </div>
+                                                </div>
+                                                <div className="relative flex-1 overflow-hidden rounded border border-bion-border bg-bion-bg p-4">
+                                                    <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent to-bion-bg" />
+                                                    <div className="mb-3 h-3 w-1/2 rounded bg-bion-surface-raised" />
+                                                    <div className="mb-2 h-2 w-full rounded bg-bion-surface-raised" />
+                                                    <div className="mb-2 h-2 w-5/6 rounded bg-bion-surface-raised" />
+                                                    <div className="mb-6 h-2 w-4/6 rounded bg-bion-surface-raised" />
+                                                    <div className="mb-3 h-3 w-1/3 rounded bg-bion-surface-raised" />
+                                                    <div className="mb-2 h-2 w-full rounded bg-bion-surface-raised" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            data-step-visual
+                                            data-step="3"
+                                            className="step-visual flex flex-col bg-bion-bg"
+                                        >
+                                            <div className="flex items-center justify-between border-b border-bion-border bg-bion-surface p-4">
+                                                <span className="text-sm font-semibold">
+                                                    Development Tasks
+                                                </span>
+                                                <StatusPill
+                                                    className="bg-bion-accent/10 text-bion-accent"
+                                                    dotClassName="bg-bion-accent"
+                                                    label="Active"
+                                                />
+                                            </div>
+                                            <div className="space-y-2 p-4">
+                                                <TaskRow
+                                                    icon={
+                                                        <Check className="size-3 text-bion-success" />
+                                                    }
+                                                    iconWrapperClassName="border border-bion-success bg-bion-success/20"
+                                                    label="Database Schema"
+                                                    labelClassName="text-xs text-bion-text-muted line-through"
+                                                    meta="Done"
+                                                    metaClassName="text-bion-text-muted"
+                                                />
+                                                <TaskRow
+                                                    icon={null}
+                                                    iconWrapperClassName="border border-bion-border"
+                                                    label="API Endpoints"
+                                                    meta="In Progress"
+                                                    metaClassName="text-bion-accent"
+                                                />
+                                                <TaskRow
+                                                    icon={
+                                                        <AlertCircle className="size-3 text-bion-danger" />
+                                                    }
+                                                    rowClassName="border-bion-danger/30 bg-bion-danger/5"
+                                                    iconWrapperClassName="bg-bion-danger/20"
+                                                    label="Client Request: Add SSO login"
+                                                    labelClassName="text-xs text-bion-danger"
+                                                    meta="Log"
+                                                    metaClassName="text-bion-danger"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            data-step-visual
+                                            data-step="4"
+                                            className="step-visual flex flex-col items-center justify-center bg-bion-surface p-8"
+                                        >
+                                            <div className="w-full max-w-sm rounded bg-white p-6 text-[#12161f] shadow-lg">
+                                                <div className="mb-8 flex justify-between">
+                                                    <div className="text-xl font-bold">
+                                                        INVOICE
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-mono text-xs text-gray-500">
+                                                            INV-0045
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400">
+                                                            Due: Aug 15, 2026
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="mb-6 border-t border-gray-200 pt-4">
+                                                    <div className="mb-2 flex justify-between text-xs">
+                                                        <span>
+                                                            Phase 1 Delivery
+                                                        </span>
+                                                        <span className="font-mono">
+                                                            $2,000.00
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-end justify-between border-t border-gray-200 pt-4">
+                                                    <div className="flex items-center gap-2 rounded-full bg-[#1f8a5f]/10 px-2 py-1 text-[10px] font-bold text-[#1f8a5f]">
+                                                        <div className="size-1.5 rounded-full bg-[#1f8a5f]" />
+                                                        Fully Paid
+                                                    </div>
+                                                    <div className="font-mono text-xl font-bold">
+                                                        $2,000.00
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="pricing" className="relative bg-bion-bg py-32">
+                    <div className="mx-auto max-w-4xl px-6 text-center">
+                        <h2 data-fade-up className="fade-up mb-4 text-3xl font-bold md:text-4xl">
+                            Clear, independent pricing.
+                        </h2>
+                        <p
+                            data-fade-up
+                            className="fade-up delay-100 mb-16 text-lg text-bion-text-muted"
+                        >
+                            Zero cuts taken from your client payments. You
+                            bring your own payment methods.
+                        </p>
+
+                        <div
+                            data-fade-up
+                            className="fade-up delay-200 grid gap-6 md:grid-cols-2"
+                        >
+                            {pricingPlans.map((plan) => (
+                                <article
+                                    key={plan.name}
+                                    className={
+                                        plan.highlighted
+                                            ? 'relative flex flex-col rounded-2xl border border-bion-accent bg-bion-surface p-8 text-left shadow-bion-glow'
+                                            : 'flex flex-col rounded-2xl border border-bion-border bg-bion-surface p-8 text-left'
+                                    }
+                                >
+                                    {plan.highlighted ? (
+                                        <div className="absolute top-0 right-8 -translate-y-1/2 rounded-full bg-bion-accent px-3 py-1 text-[10px] font-bold tracking-widest text-bion-accent-text uppercase">
+                                            Pro
+                                        </div>
+                                    ) : null}
+
+                                    <h3
+                                        className={
+                                            plan.highlighted
+                                                ? 'mb-2 text-lg font-semibold text-bion-accent'
+                                                : 'mb-2 text-lg font-semibold'
+                                        }
+                                    >
+                                        {plan.name}
+                                    </h3>
+                                    <p className="mb-8 text-xs text-bion-text-muted">
+                                        {plan.description}
+                                    </p>
+                                    <div className="mb-8">
+                                        <span className="font-mono text-4xl font-medium">
+                                            {plan.price}
+                                        </span>
+                                        <span className="text-sm text-bion-text-muted">
+                                            {plan.suffix}
+                                        </span>
+                                    </div>
+                                    <ul className="mb-10 flex-1 space-y-4 text-sm">
+                                        {plan.features.map((feature) => (
+                                            <li
+                                                key={feature}
+                                                className="flex items-center gap-3"
+                                            >
+                                                <Check
+                                                    className={
+                                                        plan.highlighted
+                                                            ? 'size-4 text-bion-text'
+                                                            : 'size-4 text-bion-text-muted'
+                                                    }
+                                                />
+                                                {feature}
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <Link
+                                        href={primaryCtaHref}
+                                        className={
+                                            plan.highlighted
+                                                ? 'w-full rounded bg-bion-accent py-2.5 text-center text-sm font-semibold text-bion-accent-text transition-opacity hover:opacity-90'
+                                                : 'w-full rounded border border-bion-border py-2.5 text-center text-sm font-semibold transition-colors hover:bg-bion-surface-raised'
+                                        }
+                                    >
+                                        {plan.cta}
+                                    </Link>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <footer className="border-t border-bion-border bg-bion-surface py-12">
+                    <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-5 items-center justify-center rounded border border-bion-border bg-bion-surface-raised">
+                                <div className="size-1 rounded-full bg-bion-accent" />
+                            </div>
+                            <span className="text-xs font-semibold text-bion-text">
+                                Biondesk
+                            </span>
+                        </div>
+
+                        <div className="flex gap-6 text-xs text-bion-text-muted">
+                            <a
+                                href="#"
+                                className="transition-colors hover:text-bion-text"
+                            >
+                                Changelog
+                            </a>
+                            <a
+                                href="#"
+                                className="transition-colors hover:text-bion-text"
+                            >
+                                Twitter
+                            </a>
+                            <a
+                                href="#"
+                                className="transition-colors hover:text-bion-text"
+                            >
+                                Terms
+                            </a>
+                        </div>
+
+                        <div className="font-mono text-[10px] text-bion-text-muted">
+                            System OK - &copy; {year}
+                        </div>
+                    </div>
+                </footer>
             </div>
         </>
+    );
+}
+
+function FeatureListItem({
+    icon,
+    title,
+    description,
+}: {
+    icon: ReactNode;
+    title: string;
+    description: string;
+}) {
+    return (
+        <li className="flex gap-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded border border-bion-border bg-bion-surface-raised">
+                {icon}
+            </div>
+            <div>
+                <h4 className="mb-1 text-sm font-semibold">{title}</h4>
+                <p className="text-xs leading-relaxed text-bion-text-muted">
+                    {description}
+                </p>
+            </div>
+        </li>
+    );
+}
+
+function WorkflowStep({
+    step,
+    eyebrow,
+    title,
+    description,
+}: {
+    step: string;
+    eyebrow: string;
+    title: string;
+    description: ReactNode;
+}) {
+    return (
+        <div data-step-trigger data-step={step} className="step-trigger step-text">
+            <div className="mb-3 text-[10px] font-bold tracking-widest text-bion-text uppercase data-[step=1]:text-bion-accent">
+                <span className={step === '1' ? 'text-bion-accent' : ''}>
+                    {eyebrow}
+                </span>
+            </div>
+            <h3 className="mb-4 text-3xl font-bold">{title}</h3>
+            <p className="text-lg leading-relaxed text-bion-text-muted">
+                {description}
+            </p>
+        </div>
+    );
+}
+
+function StatusPill({
+    className,
+    dotClassName,
+    label,
+}: {
+    className: string;
+    dotClassName: string;
+    label: string;
+}) {
+    return (
+        <span className={`status-pill ${className}`}>
+            <span className={`pill-dot ${dotClassName}`} />
+            {label}
+        </span>
+    );
+}
+
+function TaskRow({
+    rowClassName = 'border border-bion-border bg-bion-surface',
+    iconWrapperClassName,
+    icon,
+    label,
+    labelClassName = 'text-xs',
+    meta,
+    metaClassName,
+}: {
+    rowClassName?: string;
+    iconWrapperClassName: string;
+    icon: ReactNode;
+    label: string;
+    labelClassName?: string;
+    meta: string;
+    metaClassName: string;
+}) {
+    return (
+        <div
+            className={`flex items-center justify-between rounded p-3 ${rowClassName}`}
+        >
+            <div className="flex items-center gap-3">
+                <div
+                    className={`flex size-4 items-center justify-center rounded ${iconWrapperClassName}`}
+                >
+                    {icon}
+                </div>
+                <span className={labelClassName}>{label}</span>
+            </div>
+            <span className={`font-mono text-[10px] ${metaClassName}`}>
+                {meta}
+            </span>
+        </div>
     );
 }

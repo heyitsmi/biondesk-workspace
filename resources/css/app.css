@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -12,6 +14,13 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-display:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-mono:
+        'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, 'Liberation Mono', 'Courier New', monospace;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -59,6 +68,23 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --color-bion-bg: var(--bion-bg);
+    --color-bion-surface: var(--bion-surface);
+    --color-bion-surface-raised: var(--bion-surface-raised);
+    --color-bion-border: var(--bion-border);
+    --color-bion-text: var(--bion-text);
+    --color-bion-text-muted: var(--bion-text-muted);
+    --color-bion-accent: var(--bion-accent);
+    --color-bion-accent-text: var(--bion-accent-text);
+    --color-bion-success: var(--bion-success);
+    --color-bion-danger: var(--bion-danger);
+    --color-bion-accent-soft: var(--bion-accent-soft);
+    --color-bion-success-soft: var(--bion-success-soft);
+    --color-bion-danger-soft: var(--bion-danger-soft);
+    --shadow-bion-raised: var(--bion-shadow-raised);
+    --shadow-bion-panel: var(--bion-shadow-panel);
+    --shadow-bion-glow: var(--bion-shadow-glow);
 }
 
 :root {
@@ -95,6 +121,23 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+
+    --bion-bg: #f6f7f9;
+    --bion-surface: #ffffff;
+    --bion-surface-raised: #ffffff;
+    --bion-border: #e4e6eb;
+    --bion-text: #12161f;
+    --bion-text-muted: #6b7280;
+    --bion-accent: #c77f1f;
+    --bion-accent-text: #ffffff;
+    --bion-success: #1f8a5f;
+    --bion-danger: #d6383d;
+    --bion-accent-soft: rgb(199 127 31 / 0.12);
+    --bion-success-soft: rgb(31 138 95 / 0.12);
+    --bion-danger-soft: rgb(214 56 61 / 0.12);
+    --bion-shadow-raised: 0 4px 16px rgb(0 0 0 / 0.08);
+    --bion-shadow-panel: 0 24px 80px -12px rgb(0 0 0 / 0.14);
+    --bion-shadow-glow: 0 0 50px -10px rgb(199 127 31 / 0.22);
 }
 
 .dark {
@@ -130,6 +173,23 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+
+    --bion-bg: #0b0e14;
+    --bion-surface: #12161f;
+    --bion-surface-raised: #1a1f2b;
+    --bion-border: #232838;
+    --bion-text: #edeff3;
+    --bion-text-muted: #8b93a6;
+    --bion-accent: #e8a33d;
+    --bion-accent-text: #12161f;
+    --bion-success: #34a87c;
+    --bion-danger: #e5484d;
+    --bion-accent-soft: rgb(232 163 61 / 0.12);
+    --bion-success-soft: rgb(52 168 124 / 0.12);
+    --bion-danger-soft: rgb(229 72 77 / 0.12);
+    --bion-shadow-raised: 0 4px 16px rgb(0 0 0 / 0.24);
+    --bion-shadow-panel: 0 24px 80px -12px rgb(0 0 0 / 0.56);
+    --bion-shadow-glow: 0 0 50px -10px rgb(232 163 61 / 0.22);
 }
 
 @layer base {
@@ -139,5 +199,12 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer base {
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 }

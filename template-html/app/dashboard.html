@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Biondesk</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ================= reset ================= */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+  input { font: inherit; color: inherit; }
+
+  /* ================= tokens ================= */
+  :root {
+    --bg: #F6F7F9;
+    --surface: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --border: #E4E6EB;
+    --text: #12161F;
+    --text-muted: #6B7280;
+    --accent: #C77F1F;
+    --accent-text: #FFFFFF;
+    --success: #1F8A5F;
+    --danger: #D6383D;
+    --accent-soft: rgba(199,127,31,0.1);
+    --success-soft: rgba(31,138,95,0.1);
+    --danger-soft: rgba(214,56,61,0.1);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
+    --font-display: 'Instrument Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  [data-theme="dark"] {
+    --bg: #0B0E14;
+    --surface: #12161F;
+    --surface-raised: #1A1F2B;
+    --border: #232838;
+    --text: #EDEFF3;
+    --text-muted: #8B93A6;
+    --accent: #E8A33D;
+    --accent-text: #12161F;
+    --success: #34A87C;
+    --danger: #E5484D;
+    --accent-soft: rgba(232,163,61,0.12);
+    --success-soft: rgba(52,168,124,0.12);
+    --danger-soft: rgba(229,72,77,0.12);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .icon-sm { width: 15px; height: 15px; }
+
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ================= layout shell ================= */
+  .app-shell { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ---- sidebar ---- */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: width 0.2s ease;
+  }
+  .sidebar.collapsed { width: 68px; }
+
+  /* Floating collapse/expand toggle, nempel di border, sejajar baris logo */
+  .sidebar-toggle {
+    position: absolute;
+    top: 16px;
+    right: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    box-shadow: var(--shadow-raised);
+    z-index: 35;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  }
+  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .sidebar-toggle .icon { transition: transform 0.2s ease; }
+  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
+  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
+  .sidebar-brand {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
+  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar.collapsed .sidebar-nav { overflow: visible; }
+  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar.collapsed .nav-item { justify-content: center; }
+  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .sidebar.collapsed .nav-item .badge { display: none; }
+
+  .sidebar.collapsed .nav-item .tooltip {
+    position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+    margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border);
+    padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40;
+    box-shadow: var(--shadow-raised);
+  }
+  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
+  .tooltip { display: none; }
+  .sidebar.collapsed .tooltip { display: block; }
+
+  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
+
+  /* ---- main area ---- */
+  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .topbar {
+    height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    background: var(--bg);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
+  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); }
+
+  .search-trigger {
+    display: flex; align-items: center; gap: 10px;
+    width: 280px; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+    font-size: 13px;
+  }
+  .search-trigger:hover { border-color: var(--accent); }
+  .search-trigger .kbd {
+    margin-left: auto; font-family: var(--font-mono); font-size: 11px;
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); position: relative;
+  }
+  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
+  .icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); border: 1.5px solid var(--bg); }
+
+  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
+  .avatar-btn:hover { background: var(--surface-raised); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+  /* ---- dropdowns ---- */
+  .dropdown-wrap { position: relative; }
+  .dropdown-panel {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 260px;
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow-raised); padding: 6px; z-index: 50;
+    opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
+  .dropdown-item:hover { background: var(--bg); }
+  .dropdown-item.danger { color: var(--danger); }
+  .notif-item { padding: 10px; border-radius: 7px; }
+  .notif-item:hover { background: var(--bg); }
+  .notif-item .notif-title { font-size: 12.5px; font-weight: 500; margin-bottom: 2px; }
+  .notif-item .notif-time { font-size: 11.5px; color: var(--text-muted); }
+
+  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
+
+  /* ================= content ================= */
+  .content { flex: 1; overflow-y: auto; padding: 28px 32px 48px; }
+
+  .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .page-header h1 { font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .page-header p { font-size: 13.5px; color: var(--text-muted); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-text); }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: var(--surface-raised); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+  .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; margin-bottom: 6px; }
+  .stat-meta { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+  .stat-meta.positive { color: var(--success); }
+  .stat-meta.warn { color: var(--danger); }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .pill-accent { background: var(--accent-soft); color: var(--accent); }
+  .pill-accent .dot { background: var(--accent); }
+  .pill-success { background: var(--success-soft); color: var(--success); }
+  .pill-success .dot { background: var(--success); }
+  .pill-danger { background: var(--danger-soft); color: var(--danger); }
+  .pill-danger .dot { background: var(--danger); }
+  .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); }
+  .pill-muted .dot { background: var(--text-muted); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .panel-head h2 { font-size: 14.5px; font-weight: 600; }
+  .panel-link { font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .panel-link:hover { color: var(--accent); }
+  .panel-body { padding: 6px; }
+
+  .action-row { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 9px; }
+  .action-row:hover { background: var(--bg); }
+  .action-row + .action-row { margin-top: 2px; }
+  .action-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .action-icon.warn { background: var(--danger-soft); color: var(--danger); }
+  .action-icon.wait { background: var(--accent-soft); color: var(--accent); }
+  .action-text { flex: 1; min-width: 0; }
+  .action-title { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+  .action-sub { font-size: 12px; color: var(--text-muted); }
+  .action-sub .amount { font-family: var(--font-mono); color: var(--text); font-weight: 500; }
+
+  .btn-action {
+    padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    background: var(--surface-raised); border: 1px solid var(--border); color: var(--text); flex-shrink: 0;
+    transition: background 0.12s ease;
+  }
+  .btn-action:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .btn-action.done { background: var(--success-soft); color: var(--success); border-color: transparent; pointer-events: none; }
+
+  .split-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+
+  .opp-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 9px; }
+  .opp-row:hover { background: var(--bg); }
+  .opp-info { flex: 1; min-width: 0; }
+  .opp-title { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .opp-client { font-size: 12px; color: var(--text-muted); }
+  .opp-value { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+  .feed-item { display: flex; gap: 12px; padding: 11px 12px; }
+  .feed-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 3px; }
+  .feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .feed-dot.accent { background: var(--accent); }
+  .feed-dot.success { background: var(--success); }
+  .feed-line { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
+  .feed-text { font-size: 13px; margin-bottom: 2px; }
+  .feed-time { font-size: 11.5px; color: var(--text-muted); }
+
+  .cmdk-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
+  }
+  .cmdk-backdrop.open { opacity: 1; pointer-events: auto; }
+  .cmdk-modal {
+    width: 100%; max-width: 560px; background: var(--surface-raised); border: 1px solid var(--border);
+    border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    transform: translateY(-12px) scale(0.98); transition: transform 0.15s ease;
+  }
+  .cmdk-backdrop.open .cmdk-modal { transform: translateY(0) scale(1); }
+  .cmdk-input-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  .cmdk-input-row input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14.5px; }
+  .cmdk-input-row .kbd { font-family: var(--font-mono); font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; }
+  .cmdk-list { padding: 8px; max-height: 320px; overflow-y: auto; }
+  .cmdk-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 10px 10px 6px; }
+  .cmdk-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; width: 100%; text-align: left; color: var(--text); font-size: 13.5px; }
+  .cmdk-item:hover, .cmdk-item.hi { background: var(--accent-soft); color: var(--accent); }
+  .cmdk-item .icon { color: inherit; }
+
+  @media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .split-grid { grid-template-columns: 1fr; }
+    .search-trigger { display: none; }
+  }
+  @media (max-width: 760px) {
+    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
+    .sidebar.mobile-open { left: 0; }
+    .sidebar.collapsed { width: 240px; }
+    .icon-btn.mobile-menu-btn { display: flex; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px 40px; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M3 12h18"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M14 2v5h5"/><path d="M8 13h8M8 17h8M8 9h3"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3V2a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 10l1.5 1.5L14 8"/><path d="M8 15h8"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 2h12v19l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="8.5" r="2.6"/><path d="M15.8 12.3c2.6.4 4.7 2.4 4.7 5.4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 19a2 2 0 004 0"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-3.6l-.5 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.5 2.6h3.6l.5-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6z"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8M12 17v3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M16 12h3"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  </defs>
+</svg>
+
+<div class="app-shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><span></span></div>
+      <span class="brand-name">Biondesk</span>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
+      <svg class="icon icon-sm"><use href="#i-chevron-left"/></svg>
+    </button>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active">
+        <svg class="icon"><use href="#i-grid"/></svg>
+        <span class="nav-label">Dashboard</span>
+        <span class="tooltip">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-kanban"/></svg>
+        <span class="nav-label">Opportunities</span>
+        <span class="badge">6</span>
+        <span class="tooltip">Opportunities</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-briefcase"/></svg>
+        <span class="nav-label">Projects</span>
+        <span class="badge">4</span>
+        <span class="tooltip">Projects</span>
+      </a>
+
+      <div class="sidebar-section-label">Documents</div>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-file"/></svg>
+        <span class="nav-label">Proposals</span>
+        <span class="badge">2</span>
+        <span class="tooltip">Proposals</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-quote"/></svg>
+        <span class="nav-label">Quotations</span>
+        <span class="badge">1</span>
+        <span class="tooltip">Quotations</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-receipt"/></svg>
+        <span class="nav-label">Invoices</span>
+        <span class="badge">3</span>
+        <span class="tooltip">Invoices</span>
+      </a>
+
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-users"/></svg>
+        <span class="nav-label">Contacts</span>
+        <span class="tooltip">Contacts</span>
+      </a>
+
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-bell"/></svg>
+        <span class="nav-label">Reminders</span>
+        <span class="tooltip">Reminders</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-layers"/></svg>
+        <span class="nav-label">Profile Library</span>
+        <span class="tooltip">Profile Library</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="#" class="nav-item">
+        <svg class="icon"><use href="#i-settings"/></svg>
+        <span class="nav-label">Settings</span>
+        <span class="tooltip">Settings</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main-area">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn">
+          <svg class="icon"><use href="#i-menu"/></svg>
+        </button>
+        <span class="breadcrumb">Dashboard</span>
+      </div>
+
+      <button class="search-trigger" id="cmdkTrigger">
+        <svg class="icon icon-sm"><use href="#i-search"/></svg>
+        <span>Search or jump to...</span>
+        <span class="kbd">⌘K</span>
+      </button>
+
+      <div class="topbar-right">
+        <div class="theme-switch" id="themeSwitch">
+          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
+          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
+          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+        </div>
+
+        <div class="dropdown-wrap">
+          <button class="icon-btn" id="notifBtn">
+            <svg class="icon"><use href="#i-bell"/></svg>
+            <span class="dot"></span>
+          </button>
+          <div class="dropdown-panel" id="notifPanel">
+            <div class="dropdown-header">Notifications</div>
+            <div class="notif-item">
+              <div class="notif-title">Invoice INV-0043 is now overdue</div>
+              <div class="notif-time">2 hours ago</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-title">New lead via public form: Retail Co</div>
+              <div class="notif-time">Yesterday</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-title">Payment received for INV-0041</div>
+              <div class="notif-time">2 days ago</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown-wrap">
+          <button class="avatar-btn" id="userBtn">
+            <div class="avatar">HI</div>
+            <svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg>
+          </button>
+          <div class="dropdown-panel" id="userPanel">
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
+            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1>Good morning, Hilmi</h1>
+          <p>Tuesday, July 7 &middot; Here's what needs your attention today.</p>
+        </div>
+        <button class="btn btn-primary">
+          <svg class="icon icon-sm"><use href="#i-plus"/></svg>
+          New Opportunity
+        </button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Pipeline Value</span>
+            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-trend"/></svg></div>
+          </div>
+          <div class="stat-value">$47,200</div>
+          <div class="stat-meta positive">&uarr; 12% vs last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">To Be Collected</span>
+            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-wallet"/></svg></div>
+          </div>
+          <div class="stat-value">$8,450</div>
+          <div class="stat-meta warn">2 invoices overdue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Active Projects</span>
+            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-briefcase"/></svg></div>
+          </div>
+          <div class="stat-value">6</div>
+          <div class="stat-meta">2 waiting on client</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Win Rate</span>
+            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-target"/></svg></div>
+          </div>
+          <div class="stat-value">68%</div>
+          <div class="stat-meta">Based on last 12 deals</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Priority actions</h2>
+          <a href="#" class="panel-link">View all <svg class="icon icon-sm"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+        <div class="panel-body">
+          <div class="action-row">
+            <div class="action-icon warn"><svg class="icon icon-sm"><use href="#i-alert"/></svg></div>
+            <div class="action-text">
+              <div class="action-title">Invoice INV-0043 is 5 days overdue</div>
+              <div class="action-sub">Wayne Enterprises &middot; <span class="amount">$12,000</span></div>
+            </div>
+            <button class="btn-action" data-action="Send Reminder">Send Reminder</button>
+          </div>
+          <div class="action-row">
+            <div class="action-icon wait"><svg class="icon icon-sm"><use href="#i-clock"/></svg></div>
+            <div class="action-text">
+              <div class="action-title">Fintech Brand Identity waiting on client for 8 days</div>
+              <div class="action-sub">Nexus Corp &middot; <span class="amount">$8,500</span></div>
+            </div>
+            <button class="btn-action" data-action="Nudged">Nudge Client</button>
+          </div>
+          <div class="action-row">
+            <div class="action-icon wait"><svg class="icon icon-sm"><use href="#i-clock"/></svg></div>
+            <div class="action-text">
+              <div class="action-title">Web App Redesign lead has had no activity for 6 days</div>
+              <div class="action-sub">Acme Corp &middot; <span class="amount">$5,000</span></div>
+            </div>
+            <button class="btn-action" data-action="Followed up">Follow Up</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-grid">
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel-head">
+            <h2>Recent opportunities</h2>
+            <a href="#" class="panel-link">View all <svg class="icon icon-sm"><use href="#i-arrow-up-right"/></svg></a>
+          </div>
+          <div class="panel-body">
+            <div class="opp-row">
+              <span class="pill pill-muted"><span class="dot"></span>Inbox</span>
+              <div class="opp-info">
+                <div class="opp-title">Web App Redesign</div>
+                <div class="opp-client">Acme Corp</div>
+              </div>
+              <span class="opp-value">$5,000</span>
+            </div>
+            <div class="opp-row">
+              <span class="pill pill-accent"><span class="dot"></span>Negotiation</span>
+              <div class="opp-info">
+                <div class="opp-title">Fintech Brand Identity</div>
+                <div class="opp-client">Nexus Corp</div>
+              </div>
+              <span class="opp-value">$8,500</span>
+            </div>
+            <div class="opp-row">
+              <span class="pill pill-success"><span class="dot"></span>Won</span>
+              <div class="opp-info">
+                <div class="opp-title">Marketing Site</div>
+                <div class="opp-client">Wayne Ent.</div>
+              </div>
+              <span class="opp-value">$12,000</span>
+            </div>
+            <div class="opp-row">
+              <span class="pill pill-muted"><span class="dot"></span>Drafting</span>
+              <div class="opp-info">
+                <div class="opp-title">E-commerce Backend</div>
+                <div class="opp-client">Retail Co</div>
+              </div>
+              <span class="opp-value">$12,000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel-head">
+            <h2>Recent activity</h2>
+          </div>
+          <div class="panel-body">
+            <div class="feed-item">
+              <div class="feed-dot-wrap"><div class="feed-dot accent"></div><div class="feed-line"></div></div>
+              <div>
+                <div class="feed-text">Proposal sent to Nexus Corp</div>
+                <div class="feed-time">2 hours ago</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-dot-wrap"><div class="feed-dot success"></div><div class="feed-line"></div></div>
+              <div>
+                <div class="feed-text">Payment received for INV-0041 ($3,200)</div>
+                <div class="feed-time">5 hours ago</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-dot-wrap"><div class="feed-dot"></div><div class="feed-line"></div></div>
+              <div>
+                <div class="feed-text">New lead via public form: Retail Co</div>
+                <div class="feed-time">Yesterday</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-dot-wrap"><div class="feed-dot"></div></div>
+              <div>
+                <div class="feed-text">Task completed: Database schema</div>
+                <div class="feed-time">2 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="cmdk-backdrop" id="cmdkBackdrop">
+  <div class="cmdk-modal">
+    <div class="cmdk-input-row">
+      <svg class="icon"><use href="#i-search"/></svg>
+      <input type="text" placeholder="Search opportunities, projects, invoices..." id="cmdkInput" autocomplete="off">
+      <span class="kbd">Esc</span>
+    </div>
+    <div class="cmdk-list">
+      <div class="cmdk-section-label">Quick actions</div>
+      <button class="cmdk-item hi"><svg class="icon"><use href="#i-plus"/></svg> New Opportunity</button>
+      <button class="cmdk-item"><svg class="icon"><use href="#i-file"/></svg> New Invoice</button>
+      <div class="cmdk-section-label">Jump to</div>
+      <button class="cmdk-item"><svg class="icon"><use href="#i-kanban"/></svg> Opportunities</button>
+      <button class="cmdk-item"><svg class="icon"><use href="#i-briefcase"/></svg> Projects</button>
+      <button class="cmdk-item"><svg class="icon"><use href="#i-users"/></svg> Contacts</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const root = document.documentElement;
+
+  const themeSwitch = document.getElementById('themeSwitch');
+  const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function applyTheme(choice) {
+    const resolved = choice === 'system' ? (systemPref.matches ? 'dark' : 'light') : choice;
+    root.setAttribute('data-theme', resolved);
+    themeSwitch.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.themeChoice === choice));
+    localStorage.setItem('biondesk-theme', choice);
+  }
+  themeSwitch.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-theme-choice]');
+    if (!btn) return;
+    applyTheme(btn.dataset.themeChoice);
+  });
+  systemPref.addEventListener('change', () => {
+    if (localStorage.getItem('biondesk-theme') === 'system') applyTheme('system');
+  });
+  applyTheme(localStorage.getItem('biondesk-theme') || 'dark');
+  // Catatan: di app sungguhan, simpan preferensi ini ke akun (database) lewat request ke server,
+  // bukan cuma localStorage, supaya konsisten lintas device seperti di design-system.md.
+
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  function setCollapsed(state) {
+    sidebar.classList.toggle('collapsed', state);
+    sidebarToggle.title = state ? 'Expand sidebar' : 'Collapse sidebar';
+    localStorage.setItem('biondesk-sidebar-collapsed', state ? '1' : '0');
+  }
+  sidebarToggle.addEventListener('click', () => setCollapsed(!sidebar.classList.contains('collapsed')));
+  if (localStorage.getItem('biondesk-sidebar-collapsed') === '1') setCollapsed(true);
+
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  mobileMenuBtn.addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
+
+  function setupDropdown(btnId, panelId) {
+    const btn = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panel.classList.contains('open');
+      document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open'));
+      if (!isOpen) panel.classList.add('open');
+    });
+  }
+  setupDropdown('notifBtn', 'notifPanel');
+  setupDropdown('userBtn', 'userPanel');
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open'));
+  });
+
+  const cmdkBackdrop = document.getElementById('cmdkBackdrop');
+  const cmdkInput = document.getElementById('cmdkInput');
+  function openCmdk() {
+    cmdkBackdrop.classList.add('open');
+    setTimeout(() => cmdkInput.focus(), 50);
+  }
+  function closeCmdk() { cmdkBackdrop.classList.remove('open'); }
+
+  document.getElementById('cmdkTrigger').addEventListener('click', openCmdk);
+  cmdkBackdrop.addEventListener('click', (e) => { if (e.target === cmdkBackdrop) closeCmdk(); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      cmdkBackdrop.classList.contains('open') ? closeCmdk() : openCmdk();
+    }
+    if (e.key === 'Escape') closeCmdk();
+  });
+
+  document.querySelectorAll('.btn-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const label = btn.dataset.action;
+      btn.textContent = label + ' ✓';
+      btn.classList.add('done');
+    });
+  });
+})();
+</script>
+</body>
+</html>

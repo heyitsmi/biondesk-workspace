@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biondesk | The Independent's Command Center</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bion: {
+                            bg: '#0B0E14',
+                            surface: '#12161F',
+                            raised: '#1A1F2B',
+                            border: '#232838',
+                            text: '#EDEFF3',
+                            muted: '#8B93A6',
+                            accent: '#E8A33D',
+                            accentText: '#12161F',
+                            success: '#34A87C',
+                            danger: '#E5484D',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Instrument Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 50px -10px rgba(232, 163, 61, 0.25)',
+                        'raised': '0 12px 40px rgba(0, 0, 0, 0.4)',
+                        'app': '0 24px 80px -12px rgba(0, 0, 0, 0.6)',
+                    },
+                    backgroundImage: {
+                        'radial-glow': 'radial-gradient(circle at 50% 0%, rgba(232, 163, 61, 0.08) 0%, transparent 60%)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0B0E14;
+            color: #EDEFF3;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Minimal Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0B0E14; }
+        ::-webkit-scrollbar-thumb { background: #232838; border-radius: 4px; }
+
+        /* Framer-style fluid transitions */
+        .fluid-transition {
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 3D Hero App Reveal */
+        .app-reveal-container {
+            perspective: 2000px;
+        }
+        .app-mockup {
+            transform: rotateX(15deg) scale(0.9) translateY(40px);
+            opacity: 0;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease-out;
+            will-change: transform, opacity;
+        }
+        .app-mockup.revealed {
+            transform: rotateX(0deg) scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        /* Scroll Reveal Elements */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+
+        /* Sticky Scroll Interactions */
+        .step-text {
+            opacity: 0.3;
+            transition: opacity 0.5s ease;
+        }
+        .step-text.is-active {
+            opacity: 1;
+        }
+
+        .step-visual {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transform: scale(0.96) translateY(10px);
+            transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .step-visual.is-active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* Subtley moving background gradient */
+        .ambient-light {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, rgba(232, 163, 61, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Status Pill Component styling for reusability */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1;
+        }
+        .pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="font-sans relative bg-bion-bg selection:bg-bion-accent selection:text-bion-accentText">
+
+    <div class="fixed top-0 w-full z-50 bg-bion-bg/60 backdrop-blur-xl border-b border-bion-border/50">
+        <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-bion-raised border border-bion-border rounded-md flex items-center justify-center">
+                    <div class="w-1.5 h-1.5 bg-bion-accent rounded-full"></div>
+                </div>
+                <span class="font-semibold text-sm tracking-wide text-bion-text">Biondesk</span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#platform" class="text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Platform</a>
+                <a href="#workflow" class="text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Workflow</a>
+                <a href="#pricing" class="text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Pricing</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="#" class="hidden sm:block text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Sign in</a>
+                <a href="#" class="px-4 py-1.5 rounded bg-bion-text text-bion-bg text-xs font-semibold hover:bg-bion-muted fluid-transition">
+                    Get Access
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <main class="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden flex flex-col items-center">
+        <!-- Ambient top light -->
+        <div class="absolute top-0 w-full h-[600px] bg-radial-glow pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto px-6 text-center z-10 fade-up is-visible">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-bion-border bg-bion-surface mb-6">
+                <span class="flex h-2 w-2 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-bion-accent opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-bion-accent"></span>
+                </span>
+                <span class="text-[11px] font-medium text-bion-text uppercase tracking-widest">Biondesk Core v1.0</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-bion-text leading-[1.05] mb-6">
+                The independent's<br>
+                <span class="text-bion-muted">command center.</span>
+            </h1>
+            
+            <p class="text-lg md:text-xl text-bion-muted max-w-2xl mx-auto mb-10 font-medium">
+                Manage your entire cycle—from external leads and active projects to proposals and final invoices—without being locked to a single platform.
+            </p>
+            
+            <div class="flex items-center justify-center gap-4">
+                <a href="#" class="px-8 py-3.5 rounded-lg bg-bion-accent text-bion-accentText text-sm font-semibold hover:opacity-90 fluid-transition shadow-glow">
+                    Start your workspace
+                </a>
+            </div>
+        </div>
+
+        <div class="w-full max-w-[1200px] mx-auto px-4 mt-20 app-reveal-container z-20">
+            <!-- App Window -->
+            <div class="app-mockup w-full rounded-2xl border border-bion-border bg-bion-bg shadow-app overflow-hidden flex flex-col h-[600px] md:h-[700px] relative">
+                
+                <!-- Mockup Header -->
+                <div class="h-12 border-b border-bion-border bg-bion-surface flex items-center justify-between px-4 shrink-0">
+                    <div class="flex items-center gap-4">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full border border-bion-border bg-bion-raised"></div>
+                            <div class="w-3 h-3 rounded-full border border-bion-border bg-bion-raised"></div>
+                            <div class="w-3 h-3 rounded-full border border-bion-border bg-bion-raised"></div>
+                        </div>
+                        <div class="h-4 w-px bg-bion-border"></div>
+                        <span class="text-xs font-medium text-bion-muted"><i data-lucide="layout-dashboard" class="w-3 h-3 inline mr-1"></i> Studio Workflow</span>
+                    </div>
+                    <div class="w-64 h-7 rounded border border-bion-border bg-bion-bg flex items-center px-3 text-bion-muted text-xs">
+                        Search commands... <span class="ml-auto font-mono text-[10px] bg-bion-raised px-1 rounded">⌘K</span>
+                    </div>
+                </div>
+
+                <!-- Mockup Body -->
+                <div class="flex flex-1 overflow-hidden">
+                    
+                    <!-- Sidebar Collapsed -->
+                    <div class="w-16 border-r border-bion-border bg-bion-surface flex flex-col items-center py-4 gap-6 shrink-0">
+                        <div class="w-8 h-8 rounded-lg bg-bion-raised border border-bion-border flex items-center justify-center"><div class="w-2 h-2 bg-bion-accent rounded-full"></div></div>
+                        <div class="w-full flex flex-col items-center gap-4 text-bion-muted">
+                            <i data-lucide="inbox" class="w-5 h-5 hover:text-bion-text"></i>
+                            <div class="relative group">
+                                <i data-lucide="kanban" class="w-5 h-5 text-bion-text"></i>
+                                <div class="absolute -right-1 -top-1 w-2 h-2 bg-bion-accent rounded-full"></div>
+                            </div>
+                            <i data-lucide="folder-kanban" class="w-5 h-5 hover:text-bion-text"></i>
+                            <i data-lucide="receipt" class="w-5 h-5 hover:text-bion-text"></i>
+                        </div>
+                    </div>
+
+                    <!-- Main Content (Board) -->
+                    <div class="flex-1 p-6 bg-bion-bg overflow-hidden flex gap-4">
+                        
+                        <!-- Column 1 -->
+                        <div class="w-[300px] shrink-0 flex flex-col">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-semibold">Active Projects</span>
+                                <span class="text-xs font-mono text-bion-muted">2</span>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <!-- Card 1 -->
+                                <div class="bg-bion-surface border border-bion-border rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="text-sm font-medium">Fintech Brand Identity</span>
+                                        <div class="status-pill bg-bion-accent/10 text-bion-accent">
+                                            <div class="pill-dot bg-bion-accent"></div> In Progress
+                                        </div>
+                                    </div>
+                                    <div class="h-1.5 w-full bg-bion-raised rounded-full mb-4 overflow-hidden">
+                                        <div class="h-full bg-bion-accent w-3/4 rounded-full"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-bion-muted">Nexus Corp</span>
+                                        <span class="font-mono text-bion-text font-medium">$8,500</span>
+                                    </div>
+                                </div>
+                                <!-- Card 2 -->
+                                <div class="bg-bion-surface border border-bion-border rounded-lg p-4 opacity-75">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="text-sm font-medium">E-commerce Backend</span>
+                                        <div class="status-pill bg-bion-danger/10 text-bion-danger border border-bion-danger/20">
+                                            <div class="pill-dot bg-bion-danger"></div> Blocked
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <i data-lucide="message-square" class="w-3 h-3 text-bion-muted"></i>
+                                        <span class="text-[10px] text-bion-muted">Awaiting API keys from client</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-bion-muted">Retail Co</span>
+                                        <span class="font-mono text-bion-text font-medium">$12,000</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="w-[300px] shrink-0 flex flex-col">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-semibold">In Review</span>
+                                <span class="text-xs font-mono text-bion-muted">1</span>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <!-- Card 3 (Active) -->
+                                <div class="bg-bion-surface border border-bion-accent rounded-lg p-4 shadow-raised transform -translate-y-1">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="text-sm font-medium">Landing Page Redesign</span>
+                                        <div class="status-pill bg-bion-text/10 text-bion-text">
+                                            <div class="pill-dot bg-bion-text"></div> In Review
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 mb-4 p-2 rounded bg-bion-bg border border-bion-border">
+                                        <div class="w-1.5 h-1.5 bg-bion-danger rounded-full"></div>
+                                        <span class="text-[10px] font-medium text-bion-muted">1 Active Request Log</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-bion-muted">Wayne Ent</span>
+                                        <span class="font-mono text-bion-text font-medium">$4,200</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Panel (Detail View overlay) -->
+                    <div class="absolute right-0 top-12 bottom-0 w-[400px] bg-bion-surface border-l border-bion-border shadow-2xl flex flex-col transform translate-x-4 opacity-90 scale-95 origin-right">
+                        <div class="p-5 border-b border-bion-border flex items-center justify-between">
+                            <div>
+                                <div class="text-[10px] text-bion-muted uppercase tracking-wider mb-1">Request Log</div>
+                                <h3 class="text-sm font-semibold">Landing Page Redesign</h3>
+                            </div>
+                            <i data-lucide="x" class="w-4 h-4 text-bion-muted"></i>
+                        </div>
+                        <div class="p-5 flex-1 overflow-y-auto space-y-4">
+                            <div class="p-3 rounded border border-bion-border bg-bion-bg">
+                                <div class="flex justify-between text-xs mb-2">
+                                    <span class="font-medium">Client Note</span>
+                                    <span class="text-bion-muted font-mono">Today, 09:41</span>
+                                </div>
+                                <p class="text-xs text-bion-muted leading-relaxed">"Can we change the hero section color to match our new brand guidelines? Also, the logo needs to be slightly larger on mobile."</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="flex-1 py-1.5 rounded bg-bion-raised border border-bion-border text-xs font-medium hover:text-bion-text">Decline</button>
+                                <button class="flex-1 py-1.5 rounded bg-bion-text text-bion-bg text-xs font-semibold hover:bg-bion-muted">Convert to Task</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="platform" class="py-32 bg-bion-surface border-y border-bion-border relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="fade-up">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6">Built for the borderless independent.</h2>
+                    <p class="text-lg text-bion-muted mb-8 leading-relaxed">
+                        We don't care where you found your client or how they prefer to pay. Biondesk is platform-agnostic, giving you a centralized source of truth regardless of origin.
+                    </p>
+                    <ul class="space-y-6">
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded bg-bion-raised border border-bion-border flex items-center justify-center shrink-0">
+                                <i data-lucide="globe" class="w-5 h-5 text-bion-text"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold mb-1">Bring Your Own Pipeline</h4>
+                                <p class="text-xs text-bion-muted leading-relaxed">Log opportunities from Upwork, LinkedIn, or direct referrals. Create custom public forms that feed directly into your inbox.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded bg-bion-raised border border-bion-border flex items-center justify-center shrink-0">
+                                <i data-lucide="credit-card" class="w-5 h-5 text-bion-text"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold mb-1">Agnostic Invoicing</h4>
+                                <p class="text-xs text-bion-muted leading-relaxed">Bill in any currency. Provide your own Stripe link, Wise details, or bank transfer instructions. Track multiple partial payments per invoice.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="relative h-[400px] rounded-2xl border border-bion-border bg-bion-bg overflow-hidden fade-up delay-200">
+                    <div class="absolute inset-0 bg-radial-glow opacity-50"></div>
+                    <!-- Abstract representation of connections -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-24 h-24 rounded-full border border-bion-accent/30 absolute animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                        <div class="w-48 h-48 rounded-full border border-bion-accent/20 absolute animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                        
+                        <div class="relative z-10 w-16 h-16 bg-bion-surface border border-bion-accent rounded-xl shadow-glow flex items-center justify-center">
+                            <div class="w-3 h-3 bg-bion-accent rounded-full"></div>
+                        </div>
+
+                        <!-- Satellite nodes -->
+                        <div class="absolute top-1/4 left-1/4 w-10 h-10 bg-bion-raised border border-bion-border rounded-lg flex items-center justify-center"><i data-lucide="mail" class="w-4 h-4 text-bion-muted"></i></div>
+                        <div class="absolute bottom-1/3 right-1/4 w-10 h-10 bg-bion-raised border border-bion-border rounded-lg flex items-center justify-center"><i data-lucide="message-circle" class="w-4 h-4 text-bion-muted"></i></div>
+                        <div class="absolute top-1/3 right-1/3 w-10 h-10 bg-bion-raised border border-bion-border rounded-lg flex items-center justify-center"><i data-lucide="linkedin" class="w-4 h-4 text-bion-muted"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="workflow" class="bg-bion-bg border-b border-bion-border relative">
+        <div class="max-w-7xl mx-auto px-6">
+            
+            <!-- Sticky Scroll Container -->
+            <div class="flex flex-col lg:flex-row relative">
+                
+                <!-- Left: Scrolling Text Blocks -->
+                <div class="lg:w-5/12 py-[20vh] lg:py-[30vh]">
+                    <div class="space-y-[30vh]">
+                        
+                        <!-- Step 1 -->
+                        <div class="step-trigger" data-step="1">
+                            <div class="text-[10px] font-bold text-bion-accent uppercase tracking-widest mb-3">01 / Lead Capture</div>
+                            <h3 class="text-3xl font-bold mb-4">Capture without friction.</h3>
+                            <p class="text-bion-muted text-lg leading-relaxed">
+                                Share your personal <code>biondesk.com/p/your-name</code> link. Custom forms bypass the back-and-forth and drop highly qualified leads directly into your Opportunity board.
+                            </p>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="step-trigger" data-step="2">
+                            <div class="text-[10px] font-bold text-bion-text uppercase tracking-widest mb-3">02 / AI Proposal</div>
+                            <h3 class="text-3xl font-bold mb-4">Proposals that sound like you.</h3>
+                            <p class="text-bion-muted text-lg leading-relaxed">
+                                Generate proposals instantly from discovery calls. Our AI doesn't use generic templates—it reads from your personal Profile Library of past portfolios and testimonials.
+                            </p>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="step-trigger" data-step="3">
+                            <div class="text-[10px] font-bold text-bion-text uppercase tracking-widest mb-3">03 / Execution</div>
+                            <h3 class="text-3xl font-bold mb-4">Project management is core.</h3>
+                            <p class="text-bion-muted text-lg leading-relaxed">
+                                Unlike other billing tools, task management isn't an afterthought here. Track project statuses, manage task breakdowns, and log ad-hoc client requests in one place.
+                            </p>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="step-trigger" data-step="4">
+                            <div class="text-[10px] font-bold text-bion-text uppercase tracking-widest mb-3">04 / Billing</div>
+                            <h3 class="text-3xl font-bold mb-4">Get paid. Track everything.</h3>
+                            <p class="text-bion-muted text-lg leading-relaxed">
+                                Convert accepted terms directly into invoices. Set automated rules for overdue reminders, and track deposits and final payments on the same document.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Right: Sticky Visual Area -->
+                <div class="hidden lg:block lg:w-7/12 relative">
+                    <div class="sticky top-0 h-screen flex items-center justify-center pl-12">
+                        
+                        <div class="relative w-full aspect-[4/3] rounded-xl border border-bion-border bg-bion-surface shadow-raised overflow-hidden">
+                            
+                            <!-- Visual 1: Lead Form -->
+                            <div id="visual-1" class="step-visual flex flex-col bg-bion-bg is-active">
+                                <div class="h-10 border-b border-bion-border flex items-center justify-center px-4 bg-bion-surface shrink-0">
+                                    <span class="text-xs text-bion-muted">biondesk.com/p/studio</span>
+                                </div>
+                                <div class="flex-1 p-8 flex items-center justify-center">
+                                    <div class="w-full max-w-sm bg-bion-surface border border-bion-border rounded-lg p-6">
+                                        <div class="w-12 h-12 bg-bion-raised rounded mb-4 border border-bion-border"></div>
+                                        <h4 class="font-semibold text-sm mb-1">Project Inquiry</h4>
+                                        <p class="text-[10px] text-bion-muted mb-6">Let's build something great together.</p>
+                                        <div class="space-y-3">
+                                            <div class="h-8 rounded bg-bion-bg border border-bion-border"></div>
+                                            <div class="h-20 rounded bg-bion-bg border border-bion-border"></div>
+                                            <div class="h-8 rounded bg-bion-accent flex items-center justify-center mt-4">
+                                                <span class="text-[10px] font-bold text-bion-accentText">Submit Form</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual 2: AI Proposal -->
+                            <div id="visual-2" class="step-visual flex flex-col p-6">
+                                <div class="flex items-center gap-2 mb-6">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-bion-accent"></i>
+                                    <span class="text-sm font-semibold">Generating Proposal...</span>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="w-1/3 space-y-2">
+                                        <div class="text-[10px] text-bion-muted uppercase mb-2">Sources</div>
+                                        <div class="p-2 rounded bg-bion-raised border border-bion-border text-xs text-bion-muted">Discovery Call.txt</div>
+                                        <div class="p-2 rounded bg-bion-raised border border-bion-border text-xs text-bion-muted">Profile: Web Portfolio</div>
+                                    </div>
+                                    <div class="flex-1 border border-bion-border bg-bion-bg rounded p-4 relative overflow-hidden">
+                                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-bion-bg z-10"></div>
+                                        <div class="h-3 w-1/2 bg-bion-raised rounded mb-3"></div>
+                                        <div class="h-2 w-full bg-bion-raised rounded mb-2"></div>
+                                        <div class="h-2 w-5/6 bg-bion-raised rounded mb-2"></div>
+                                        <div class="h-2 w-4/6 bg-bion-raised rounded mb-6"></div>
+                                        <div class="h-3 w-1/3 bg-bion-raised rounded mb-3"></div>
+                                        <div class="h-2 w-full bg-bion-raised rounded mb-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual 3: Project Execution -->
+                            <div id="visual-3" class="step-visual flex flex-col bg-bion-bg">
+                                <div class="border-b border-bion-border p-4 bg-bion-surface flex justify-between items-center">
+                                    <span class="text-sm font-semibold">Development Tasks</span>
+                                    <div class="status-pill bg-bion-accent/10 text-bion-accent"><div class="pill-dot bg-bion-accent"></div> Active</div>
+                                </div>
+                                <div class="p-4 space-y-2">
+                                    <div class="flex justify-between p-3 rounded bg-bion-surface border border-bion-border items-center">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-4 h-4 rounded border border-bion-success bg-bion-success/20 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3 text-bion-success"></i></div>
+                                            <span class="text-xs text-bion-muted line-through">Database Schema</span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-bion-muted">Done</span>
+                                    </div>
+                                    <div class="flex justify-between p-3 rounded bg-bion-surface border border-bion-border items-center">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-4 h-4 rounded border border-bion-border"></div>
+                                            <span class="text-xs">API Endpoints</span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-bion-accent">In Progress</span>
+                                    </div>
+                                    <div class="flex justify-between p-3 rounded border border-bion-danger/30 bg-bion-danger/5 items-center">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-4 h-4 rounded bg-bion-danger/20 flex items-center justify-center"><i data-lucide="alert-circle" class="w-3 h-3 text-bion-danger"></i></div>
+                                            <span class="text-xs text-bion-danger">Client Request: Add SSO login</span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-bion-danger">Log</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual 4: Invoice & Payment -->
+                            <div id="visual-4" class="step-visual flex flex-col p-8 bg-bion-surface items-center justify-center">
+                                <div class="w-full max-w-sm bg-white rounded shadow-lg p-6 text-[#12161F]">
+                                    <div class="flex justify-between mb-8">
+                                        <div class="text-xl font-bold">INVOICE</div>
+                                        <div class="text-right">
+                                            <div class="text-xs text-gray-500 font-mono">INV-0045</div>
+                                            <div class="text-[10px] text-gray-400">Due: Aug 15, 2026</div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-200 pt-4 mb-6">
+                                        <div class="flex justify-between text-xs mb-2">
+                                            <span>Phase 1 Delivery</span>
+                                            <span class="font-mono">$2,000.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-end border-t border-gray-200 pt-4">
+                                        <div class="flex items-center gap-2 px-2 py-1 bg-[#1F8A5F]/10 rounded-full text-[#1F8A5F] text-[10px] font-bold">
+                                            <div class="w-1.5 h-1.5 bg-[#1F8A5F] rounded-full"></div> Fully Paid
+                                        </div>
+                                        <div class="text-xl font-mono font-bold">$2,000.00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="py-32 relative bg-bion-bg">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 fade-up">Clear, independent pricing.</h2>
+            <p class="text-bion-muted text-lg mb-16 fade-up delay-100">Zero cuts taken from your client payments. You bring your own payment methods.</p>
+
+            <div class="grid md:grid-cols-2 gap-6 fade-up delay-200">
+                
+                <!-- Free Tier -->
+                <div class="p-8 rounded-2xl border border-bion-border bg-bion-surface flex flex-col text-left">
+                    <h3 class="text-lg font-semibold mb-2">Core</h3>
+                    <p class="text-xs text-bion-muted mb-8">For the solo freelancer establishing process.</p>
+                    <div class="mb-8">
+                        <span class="text-4xl font-mono font-medium">Rp0</span><span class="text-sm text-bion-muted">/month</span>
+                    </div>
+                    <ul class="space-y-4 text-sm mb-10 flex-1">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-muted"></i> 3 Active Projects</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-muted"></i> Basic Proposal Editor</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-muted"></i> Manual Invoice Tracking</li>
+                    </ul>
+                    <button class="w-full py-2.5 rounded border border-bion-border text-sm font-semibold hover:bg-bion-raised transition-colors">Create Free Account</button>
+                </div>
+
+                <!-- Pro Tier -->
+                <div class="p-8 rounded-2xl border border-bion-accent bg-bion-surface relative flex flex-col text-left shadow-glow">
+                    <div class="absolute top-0 right-8 -translate-y-1/2 px-3 py-1 bg-bion-accent text-bion-accentText text-[10px] font-bold uppercase tracking-widest rounded-full">Pro</div>
+                    <h3 class="text-lg font-semibold mb-2 text-bion-accent">Professional</h3>
+                    <p class="text-xs text-bion-muted mb-8">The complete suite for high-volume independents.</p>
+                    <div class="mb-8">
+                        <span class="text-4xl font-mono font-medium">Rp79k</span><span class="text-sm text-bion-muted">/month</span>
+                    </div>
+                    <ul class="space-y-4 text-sm mb-10 flex-1">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-text"></i> Unlimited Projects</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-text"></i> Profile Library AI Generation</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-text"></i> Custom Public Lead Form</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-bion-text"></i> Automated Reminder Rules</li>
+                    </ul>
+                    <button class="w-full py-2.5 rounded bg-bion-accent text-bion-accentText text-sm font-semibold hover:opacity-90 transition-opacity">Upgrade to Pro</button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-bion-border bg-bion-surface py-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-5 h-5 bg-bion-raised border border-bion-border rounded flex items-center justify-center">
+                    <div class="w-1 h-1 bg-bion-accent rounded-full"></div>
+                </div>
+                <span class="text-xs font-semibold text-bion-text">Biondesk</span>
+            </div>
+            <div class="flex gap-6 text-xs text-bion-muted">
+                <a href="#" class="hover:text-bion-text transition-colors">Changelog</a>
+                <a href="#" class="hover:text-bion-text transition-colors">Twitter</a>
+                <a href="#" class="hover:text-bion-text transition-colors">Terms</a>
+            </div>
+            <div class="text-[10px] text-bion-muted font-mono">
+                System OK — &copy; <span id="year"></span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // 1. Initial Hero 3D Reveal
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const mockup = document.querySelector('.app-mockup');
+                if(mockup) mockup.classList.add('revealed');
+            }, 100);
+        });
+
+        // Check for reduced motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // 2. Standard Fade Up Observer
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            if (prefersReducedMotion) {
+                el.classList.add('is-visible');
+                el.style.transition = 'none';
+            } else {
+                fadeObserver.observe(el);
+            }
+        });
+
+        // 3. Sticky Scroll (Scrollytelling) Logic
+        const stepTriggers = document.querySelectorAll('.step-trigger');
+        const visuals = document.querySelectorAll('.step-visual');
+
+        // Observer to detect which text block is currently in the middle of the screen
+        const scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Update Text Opacity
+                    stepTriggers.forEach(t => t.classList.remove('is-active', 'opacity-100'));
+                    stepTriggers.forEach(t => t.classList.add('opacity-30'));
+                    
+                    entry.target.classList.remove('opacity-30');
+                    entry.target.classList.add('is-active', 'opacity-100');
+
+                    // Update Right Side Visual
+                    const stepIndex = entry.target.getAttribute('data-step');
+                    visuals.forEach(v => v.classList.remove('is-active'));
+                    
+                    const targetVisual = document.getElementById(`visual-${stepIndex}`);
+                    if (targetVisual) {
+                        targetVisual.classList.add('is-active');
+                    }
+                }
+            });
+        }, { 
+            // Trigger when the element crosses the middle of the viewport
+            rootMargin: '-40% 0px -40% 0px',
+            threshold: 0
+        });
+
+        // Initialize state
+        stepTriggers.forEach((trigger, index) => {
+            // Setup base opacity classes for Tailwind
+            trigger.classList.add('transition-opacity', 'duration-500');
+            if(index !== 0) trigger.classList.add('opacity-30');
+            
+            // Only observe on desktop where sticky behavior exists
+            if (window.innerWidth >= 1024) {
+                scrollObserver.observe(trigger);
+            } else {
+                trigger.classList.remove('opacity-30'); // Keep all visible on mobile
+            }
+        });
+
+        // Handle resize events to enable/disable observer
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) {
+                stepTriggers.forEach(t => scrollObserver.observe(t));
+            } else {
+                stepTriggers.forEach(t => {
+                    scrollObserver.unobserve(t);
+                    t.classList.remove('opacity-30');
+                    t.classList.add('opacity-100');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
