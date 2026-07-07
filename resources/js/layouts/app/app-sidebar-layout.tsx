@@ -4,9 +4,10 @@ import type { AppLayoutProps } from '@/types';
 export default function AppSidebarLayout({
     children,
     breadcrumbs = [],
+    mainClassName,
 }: AppLayoutProps) {
     return (
-        <BiondeskAppShell breadcrumbs={breadcrumbs}>
+        <BiondeskAppShell breadcrumbs={breadcrumbs} mainClassName={mainClassName}>
             {children}
         </BiondeskAppShell>
     );

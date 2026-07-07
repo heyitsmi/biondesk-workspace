@@ -1,714 +1,53 @@
 import { Head } from '@inertiajs/react';
-import { useMemo, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useMemo, useState   } from 'react';
+import type {ChangeEvent, KeyboardEvent} from 'react';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as projects, show as projectShow } from '@/routes/projects';
 import type {
     BiondeskTone,
     ProjectAttachment,
     ProjectDetailRequestLog,
-    ProjectDetailTask,
     ProjectRequestClassification,
     ProjectRequestSource,
     ProjectShowPageProps,
     ProjectTaskStatus,
 } from '@/types';
 
-const projectShowStyles = `
-  .bd-app-shell .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 32px 24px;
-    overflow: hidden;
-    min-height: 0;
-  }
-  .bd-app-shell .project-show-page {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .bd-app-shell .detail-header-mini {
-    flex-shrink: 0;
-    margin-bottom: 16px;
-  }
-  .bd-app-shell .detail-header-mini h1 {
-    font-size: 21px;
-    font-weight: 700;
-    margin-bottom: 5px;
-  }
-  .bd-app-shell .client-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--text-muted);
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .bd-app-shell .pill .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .bd-app-shell .pill-accent {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .pill-accent .dot { background: var(--accent); }
-  .bd-app-shell .pill-success {
-    background: var(--success-soft);
-    color: var(--success);
-  }
-  .bd-app-shell .pill-success .dot { background: var(--success); }
-  .bd-app-shell .pill-danger {
-    background: var(--danger-soft);
-    color: var(--danger);
-  }
-  .bd-app-shell .pill-danger .dot { background: var(--danger); }
-  .bd-app-shell .pill-muted {
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
-  .bd-app-shell .pill-muted .dot { background: var(--text-muted); }
-  .bd-app-shell .tab-nav {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 18px;
-    flex-shrink: 0;
-    overflow-x: auto;
-  }
-  .bd-app-shell .tab-btn {
-    padding: 10px 2px;
-    margin-right: 24px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-  }
-  .bd-app-shell .tab-btn:hover { color: var(--text); }
-  .bd-app-shell .tab-btn.active {
-    color: var(--text);
-    border-bottom-color: var(--accent);
-  }
-  .bd-app-shell .tab-panels {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .bd-app-shell .tab-panel {
-    display: none;
-    height: 100%;
-    flex-direction: column;
-    min-height: 0;
-  }
-  .bd-app-shell .tab-panel.active { display: flex; }
-  .bd-app-shell .details-form {
-    max-width: 460px;
-    overflow-y: auto;
-  }
-  .bd-app-shell .field-group { margin-bottom: 18px; }
-  .bd-app-shell .field-label {
-    font-size: 11.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin-bottom: 7px;
-    display: block;
-  }
-  .bd-app-shell select.field-select,
-  .bd-app-shell input.field-input,
-  .bd-app-shell textarea.field-input {
-    width: 100%;
-    padding: 9px 11px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 13.5px;
-  }
-  .bd-app-shell select.field-select:focus,
-  .bd-app-shell input.field-input:focus,
-  .bd-app-shell textarea.field-input:focus {
-    border-color: var(--accent);
-  }
-  .bd-app-shell .form-row { display: flex; gap: 12px; }
-  .bd-app-shell .form-row .field-group { flex: 1; }
-  .bd-app-shell .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    transition: opacity 0.12s ease, transform 0.1s ease;
-  }
-  .bd-app-shell .btn:active { transform: scale(0.97); }
-  .bd-app-shell .btn:disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  .bd-app-shell .btn-primary {
-    background: var(--accent);
-    color: var(--accent-text);
-  }
-  .bd-app-shell .btn-primary:hover { opacity: 0.88; }
-  .bd-app-shell .btn-ghost {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .bd-app-shell .btn-ghost:hover { background: var(--surface-raised); }
-  .bd-app-shell .btn-sm {
-    padding: 6px 12px;
-    font-size: 12.5px;
-  }
-  .bd-app-shell .task-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .view-toggle {
-    display: flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-  }
-  .bd-app-shell .view-toggle button {
-    padding: 6px 13px;
-    border-radius: 6px;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .bd-app-shell .view-toggle button.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .task-toolbar-right {
-    display: flex;
-    gap: 8px;
-  }
-  .bd-app-shell .task-add-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .task-add-row input {
-    flex: 1;
-    padding: 9px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 13px;
-  }
-  .bd-app-shell .task-board {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  .bd-app-shell .task-col {
-    flex: 1;
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-  .bd-app-shell .task-col-head {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 0 4px 10px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .task-col-head .count {
-    margin-left: auto;
-    font-family: var(--font-mono);
-  }
-  .bd-app-shell .task-col-head .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .bd-app-shell .task-col-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 4px;
-    border-radius: 8px;
-    transition: background 0.12s ease;
-  }
-  .bd-app-shell .task-col-body.drag-over { background: var(--accent-soft); }
-  .bd-app-shell .task-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 10px 11px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.12s ease;
-  }
-  .bd-app-shell .task-card:hover { border-color: var(--accent); }
-  .bd-app-shell .task-card.dragging { opacity: 0.35; }
-  .bd-app-shell .task-card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-  }
-  .bd-app-shell .task-delete {
-    opacity: 0;
-    color: var(--text-muted);
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    flex-shrink: 0;
-    transition: opacity 0.12s ease;
-  }
-  .bd-app-shell .task-card:hover .task-delete { opacity: 1; }
-  .bd-app-shell .task-delete:hover {
-    background: var(--danger-soft);
-    color: var(--danger);
-  }
-  .bd-app-shell .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    flex: 1;
-  }
-  .bd-app-shell .table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-  .bd-app-shell .data-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .bd-app-shell .data-table thead {
-    position: sticky;
-    top: 0;
-    background: var(--surface);
-    z-index: 5;
-  }
-  .bd-app-shell .data-table th {
-    text-align: left;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .bd-app-shell .data-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .bd-app-shell .data-table tbody tr:last-child td { border-bottom: none; }
-  .bd-app-shell select.status-inline {
-    padding: 5px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 12.5px;
-  }
-  .bd-app-shell .reqlog-toolbar {
-    flex-shrink: 0;
-    margin-bottom: 14px;
-  }
-  .bd-app-shell .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    margin-bottom: 12px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .search-box input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .bd-app-shell .chip-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .chip {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 12.5px;
-    font-weight: 500;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-  }
-  .bd-app-shell .chip.active {
-    background: var(--text);
-    color: var(--bg);
-    border-color: var(--text);
-  }
-  .bd-app-shell .reqlog-scroll {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-  .bd-app-shell .reqlog-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    background: var(--surface);
-  }
-  .bd-app-shell .reqlog-main {
-    flex: 1;
-    min-width: 0;
-  }
-  .bd-app-shell .reqlog-text {
-    font-size: 13.5px;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-  .bd-app-shell .reqlog-meta {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 12px;
-    color: var(--text-muted);
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .class-badge {
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 10.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .class-new {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .class-duplicate,
-  .bd-app-shell .class-related {
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
-  .bd-app-shell .class-contradiction {
-    background: var(--danger-soft);
-    color: var(--danger);
-  }
-  .bd-app-shell .reqlog-actions-row {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .empty-note {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 6px 0;
-  }
-  .bd-app-shell .activity-scroll {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    max-width: 560px;
-  }
-  .bd-app-shell .feed-item {
-    display: flex;
-    gap: 12px;
-    padding: 11px 4px;
-  }
-  .bd-app-shell .feed-dot-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    padding-top: 3px;
-  }
-  .bd-app-shell .feed-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--border);
-  }
-  .bd-app-shell .feed-dot.accent { background: var(--accent); }
-  .bd-app-shell .feed-dot.success { background: var(--success); }
-  .bd-app-shell .feed-dot.danger { background: var(--danger); }
-  .bd-app-shell .feed-line {
-    width: 1px;
-    flex: 1;
-    background: var(--border);
-    margin-top: 4px;
-  }
-  .bd-app-shell .feed-text {
-    font-size: 13px;
-    margin-bottom: 2px;
-  }
-  .bd-app-shell .feed-time {
-    font-size: 11.5px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-  }
-  .bd-app-shell .modal-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .bd-app-shell .modal {
-    width: 100%;
-    max-width: 440px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    transform: translateY(-10px) scale(0.98);
-    transition: transform 0.15s ease;
-  }
-  .bd-app-shell .modal-backdrop.open .modal {
-    transform: translateY(0) scale(1);
-  }
-  .bd-app-shell .modal-head {
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .bd-app-shell .modal-head h3 {
-    font-size: 15.5px;
-    font-weight: 700;
-  }
-  .bd-app-shell .modal-body {
-    padding: 20px;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  .bd-app-shell .modal-foot {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-  .bd-app-shell .slideover-close {
-    color: var(--text-muted);
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .slideover-close:hover {
-    background: var(--bg);
-    color: var(--text);
-  }
-  .bd-app-shell .extract-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-  .bd-app-shell .extract-item:last-child { border-bottom: none; }
-  .bd-app-shell .extract-item input {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    accent-color: var(--accent);
-  }
-  .bd-app-shell .tag-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-  .bd-app-shell .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 8px 3px 10px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 11.5px;
-    font-weight: 500;
-  }
-  .bd-app-shell .tag-chip button {
-    color: var(--accent);
-    opacity: 0.7;
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .bd-app-shell .tag-chip button:hover { opacity: 1; }
-  .bd-app-shell .tag-chip svg {
-    width: 11px;
-    height: 11px;
-  }
-  .bd-app-shell .attach-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-  .bd-app-shell .attach-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    font-size: 12.5px;
-    background: var(--surface);
-  }
-  .bd-app-shell .attach-row span {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .bd-app-shell .attach-row button {
-    color: var(--text-muted);
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .bd-app-shell .attach-row button:hover { color: var(--danger); }
-  .bd-app-shell .attach-btn-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 13px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .bd-app-shell .attach-btn-label:hover {
-    background: var(--surface-raised);
-  }
-  .bd-app-shell .card-meta-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .meta-tag {
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 10.5px;
-    font-weight: 600;
-  }
-  .bd-app-shell .meta-icon-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text-muted);
-    font-size: 11px;
-  }
-  .bd-app-shell .meta-icon-group svg {
-    width: 13px;
-    height: 13px;
-  }
-  .bd-app-shell .extract-preview {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  @media (max-width: 900px) {
-    .bd-app-shell .task-board { flex-direction: column; }
-  }
-  @media (max-width: 760px) {
-    .bd-app-shell .content { padding: 20px 16px 40px; }
-    .bd-app-shell .form-row { flex-direction: column; gap: 0; }
-    .bd-app-shell .reqlog-row {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .bd-app-shell .reqlog-actions-row {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-  }
-`;
+const ICON_CLS =
+    'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+const ICON_SM_CLS =
+    'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+
+const BTN =
+    'inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none';
+const BTN_PRIMARY = cn(BTN, 'bg-bion-accent text-bion-accent-text hover:opacity-[0.88]');
+const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised');
+const BTN_GHOST_SM = cn(
+    'inline-flex items-center gap-[7px] rounded-[8px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97]',
+    'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised',
+);
+
+const PILL_BASE =
+    'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
+
+const FIELD_LABEL = 'mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
+const FIELD_INPUT =
+    'w-full rounded-[8px] border border-bion-border bg-bion-surface px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
+
+const TAB_BTN =
+    'mr-[24px] whitespace-nowrap border-b-2 border-transparent py-[10px] text-[13.5px] font-medium text-bion-text-muted hover:text-bion-text';
+const TAB_BTN_ACTIVE = 'mr-[24px] whitespace-nowrap border-b-2 border-bion-accent py-[10px] text-[13.5px] font-medium text-bion-text';
+
+const MODAL_BACKDROP =
+    'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!';
+const MODAL =
+    'w-full max-w-[440px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]';
+const MODAL_HEAD = 'flex items-center justify-between border-b border-bion-border p-[18px_20px]';
+const MODAL_BODY = 'max-h-[60vh] overflow-y-auto p-[20px]';
+const MODAL_FOOT = 'flex justify-end gap-[10px] border-t border-bion-border p-[16px_20px]';
+const SLIDEOVER_CLOSE =
+    'flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text';
 
 type TabKey = 'details' | 'tasks' | 'reqlog' | 'activity';
 type ExtractSource = 'text' | 'file';
@@ -730,24 +69,31 @@ type RequestDraft = {
 };
 
 const toneClassMap: Record<BiondeskTone, string> = {
-    accent: 'pill-accent',
-    success: 'pill-success',
-    danger: 'pill-danger',
-    muted: 'pill-muted',
+    accent: cn(PILL_BASE, 'bg-bion-accent-soft text-bion-accent'),
+    success: cn(PILL_BASE, 'bg-bion-success-soft text-bion-success'),
+    danger: cn(PILL_BASE, 'bg-bion-danger-soft text-bion-danger'),
+    muted: cn(PILL_BASE, 'border border-bion-border bg-bion-surface-raised text-bion-text-muted'),
+};
+
+const toneDotMap: Record<BiondeskTone, string> = {
+    accent: 'bg-bion-accent',
+    success: 'bg-bion-success',
+    danger: 'bg-bion-danger',
+    muted: 'bg-bion-text-muted',
 };
 
 const toneColorMap: Record<BiondeskTone, string> = {
-    accent: 'var(--accent)',
-    success: 'var(--success)',
-    danger: 'var(--danger)',
-    muted: 'var(--text-muted)',
+    accent: 'var(--bion-accent)',
+    success: 'var(--bion-success)',
+    danger: 'var(--bion-danger)',
+    muted: 'var(--bion-text-muted)',
 };
 
 const requestClassMap: Record<ProjectRequestClassification, string> = {
-    new: 'class-new',
-    duplicate: 'class-duplicate',
-    related: 'class-related',
-    contradiction: 'class-contradiction',
+    new: 'bg-bion-accent-soft text-bion-accent',
+    duplicate: 'border border-bion-border bg-bion-surface-raised text-bion-text-muted',
+    related: 'border border-bion-border bg-bion-surface-raised text-bion-text-muted',
+    contradiction: 'bg-bion-danger-soft text-bion-danger',
 };
 
 const sourceIconMap: Record<ProjectRequestSource, string> = {
@@ -757,14 +103,6 @@ const sourceIconMap: Record<ProjectRequestSource, string> = {
     'Phone call': 'i-phone',
     Other: 'i-mail',
 };
-
-const emptyTaskDraft = (status: ProjectTaskStatus = 'todo'): TaskDraft => ({
-    title: '',
-    status,
-    description: '',
-    tags: [],
-    attachments: [],
-});
 
 const emptyRequestDraft = (): RequestDraft => ({
     text: '',
@@ -828,14 +166,6 @@ export default function ProjectShowPage({
             ]),
         ) as Record<ProjectTaskStatus, { label: string; tone: BiondeskTone }>;
     }, [taskStages]);
-
-    const taskProgress = useMemo(() => {
-        const done = project.tasks.filter((task) => task.status === 'done').length;
-        const total = project.tasks.length;
-        const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-
-        return { done, total, percent };
-    }, [project.tasks]);
 
     const groupedTasks = useMemo(() => {
         return taskStages.map((stage) => ({
@@ -1052,6 +382,7 @@ export default function ProjectShowPage({
         if (requestId === null) {
             setEditingRequestId(null);
             setRequestDraft(emptyRequestDraft());
+
             return;
         }
 
@@ -1292,21 +623,19 @@ export default function ProjectShowPage({
         <>
             <Head title={project.title} />
 
-            <style>{projectShowStyles}</style>
-
-            <div className="project-show-page">
-                <div className="detail-header-mini">
-                    <h1>{project.title}</h1>
-                    <div className="client-row">
+            <div className="flex min-h-0 flex-1 flex-col">
+                <div className="mb-[16px] shrink-0">
+                    <h1 className="mb-[5px] text-[21px] font-bold">{project.title}</h1>
+                    <div className="flex flex-wrap items-center gap-[10px] text-[13px] text-bion-text-muted">
                         <span>{project.client}</span>
-                        <span className={`pill ${toneClassMap[project.tone]}`}>
-                            <span className="dot" />
+                        <span className={toneClassMap[project.tone]}>
+                            <span className={cn('h-[6px] w-[6px] rounded-full', toneDotMap[project.tone])} />
                             {project.stageLabel}
                         </span>
                     </div>
                 </div>
 
-                <div className="tab-nav">
+                <div className="mb-[18px] flex shrink-0 gap-0 overflow-x-auto border-b border-bion-border">
                     {(
                         [
                             ['details', 'Details'],
@@ -1318,9 +647,7 @@ export default function ProjectShowPage({
                         <button
                             key={tab}
                             type="button"
-                            className={`tab-btn ${
-                                activeTab === tab ? 'active' : ''
-                            }`}
+                            className={activeTab === tab ? TAB_BTN_ACTIVE : TAB_BTN}
                             onClick={() => setActiveTab(tab)}
                         >
                             {label}
@@ -1328,17 +655,13 @@ export default function ProjectShowPage({
                     ))}
                 </div>
 
-                <div className="tab-panels">
-                    <div
-                        className={`tab-panel ${
-                            activeTab === 'details' ? 'active' : ''
-                        }`}
-                    >
-                        <div className="details-form">
-                            <div className="field-group">
-                                <span className="field-label">Title</span>
+                <div className="flex min-h-0 flex-1 flex-col">
+                    <div className={cn('min-h-0 flex-col', activeTab === 'details' ? 'flex' : 'hidden')}>
+                        <div className="max-w-[460px] overflow-y-auto">
+                            <div className="mb-[18px]">
+                                <span className={FIELD_LABEL}>Title</span>
                                 <input
-                                    className="field-input"
+                                    className={FIELD_INPUT}
                                     value={detailsForm.title}
                                     onChange={(event) =>
                                         setDetailsForm((current) => ({
@@ -1349,11 +672,11 @@ export default function ProjectShowPage({
                                 />
                             </div>
 
-                            <div className="form-row">
-                                <div className="field-group">
-                                    <span className="field-label">Client</span>
+                            <div className="flex gap-[12px]">
+                                <div className="mb-[18px] flex-1">
+                                    <span className={FIELD_LABEL}>Client</span>
                                     <input
-                                        className="field-input"
+                                        className={FIELD_INPUT}
                                         value={detailsForm.client}
                                         onChange={(event) =>
                                             setDetailsForm((current) => ({
@@ -1363,12 +686,12 @@ export default function ProjectShowPage({
                                         }
                                     />
                                 </div>
-                                <div className="field-group">
-                                    <span className="field-label">
+                                <div className="mb-[18px] flex-1">
+                                    <span className={FIELD_LABEL}>
                                         Due date
                                     </span>
                                     <input
-                                        className="field-input"
+                                        className={FIELD_INPUT}
                                         value={detailsForm.dueAt}
                                         onChange={(event) =>
                                             setDetailsForm((current) => ({
@@ -1380,10 +703,10 @@ export default function ProjectShowPage({
                                 </div>
                             </div>
 
-                            <div className="field-group">
-                                <span className="field-label">Status</span>
+                            <div className="mb-[18px]">
+                                <span className={FIELD_LABEL}>Status</span>
                                 <select
-                                    className="field-select"
+                                    className={FIELD_INPUT}
                                     value={detailsForm.stage}
                                     onChange={(event) =>
                                         setDetailsForm((current) => ({
@@ -1403,12 +726,12 @@ export default function ProjectShowPage({
                                 </select>
                             </div>
 
-                            <div className="field-group">
-                                <span className="field-label">
+                            <div className="mb-[18px]">
+                                <span className={FIELD_LABEL}>
                                     Description
                                 </span>
                                 <textarea
-                                    className="field-input"
+                                    className={cn(FIELD_INPUT, 'resize-y')}
                                     rows={5}
                                     value={detailsForm.description}
                                     onChange={(event) =>
@@ -1422,7 +745,7 @@ export default function ProjectShowPage({
 
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className={BTN_PRIMARY}
                                 onClick={saveDetails}
                             >
                                 Save changes
@@ -1430,46 +753,44 @@ export default function ProjectShowPage({
                         </div>
                     </div>
 
-                    <div
-                        className={`tab-panel ${
-                            activeTab === 'tasks' ? 'active' : ''
-                        }`}
-                    >
-                        <div className="task-toolbar">
-                            <div className="view-toggle">
+                    <div className={cn('min-h-0 flex-col', activeTab === 'tasks' ? 'flex' : 'hidden')}>
+                        <div className="mb-[14px] flex flex-wrap items-center justify-between gap-[10px]">
+                            <div className="flex rounded-[8px] border border-bion-border bg-bion-surface p-[2px]">
                                 <button
                                     type="button"
-                                    className={
-                                        taskView === 'board' ? 'active' : ''
-                                    }
+                                    className={cn(
+                                        'flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                        taskView === 'board' && 'bg-bion-accent-soft! text-bion-accent!',
+                                    )}
                                     onClick={() => setTaskView('board')}
                                 >
-                                    <svg className="icon icon-sm">
+                                    <svg className={ICON_SM_CLS}>
                                         <use href="#i-kanban" />
                                     </svg>
                                     Board
                                 </button>
                                 <button
                                     type="button"
-                                    className={
-                                        taskView === 'list' ? 'active' : ''
-                                    }
+                                    className={cn(
+                                        'flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                        taskView === 'list' && 'bg-bion-accent-soft! text-bion-accent!',
+                                    )}
                                     onClick={() => setTaskView('list')}
                                 >
-                                    <svg className="icon icon-sm">
+                                    <svg className={ICON_SM_CLS}>
                                         <use href="#i-list" />
                                     </svg>
                                     List
                                 </button>
                             </div>
 
-                            <div className="task-toolbar-right">
+                            <div className="flex gap-[8px]">
                                 <button
                                     type="button"
-                                    className="btn btn-ghost btn-sm"
+                                    className={BTN_GHOST_SM}
                                     onClick={openExtractModal}
                                 >
-                                    <svg className="icon icon-sm">
+                                    <svg className={ICON_SM_CLS}>
                                         <use href="#i-sparkles" />
                                     </svg>
                                     Extract with AI
@@ -1477,9 +798,10 @@ export default function ProjectShowPage({
                             </div>
                         </div>
 
-                        <div className="task-add-row">
+                        <div className="mb-[14px] flex shrink-0 gap-[8px]">
                             <input
                                 type="text"
+                                className="flex-1 rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[9px] text-[13px] text-bion-text"
                                 placeholder="Add a task..."
                                 value={newTaskTitle}
                                 onChange={(event) =>
@@ -1493,7 +815,7 @@ export default function ProjectShowPage({
                             />
                             <button
                                 type="button"
-                                className="btn btn-ghost"
+                                className={BTN_GHOST}
                                 onClick={addTask}
                             >
                                 Add task
@@ -1501,28 +823,27 @@ export default function ProjectShowPage({
                         </div>
 
                         {taskView === 'board' ? (
-                            <div className="task-board">
+                            <div className="flex min-h-0 flex-1 gap-[14px] overflow-x-auto pb-[8px] max-[900px]:flex-col">
                                 {groupedTasks.map((stage) => (
-                                    <div key={stage.key} className="task-col">
-                                        <div className="task-col-head">
+                                    <div key={stage.key} className="flex min-h-0 min-w-[200px] flex-1 flex-col">
+                                        <div className="flex shrink-0 items-center gap-[7px] px-[4px] pb-[10px] text-[12.5px] font-semibold text-bion-text-muted">
                                             <span
-                                                className="dot"
+                                                className="h-[6px] w-[6px] rounded-full"
                                                 style={{
                                                     background:
                                                         toneColorMap[stage.tone],
                                                 }}
                                             />
                                             {stage.label}
-                                            <span className="count">
+                                            <span className="ml-auto font-mono">
                                                 {stage.items.length}
                                             </span>
                                         </div>
                                         <div
-                                            className={`task-col-body ${
-                                                draggedTaskId !== null
-                                                    ? 'drag-over'
-                                                    : ''
-                                            }`}
+                                            className={cn(
+                                                'flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto rounded-[8px] p-[4px] [transition:background_0.12s_ease]',
+                                                draggedTaskId !== null && 'bg-bion-accent-soft',
+                                            )}
                                             onDragOver={(event) =>
                                                 event.preventDefault()
                                             }
@@ -1533,13 +854,14 @@ export default function ProjectShowPage({
                                                         stage.key,
                                                     );
                                                 }
+
                                                 setDraggedTaskId(null);
                                             }}
                                         >
                                             {stage.items.map((task) => (
                                                 <div
                                                     key={task.id}
-                                                    className="task-card"
+                                                    className="group rounded-[9px] border border-bion-border bg-bion-surface p-[10px_11px] text-[13px] [transition:border-color_0.12s_ease] cursor-pointer hover:border-bion-accent"
                                                     draggable
                                                     onDragStart={() =>
                                                         setDraggedTaskId(task.id)
@@ -1551,11 +873,11 @@ export default function ProjectShowPage({
                                                         openTaskDetail(task.id)
                                                     }
                                                 >
-                                                    <div className="task-card-top">
+                                                    <div className="flex items-center justify-between gap-[8px]">
                                                         <span>{task.title}</span>
                                                         <button
                                                             type="button"
-                                                            className="task-delete"
+                                                            className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[5px] text-bion-text-muted opacity-0 [transition:opacity_0.12s_ease] group-hover:opacity-100 hover:bg-bion-danger-soft hover:text-bion-danger"
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
                                                                 setProject(
@@ -1572,7 +894,7 @@ export default function ProjectShowPage({
                                                                 );
                                                             }}
                                                         >
-                                                            <svg className="icon icon-sm">
+                                                            <svg className={ICON_SM_CLS}>
                                                                 <use href="#i-x" />
                                                             </svg>
                                                         </button>
@@ -1583,12 +905,12 @@ export default function ProjectShowPage({
                                                             '' ||
                                                         task.attachments
                                                             .length > 0) && (
-                                                        <div className="card-meta-row">
+                                                        <div className="mt-[8px] flex flex-wrap items-center gap-[10px]">
                                                             {task.tags.map(
                                                                 (tag) => (
                                                                     <span
                                                                         key={tag}
-                                                                        className="meta-tag"
+                                                                        className="rounded-full bg-bion-accent-soft px-[8px] py-[2px] text-[10.5px] font-semibold text-bion-accent"
                                                                     >
                                                                         {tag}
                                                                     </span>
@@ -1596,16 +918,16 @@ export default function ProjectShowPage({
                                                             )}
                                                             {task.description !==
                                                             '' ? (
-                                                                <span className="meta-icon-group">
-                                                                    <svg className="icon icon-sm">
+                                                                <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                                    <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                                         <use href="#i-align-left" />
                                                                     </svg>
                                                                 </span>
                                                             ) : null}
                                                             {task.attachments
                                                                 .length > 0 ? (
-                                                                <span className="meta-icon-group">
-                                                                    <svg className="icon icon-sm">
+                                                                <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                                    <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                                         <use href="#i-paperclip" />
                                                                     </svg>
                                                                     {
@@ -1624,23 +946,25 @@ export default function ProjectShowPage({
                                 ))}
                             </div>
                         ) : (
-                            <div className="panel">
-                                <div className="table-wrap">
-                                    <table className="data-table">
-                                        <thead>
+                            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
+                                <div className="min-h-0 flex-1 overflow-y-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead className="sticky top-0 z-[5] bg-bion-surface">
                                             <tr>
-                                                <th>Task</th>
-                                                <th>Status</th>
+                                                <th className="border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                                    Task
+                                                </th>
+                                                <th className="border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                                    Status
+                                                </th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody className="[&_tr:last-child_td]:border-b-0">
                                             {project.tasks.length > 0 ? (
                                                 project.tasks.map((task) => (
                                                     <tr key={task.id}>
                                                         <td
-                                                            style={{
-                                                                cursor: 'pointer',
-                                                            }}
+                                                            className="cursor-pointer border-b border-bion-border px-[16px] py-[12px] text-[13px]"
                                                             onClick={() =>
                                                                 openTaskDetail(
                                                                     task.id,
@@ -1649,9 +973,9 @@ export default function ProjectShowPage({
                                                         >
                                                             {task.title}
                                                         </td>
-                                                        <td>
+                                                        <td className="border-b border-bion-border px-[16px] py-[12px] text-[13px]">
                                                             <select
-                                                                className="status-inline"
+                                                                className="rounded-[6px] border border-bion-border bg-bion-bg px-[8px] py-[5px] text-[12.5px] text-bion-text"
                                                                 value={
                                                                     task.status
                                                                 }
@@ -1697,7 +1021,7 @@ export default function ProjectShowPage({
                                                 <tr>
                                                     <td
                                                         colSpan={2}
-                                                        className="empty-note"
+                                                        className="border-b border-bion-border px-[16px] py-[12px] text-[12px] text-bion-text-muted italic"
                                                     >
                                                         No tasks yet.
                                                     </td>
@@ -1710,37 +1034,28 @@ export default function ProjectShowPage({
                         )}
                     </div>
 
-                    <div
-                        className={`tab-panel ${
-                            activeTab === 'reqlog' ? 'active' : ''
-                        }`}
-                    >
-                        <div className="reqlog-toolbar">
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-end',
-                                    marginBottom: '12px',
-                                }}
-                            >
+                    <div className={cn('min-h-0 flex-col', activeTab === 'reqlog' ? 'flex' : 'hidden')}>
+                        <div className="mb-[14px] shrink-0">
+                            <div className="mb-[12px] flex justify-end">
                                 <button
                                     type="button"
-                                    className="btn btn-ghost btn-sm"
+                                    className={BTN_GHOST_SM}
                                     onClick={() => openRequestDetail(null)}
                                 >
-                                    <svg className="icon icon-sm">
+                                    <svg className={ICON_SM_CLS}>
                                         <use href="#i-plus" />
                                     </svg>
                                     Add Request
                                 </button>
                             </div>
 
-                            <label className="search-box">
-                                <svg className="icon icon-sm">
+                            <label className="mb-[12px] flex items-center gap-[8px] rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[8px] text-bion-text-muted">
+                                <svg className={ICON_SM_CLS}>
                                     <use href="#i-search" />
                                 </svg>
                                 <input
                                     type="text"
+                                    className="flex-1 border-none bg-transparent text-[13px] text-bion-text outline-none"
                                     placeholder="Search past requests by keyword, content..."
                                     value={reqSearch}
                                     onChange={(event) =>
@@ -1749,7 +1064,7 @@ export default function ProjectShowPage({
                                 />
                             </label>
 
-                            <div className="chip-row">
+                            <div className="flex flex-wrap gap-[8px]">
                                 {(
                                     [
                                         ['all', 'All Requests'],
@@ -1764,9 +1079,10 @@ export default function ProjectShowPage({
                                     <button
                                         key={key}
                                         type="button"
-                                        className={`chip ${
-                                            reqFilter === key ? 'active' : ''
-                                        }`}
+                                        className={cn(
+                                            'rounded-full border border-bion-border bg-bion-surface px-[14px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                            reqFilter === key && 'border-bion-text! bg-bion-text! text-bion-bg!',
+                                        )}
                                         onClick={() => setReqFilter(key)}
                                     >
                                         {label}
@@ -1775,23 +1091,22 @@ export default function ProjectShowPage({
                             </div>
                         </div>
 
-                        <div className="reqlog-scroll">
+                        <div className="min-h-0 flex-1 overflow-y-auto">
                             {filteredRequestLogs.length > 0 ? (
                                 filteredRequestLogs.map((requestLog) => (
                                     <div
                                         key={requestLog.id}
-                                        className="reqlog-row"
-                                        style={{ cursor: 'pointer' }}
+                                        className="mb-[10px] flex cursor-pointer items-center gap-[16px] rounded-[10px] border border-bion-border bg-bion-surface p-[14px_16px] max-[760px]:flex-col max-[760px]:items-start"
                                         onClick={() =>
                                             openRequestDetail(requestLog.id)
                                         }
                                     >
-                                        <div className="reqlog-main">
-                                            <div className="reqlog-text">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="mb-[6px] text-[13.5px] font-medium">
                                                 "{requestLog.text}"
                                             </div>
-                                            <div className="reqlog-meta">
-                                                <svg className="icon icon-sm">
+                                            <div className="flex flex-wrap items-center gap-[7px] text-[12px] text-bion-text-muted">
+                                                <svg className={ICON_SM_CLS}>
                                                     <use
                                                         href={`#${
                                                             sourceIconMap[
@@ -1804,16 +1119,16 @@ export default function ProjectShowPage({
                                                 {requestLog.source} ·{' '}
                                                 {requestLog.date}
                                                 {requestLog.notes !== '' ? (
-                                                    <span className="meta-icon-group">
-                                                        <svg className="icon icon-sm">
+                                                    <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                        <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                             <use href="#i-align-left" />
                                                         </svg>
                                                     </span>
                                                 ) : null}
                                                 {requestLog.attachments.length >
                                                 0 ? (
-                                                    <span className="meta-icon-group">
-                                                        <svg className="icon icon-sm">
+                                                    <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                        <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                             <use href="#i-paperclip" />
                                                         </svg>
                                                         {
@@ -1826,23 +1141,24 @@ export default function ProjectShowPage({
                                             </div>
                                         </div>
                                         <span
-                                            className={`class-badge ${
+                                            className={cn(
+                                                'shrink-0 rounded-full px-[10px] py-[3px] text-[10.5px] font-bold uppercase [letter-spacing:0.03em]',
                                                 requestClassMap[
                                                     requestLog.classification
-                                                ]
-                                            }`}
+                                                ],
+                                            )}
                                         >
                                             {requestLog.classification}
                                         </span>
                                         <div
-                                            className="reqlog-actions-row"
+                                            className="flex shrink-0 gap-[8px] max-[760px]:w-full max-[760px]:flex-wrap"
                                             onClick={(event) =>
                                                 event.stopPropagation()
                                             }
                                         >
                                             <button
                                                 type="button"
-                                                className="btn btn-ghost btn-sm"
+                                                className={BTN_GHOST_SM}
                                                 onClick={() =>
                                                     convertRequestToTask(
                                                         requestLog.id,
@@ -1853,7 +1169,7 @@ export default function ProjectShowPage({
                                             </button>
                                             <button
                                                 type="button"
-                                                className="btn btn-ghost btn-sm"
+                                                className={BTN_GHOST_SM}
                                                 onClick={() =>
                                                     dismissRequest(
                                                         requestLog.id,
@@ -1866,46 +1182,43 @@ export default function ProjectShowPage({
                                     </div>
                                 ))
                             ) : (
-                                <div className="empty-note">
+                                <div className="py-[6px] text-[12px] text-bion-text-muted italic">
                                     No requests match this filter.
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div
-                        className={`tab-panel ${
-                            activeTab === 'activity' ? 'active' : ''
-                        }`}
-                    >
-                        <div className="activity-scroll">
+                    <div className={cn('min-h-0 flex-col', activeTab === 'activity' ? 'flex' : 'hidden')}>
+                        <div className="min-h-0 max-w-[560px] flex-1 overflow-y-auto">
                             {project.activity.length > 0 ? (
                                 project.activity.map((entry, index) => (
-                                    <div key={`${entry.text}-${index}`} className="feed-item">
-                                        <div className="feed-dot-wrap">
+                                    <div key={`${entry.text}-${index}`} className="flex gap-[12px] p-[11px_4px]">
+                                        <div className="flex shrink-0 flex-col items-center pt-[3px]">
                                             <div
-                                                className={`feed-dot ${
-                                                    entry.tone === 'muted'
-                                                        ? ''
-                                                        : entry.tone
-                                                }`}
+                                                className={cn(
+                                                    'h-[7px] w-[7px] rounded-full bg-bion-border',
+                                                    entry.tone === 'accent' && 'bg-bion-accent',
+                                                    entry.tone === 'success' && 'bg-bion-success',
+                                                    entry.tone === 'danger' && 'bg-bion-danger',
+                                                )}
                                             />
                                             {index < project.activity.length - 1 ? (
-                                                <div className="feed-line" />
+                                                <div className="mt-[4px] w-px flex-1 bg-bion-border" />
                                             ) : null}
                                         </div>
                                         <div>
-                                            <div className="feed-text">
+                                            <div className="mb-[2px] text-[13px]">
                                                 {entry.text}
                                             </div>
-                                            <div className="feed-time">
+                                            <div className="text-[11.5px] text-bion-text-muted">
                                                 {entry.time}
                                             </div>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="empty-note">
+                                <div className="py-[6px] text-[12px] text-bion-text-muted italic">
                                     No activity yet.
                                 </div>
                             )}
@@ -1915,34 +1228,32 @@ export default function ProjectShowPage({
             </div>
 
             <div
-                className={`modal-backdrop ${
-                    editingTaskId !== null ? 'open' : ''
-                }`}
+                className={cn(MODAL_BACKDROP, editingTaskId !== null && 'open')}
                 onClick={(event) => {
                     if (event.target === event.currentTarget) {
                         closeTaskDetail();
                     }
                 }}
             >
-                <div className="modal" style={{ maxWidth: '520px' }}>
-                    <div className="modal-head">
-                        <h3>Edit Task</h3>
+                <div className={cn(MODAL, 'max-w-[520px]')}>
+                    <div className={MODAL_HEAD}>
+                        <h3 className="text-[15.5px] font-bold">Edit Task</h3>
                         <button
                             type="button"
-                            className="slideover-close"
+                            className={SLIDEOVER_CLOSE}
                             onClick={closeTaskDetail}
                         >
-                            <svg className="icon">
+                            <svg className={ICON_CLS}>
                                 <use href="#i-x" />
                             </svg>
                         </button>
                     </div>
 
-                    <div className="modal-body">
-                        <div className="field-group">
-                            <span className="field-label">Title</span>
+                    <div className={MODAL_BODY}>
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Title</span>
                             <input
-                                className="field-input"
+                                className={FIELD_INPUT}
                                 value={taskDraft?.title ?? ''}
                                 onChange={(event) =>
                                     setTaskDraft((current) =>
@@ -1957,10 +1268,10 @@ export default function ProjectShowPage({
                             />
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Status</span>
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Status</span>
                             <select
-                                className="field-select"
+                                className={FIELD_INPUT}
                                 value={taskDraft?.status ?? 'todo'}
                                 onChange={(event) =>
                                     setTaskDraft((current) =>
@@ -1982,10 +1293,10 @@ export default function ProjectShowPage({
                             </select>
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Description</span>
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Description</span>
                             <textarea
-                                className="field-input"
+                                className={cn(FIELD_INPUT, 'resize-y')}
                                 rows={3}
                                 value={taskDraft?.description ?? ''}
                                 onChange={(event) =>
@@ -2002,14 +1313,15 @@ export default function ProjectShowPage({
                             />
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Tags</span>
-                            <div className="tag-chips">
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Tags</span>
+                            <div className="mb-[8px] flex flex-wrap gap-[6px]">
                                 {taskDraft?.tags.map((tag, index) => (
-                                    <span key={`${tag}-${index}`} className="tag-chip">
+                                    <span key={`${tag}-${index}`} className="inline-flex items-center gap-[5px] rounded-full bg-bion-accent-soft py-[3px] pr-[8px] pl-[10px] text-[11.5px] font-medium text-bion-accent">
                                         {tag}
                                         <button
                                             type="button"
+                                            className="flex h-[14px] w-[14px] items-center justify-center text-bion-accent opacity-70 hover:opacity-100"
                                             onClick={() =>
                                                 setTaskDraft((current) =>
                                                     current
@@ -2028,7 +1340,7 @@ export default function ProjectShowPage({
                                                 )
                                             }
                                         >
-                                            <svg className="icon">
+                                            <svg className="h-[11px] w-[11px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                 <use href="#i-x" />
                                             </svg>
                                         </button>
@@ -2036,27 +1348,28 @@ export default function ProjectShowPage({
                                 ))}
                             </div>
                             <input
-                                className="field-input"
+                                className={FIELD_INPUT}
                                 placeholder="Type a tag and press Enter"
                                 onKeyDown={handleTaskTagEnter}
                             />
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Attachments</span>
-                            <div className="attach-list">
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Attachments</span>
+                            <div className="mb-[10px] flex flex-col gap-[6px]">
                                 {taskDraft?.attachments.map(
                                     (attachment, index) => (
                                         <div
                                             key={`${attachment.name}-${index}`}
-                                            className="attach-row"
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
                                         >
-                                            <svg className="icon icon-sm">
+                                            <svg className={ICON_SM_CLS}>
                                                 <use href="#i-paperclip" />
                                             </svg>
-                                            <span>{attachment.name}</span>
+                                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{attachment.name}</span>
                                             <button
                                                 type="button"
+                                                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-bion-text-muted hover:text-bion-danger"
                                                 onClick={() =>
                                                     setTaskDraft((current) =>
                                                         current
@@ -2076,7 +1389,7 @@ export default function ProjectShowPage({
                                                     )
                                                 }
                                             >
-                                                <svg className="icon icon-sm">
+                                                <svg className={ICON_SM_CLS}>
                                                     <use href="#i-x" />
                                                 </svg>
                                             </button>
@@ -2084,45 +1397,41 @@ export default function ProjectShowPage({
                                     ),
                                 )}
                             </div>
-                            <label className="attach-btn-label">
-                                <svg className="icon icon-sm">
+                            <label className="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-bion-border bg-bion-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-bion-surface-raised">
+                                <svg className={ICON_SM_CLS}>
                                     <use href="#i-paperclip" />
                                 </svg>
                                 Add attachment
                                 <input
                                     type="file"
                                     multiple
-                                    style={{ display: 'none' }}
+                                    className="hidden"
                                     onChange={handleTaskAttachmentChange}
                                 />
                             </label>
                         </div>
                     </div>
 
-                    <div
-                        className="modal-foot"
-                        style={{ justifyContent: 'space-between' }}
-                    >
+                    <div className={cn(MODAL_FOOT, 'justify-between')}>
                         <button
                             type="button"
-                            className="btn btn-ghost"
-                            style={{ color: 'var(--danger)' }}
+                            className={cn(BTN_GHOST, 'text-bion-danger')}
                             onClick={deleteTask}
                         >
                             Delete task
                         </button>
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="flex gap-[10px]">
                             <button
                                 type="button"
-                                className="btn btn-ghost"
+                                className={BTN_GHOST}
                                 onClick={closeTaskDetail}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className={BTN_PRIMARY}
                                 onClick={saveTaskDetail}
                             >
                                 Save
@@ -2133,38 +1442,36 @@ export default function ProjectShowPage({
             </div>
 
             <div
-                className={`modal-backdrop ${
-                    requestDraft !== null ? 'open' : ''
-                }`}
+                className={cn(MODAL_BACKDROP, requestDraft !== null && 'open')}
                 onClick={(event) => {
                     if (event.target === event.currentTarget) {
                         closeRequestDetail();
                     }
                 }}
             >
-                <div className="modal" style={{ maxWidth: '520px' }}>
-                    <div className="modal-head">
-                        <h3>
+                <div className={cn(MODAL, 'max-w-[520px]')}>
+                    <div className={MODAL_HEAD}>
+                        <h3 className="text-[15.5px] font-bold">
                             {editingRequestId === null
                                 ? 'Add Request'
                                 : 'Request Detail'}
                         </h3>
                         <button
                             type="button"
-                            className="slideover-close"
+                            className={SLIDEOVER_CLOSE}
                             onClick={closeRequestDetail}
                         >
-                            <svg className="icon">
+                            <svg className={ICON_CLS}>
                                 <use href="#i-x" />
                             </svg>
                         </button>
                     </div>
 
-                    <div className="modal-body">
-                        <div className="field-group">
-                            <span className="field-label">Request text</span>
+                    <div className={MODAL_BODY}>
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Request text</span>
                             <textarea
-                                className="field-input"
+                                className={cn(FIELD_INPUT, 'resize-y')}
                                 rows={2}
                                 value={requestDraft?.text ?? ''}
                                 onChange={(event) =>
@@ -2180,11 +1487,11 @@ export default function ProjectShowPage({
                             />
                         </div>
 
-                        <div className="form-row">
-                            <div className="field-group">
-                                <span className="field-label">Source</span>
+                        <div className="flex gap-[12px] max-[760px]:flex-col">
+                            <div className="mb-[18px] flex-1">
+                                <span className={FIELD_LABEL}>Source</span>
                                 <select
-                                    className="field-select"
+                                    className={FIELD_INPUT}
                                     value={requestDraft?.source ?? 'WhatsApp'}
                                     onChange={(event) =>
                                         setRequestDraft((current) =>
@@ -2214,12 +1521,12 @@ export default function ProjectShowPage({
                                 </select>
                             </div>
 
-                            <div className="field-group">
-                                <span className="field-label">
+                            <div className="mb-[18px] flex-1">
+                                <span className={FIELD_LABEL}>
                                     Classification
                                 </span>
                                 <select
-                                    className="field-select"
+                                    className={FIELD_INPUT}
                                     value={requestDraft?.classification ?? 'new'}
                                     onChange={(event) =>
                                         setRequestDraft((current) =>
@@ -2253,10 +1560,10 @@ export default function ProjectShowPage({
                             </div>
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Notes</span>
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Notes</span>
                             <textarea
-                                className="field-input"
+                                className={cn(FIELD_INPUT, 'resize-y')}
                                 rows={3}
                                 value={requestDraft?.notes ?? ''}
                                 onChange={(event) =>
@@ -2272,21 +1579,22 @@ export default function ProjectShowPage({
                             />
                         </div>
 
-                        <div className="field-group">
-                            <span className="field-label">Attachments</span>
-                            <div className="attach-list">
+                        <div className="mb-[18px]">
+                            <span className={FIELD_LABEL}>Attachments</span>
+                            <div className="mb-[10px] flex flex-col gap-[6px]">
                                 {requestDraft?.attachments.map(
                                     (attachment, index) => (
                                         <div
                                             key={`${attachment.name}-${index}`}
-                                            className="attach-row"
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
                                         >
-                                            <svg className="icon icon-sm">
+                                            <svg className={ICON_SM_CLS}>
                                                 <use href="#i-paperclip" />
                                             </svg>
-                                            <span>{attachment.name}</span>
+                                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{attachment.name}</span>
                                             <button
                                                 type="button"
+                                                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-bion-text-muted hover:text-bion-danger"
                                                 onClick={() =>
                                                     setRequestDraft((current) =>
                                                         current
@@ -2306,7 +1614,7 @@ export default function ProjectShowPage({
                                                     )
                                                 }
                                             >
-                                                <svg className="icon icon-sm">
+                                                <svg className={ICON_SM_CLS}>
                                                     <use href="#i-x" />
                                                 </svg>
                                             </button>
@@ -2314,34 +1622,28 @@ export default function ProjectShowPage({
                                     ),
                                 )}
                             </div>
-                            <label className="attach-btn-label">
-                                <svg className="icon icon-sm">
+                            <label className="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-bion-border bg-bion-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-bion-surface-raised">
+                                <svg className={ICON_SM_CLS}>
                                     <use href="#i-paperclip" />
                                 </svg>
                                 Add attachment
                                 <input
                                     type="file"
                                     multiple
-                                    style={{ display: 'none' }}
+                                    className="hidden"
                                     onChange={handleRequestAttachmentChange}
                                 />
                             </label>
                         </div>
                     </div>
 
-                    <div
-                        className="modal-foot"
-                        style={{ justifyContent: 'space-between' }}
-                    >
+                    <div className={cn(MODAL_FOOT, 'justify-between')}>
                         <button
                             type="button"
-                            className="btn btn-ghost"
-                            style={{
-                                color:
-                                    editingRequestId === null
-                                        ? 'var(--text)'
-                                        : 'var(--danger)',
-                            }}
+                            className={cn(
+                                BTN_GHOST,
+                                editingRequestId === null ? 'text-bion-text' : 'text-bion-danger',
+                            )}
                             onClick={() => {
                                 if (editingRequestId !== null) {
                                     dismissRequest(editingRequestId);
@@ -2355,17 +1657,17 @@ export default function ProjectShowPage({
                                 : 'Dismiss request'}
                         </button>
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="flex gap-[10px]">
                             <button
                                 type="button"
-                                className="btn btn-ghost"
+                                className={BTN_GHOST}
                                 onClick={closeRequestDetail}
                             >
                                 Close
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className={BTN_PRIMARY}
                                 onClick={saveRequestDetail}
                             >
                                 Save
@@ -2376,60 +1678,50 @@ export default function ProjectShowPage({
             </div>
 
             <div
-                className={`modal-backdrop ${
-                    showExtractModal ? 'open' : ''
-                }`}
+                className={cn(MODAL_BACKDROP, showExtractModal && 'open')}
                 onClick={(event) => {
                     if (event.target === event.currentTarget) {
                         closeExtractModal();
                     }
                 }}
             >
-                <div className="modal" style={{ maxWidth: '560px' }}>
-                    <div className="modal-head">
-                        <h3>
-                            <svg
-                                className="icon icon-sm"
-                                style={{
-                                    display: 'inline',
-                                    verticalAlign: '-2px',
-                                    color: 'var(--accent)',
-                                }}
-                            >
+                <div className={cn(MODAL, 'max-w-[560px]')}>
+                    <div className={MODAL_HEAD}>
+                        <h3 className="flex items-center gap-[6px] text-[15.5px] font-bold">
+                            <svg className={cn(ICON_SM_CLS, 'text-bion-accent')}>
                                 <use href="#i-sparkles" />
-                            </svg>{' '}
+                            </svg>
                             Extract tasks with AI
                         </h3>
                         <button
                             type="button"
-                            className="slideover-close"
+                            className={SLIDEOVER_CLOSE}
                             onClick={closeExtractModal}
                         >
-                            <svg className="icon">
+                            <svg className={ICON_CLS}>
                                 <use href="#i-x" />
                             </svg>
                         </button>
                     </div>
 
-                    <div className="modal-body">
-                        <div
-                            className="view-toggle"
-                            style={{ marginBottom: '16px' }}
-                        >
+                    <div className={MODAL_BODY}>
+                        <div className="mb-[16px] flex rounded-[8px] border border-bion-border bg-bion-surface p-[2px]">
                             <button
                                 type="button"
-                                className={
-                                    extractSource === 'text' ? 'active' : ''
-                                }
+                                className={cn(
+                                    'flex flex-1 items-center justify-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                    extractSource === 'text' && 'bg-bion-accent-soft! text-bion-accent!',
+                                )}
                                 onClick={() => setExtractSource('text')}
                             >
                                 Paste Text
                             </button>
                             <button
                                 type="button"
-                                className={
-                                    extractSource === 'file' ? 'active' : ''
-                                }
+                                className={cn(
+                                    'flex flex-1 items-center justify-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                    extractSource === 'file' && 'bg-bion-accent-soft! text-bion-accent!',
+                                )}
                                 onClick={() => setExtractSource('file')}
                             >
                                 Upload File
@@ -2437,12 +1729,12 @@ export default function ProjectShowPage({
                         </div>
 
                         {extractSource === 'text' ? (
-                            <div className="field-group">
-                                <span className="field-label">
+                            <div className="mb-[18px]">
+                                <span className={FIELD_LABEL}>
                                     Paste a description, chat, or any context
                                 </span>
                                 <textarea
-                                    className="field-input"
+                                    className={cn(FIELD_INPUT, 'resize-y')}
                                     rows={6}
                                     placeholder="Paste a project brief, chat, or meeting notes here..."
                                     value={extractInput}
@@ -2452,33 +1744,33 @@ export default function ProjectShowPage({
                                 />
                             </div>
                         ) : (
-                            <div className="field-group">
-                                <span className="field-label">
+                            <div className="mb-[18px]">
+                                <span className={FIELD_LABEL}>
                                     Upload a screenshot, photo, or audio recording
                                 </span>
-                                <label className="attach-btn-label">
-                                    <svg className="icon icon-sm">
+                                <label className="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-bion-border bg-bion-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-bion-surface-raised">
+                                    <svg className={ICON_SM_CLS}>
                                         <use href="#i-paperclip" />
                                     </svg>
                                     Choose file
                                     <input
                                         type="file"
                                         accept="image/*,audio/*"
-                                        style={{ display: 'none' }}
+                                        className="hidden"
                                         onChange={handleExtractFileChange}
                                     />
                                 </label>
                                 {extractFileNames.length > 0 ? (
-                                    <div className="extract-preview">
+                                    <div className="mt-[10px] flex flex-col gap-[8px]">
                                         {extractFileNames.map((fileName) => (
                                             <div
                                                 key={fileName}
-                                                className="attach-row"
+                                                className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
                                             >
-                                                <svg className="icon icon-sm">
+                                                <svg className={ICON_SM_CLS}>
                                                     <use href="#i-paperclip" />
                                                 </svg>
-                                                <span>{fileName}</span>
+                                                <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{fileName}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -2488,17 +1780,18 @@ export default function ProjectShowPage({
 
                         {extractCandidates.length > 0 ? (
                             <div>
-                                <span className="field-label">
+                                <span className={FIELD_LABEL}>
                                     Suggested tasks, uncheck what you don't need
                                 </span>
                                 <div>
                                     {extractCandidates.map((candidate) => (
                                         <label
                                             key={candidate.id}
-                                            className="extract-item"
+                                            className="flex cursor-pointer items-center gap-[10px] border-b border-bion-border py-[8px] last:border-b-0"
                                         >
                                             <input
                                                 type="checkbox"
+                                                className="h-[16px] w-[16px] shrink-0 accent-bion-accent"
                                                 checked={candidate.selected}
                                                 onChange={() =>
                                                     setExtractCandidates(
@@ -2527,17 +1820,17 @@ export default function ProjectShowPage({
                         ) : null}
                     </div>
 
-                    <div className="modal-foot">
+                    <div className={MODAL_FOOT}>
                         <button
                             type="button"
-                            className="btn btn-ghost"
+                            className={BTN_GHOST}
                             onClick={closeExtractModal}
                         >
                             Cancel
                         </button>
                         <button
                             type="button"
-                            className="btn btn-primary"
+                            className={BTN_PRIMARY}
                             onClick={runExtract}
                         >
                             {extractCandidates.length > 0
@@ -2585,4 +1878,6 @@ ProjectShowPage.layout = (props: {
                     : '/',
         },
     ],
+    mainClassName:
+        'flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]',
 });

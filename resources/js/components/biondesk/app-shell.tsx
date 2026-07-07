@@ -8,6 +8,7 @@ import {
     home,
     logout,
 } from '@/routes';
+import { index as invoices } from '@/routes/invoices';
 import { index as opportunities } from '@/routes/opportunities';
 import { edit as profile } from '@/routes/profile';
 import { index as projects } from '@/routes/projects';
@@ -24,7 +25,11 @@ import type { BreadcrumbItem } from '@/types';
 type Props = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
+    mainClassName?: string;
 };
+
+const DEFAULT_MAIN_CLS =
+    'flex-1 overflow-y-auto px-[32px] py-[28px] max-[760px]:px-[16px] max-[760px]:pt-[20px] max-[760px]:pb-[40px]';
 
 type NavItem = {
     title: string;
@@ -38,660 +43,44 @@ type NavSection = {
     items: NavItem[];
 };
 
-const shellStyles = `
-  .bd-app-shell {
-    --bg: #F6F7F9;
-    --surface: #FFFFFF;
-    --surface-raised: #FFFFFF;
-    --border: #E4E6EB;
-    --text: #12161F;
-    --text-muted: #6B7280;
-    --accent: #C77F1F;
-    --accent-text: #FFFFFF;
-    --success: #1F8A5F;
-    --danger: #D6383D;
-    --accent-soft: rgba(199,127,31,0.1);
-    --success-soft: rgba(31,138,95,0.1);
-    --danger-soft: rgba(214,56,61,0.1);
-    --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
-    --font-display: "Instrument Sans", sans-serif;
-    --font-mono: "JetBrains Mono", monospace;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-display);
-    font-size: 14px;
-    height: 100vh;
-    overflow: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
+const ICON_CLS =
+    'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+const ICON_SM_CLS =
+    'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
 
-  .bd-app-shell[data-theme="dark"] {
-    --bg: #0B0E14;
-    --surface: #12161F;
-    --surface-raised: #1A1F2B;
-    --border: #232838;
-    --text: #EDEFF3;
-    --text-muted: #8B93A6;
-    --accent: #E8A33D;
-    --accent-text: #12161F;
-    --success: #34A87C;
-    --danger: #E5484D;
-    --accent-soft: rgba(232,163,61,0.12);
-    --success-soft: rgba(52,168,124,0.12);
-    --danger-soft: rgba(229,72,77,0.12);
-    --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
-  }
+const TOOLTIP_CLS = cn(
+    'tooltip hidden group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:absolute',
+    'group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:z-40',
+    'group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:rounded-[6px]',
+    'group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-bion-border group-[.collapsed]/sidebar:bg-bion-surface-raised',
+    'group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px]',
+    'group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:shadow-bion-raised',
+    'group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease]',
+    'group-[.collapsed]/sidebar:group-hover/nav:opacity-100!',
+    'group-[.collapsed]/sidebar:block!',
+);
 
-  .bd-app-shell * { margin: 0; padding: 0; box-sizing: border-box; }
-  .bd-app-shell * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-  .bd-app-shell *::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
-  }
-  .bd-app-shell *::-webkit-scrollbar-track { background: transparent; }
-  .bd-app-shell *::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 999px;
-  }
-  .bd-app-shell *::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-  .bd-app-shell button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  .bd-app-shell a { color: inherit; text-decoration: none; }
-  .bd-app-shell input { font: inherit; color: inherit; }
-  .bd-app-shell input::placeholder { color: inherit; opacity: 1; }
-  .bd-app-shell a:focus-visible,
-  .bd-app-shell button:focus-visible,
-  .bd-app-shell input:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
+const NAV_ITEM_BASE =
+    'nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap [transition:background_0.12s_ease,color_0.12s_ease] group-[.collapsed]/sidebar:justify-center';
 
-  .bd-app-shell .icon {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .icon-sm { width: 15px; height: 15px; }
+const commandItems: Array<{
+    section: string;
+    label: string;
+    icon: string;
+    highlighted?: boolean;
+}> = [
+    { section: 'Quick actions', label: 'New Opportunity', icon: 'i-plus', highlighted: true },
+    { section: 'Quick actions', label: 'New Invoice', icon: 'i-file' },
+    { section: 'Jump to', label: 'Opportunities', icon: 'i-kanban' },
+    { section: 'Jump to', label: 'Projects', icon: 'i-briefcase' },
+    { section: 'Jump to', label: 'Contacts', icon: 'i-users' },
+];
 
-  .bd-app-shell .app-shell { display: flex; height: 100vh; overflow: hidden; }
-  .bd-app-shell .sidebar {
-    width: 240px;
-    flex-shrink: 0;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: width 0.2s ease;
-  }
-  .bd-app-shell .sidebar.collapsed { width: 68px; }
-  .bd-app-shell .sidebar-toggle {
-    position: absolute;
-    top: 16px;
-    right: -14px;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    box-shadow: var(--shadow-raised);
-    z-index: 35;
-    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-  }
-  .bd-app-shell .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
-  .bd-app-shell .sidebar-toggle .icon { transition: transform 0.2s ease; }
-  .bd-app-shell .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
-  .bd-app-shell .sidebar-brand {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 18px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .bd-app-shell .brand-mark {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .brand-mark span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-  .bd-app-shell .brand-name {
-    font-weight: 600;
-    font-size: 15px;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  .bd-app-shell .sidebar.collapsed .brand-name,
-  .bd-app-shell .sidebar.collapsed .nav-label,
-  .bd-app-shell .sidebar.collapsed .sidebar-section-label {
-    display: none;
-  }
-  .bd-app-shell .sidebar-nav {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .bd-app-shell .sidebar.collapsed .sidebar-nav { overflow: visible; }
-  .bd-app-shell .sidebar-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    padding: 14px 10px 6px;
-  }
-  .bd-app-shell .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-size: 13.5px;
-    font-weight: 500;
-    white-space: nowrap;
-    position: relative;
-    transition: background 0.12s ease, color 0.12s ease;
-  }
-  .bd-app-shell .nav-item:hover { background: var(--surface-raised); color: var(--text); }
-  .bd-app-shell .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .bd-app-shell .sidebar.collapsed .nav-item { justify-content: center; }
-  .bd-app-shell .nav-item .badge {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .sidebar.collapsed .nav-item .badge { display: none; }
-  .bd-app-shell .tooltip { display: none; }
-  .bd-app-shell .sidebar.collapsed .tooltip {
-    display: block;
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 10px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-    z-index: 40;
-    box-shadow: var(--shadow-raised);
-  }
-  .bd-app-shell .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
-  .bd-app-shell .sidebar-footer {
-    border-top: 1px solid var(--border);
-    padding: 10px 12px;
-    flex-shrink: 0;
-  }
-
-  .bd-app-shell .main-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .bd-app-shell .topbar {
-    height: 60px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    background: var(--bg);
-  }
-  .bd-app-shell .topbar-left { display: flex; align-items: center; gap: 14px; }
-  .bd-app-shell .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); }
-  .bd-app-shell .search-trigger {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 280px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-muted);
-    font-size: 13px;
-  }
-  .bd-app-shell .search-trigger:hover { border-color: var(--accent); }
-  .bd-app-shell .search-trigger .kbd {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 6px;
-  }
-  .bd-app-shell .topbar-right { display: flex; align-items: center; gap: 8px; }
-  .bd-app-shell .icon-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    position: relative;
-  }
-  .bd-app-shell .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
-  .bd-app-shell .icon-btn .dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--danger);
-    border: 1.5px solid var(--bg);
-  }
-  .bd-app-shell .avatar-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 8px 4px 4px;
-    border-radius: 8px;
-  }
-  .bd-app-shell .avatar-btn:hover { background: var(--surface-raised); }
-  .bd-app-shell .avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--accent-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .dropdown-wrap { position: relative; }
-  .bd-app-shell .dropdown-panel {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    width: 260px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow-raised);
-    padding: 6px;
-    z-index: 50;
-    opacity: 0;
-    transform: translateY(-6px) scale(0.98);
-    pointer-events: none;
-    transition: opacity 0.14s ease, transform 0.14s ease;
-  }
-  .bd-app-shell .dropdown-panel.open {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-  }
-  .bd-app-shell .dropdown-header {
-    padding: 8px 10px;
-    font-size: 12.5px;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
-  }
-  .bd-app-shell .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 7px;
-    font-size: 13px;
-    color: var(--text);
-    width: 100%;
-    text-align: left;
-  }
-  .bd-app-shell .dropdown-item:hover { background: var(--bg); }
-  .bd-app-shell .dropdown-item.danger { color: var(--danger); }
-  .bd-app-shell .notif-item { padding: 10px; border-radius: 7px; }
-  .bd-app-shell .notif-item:hover { background: var(--bg); }
-  .bd-app-shell .notif-title { font-size: 12.5px; font-weight: 500; margin-bottom: 2px; }
-  .bd-app-shell .notif-time { font-size: 11.5px; color: var(--text-muted); }
-  .bd-app-shell .theme-switch {
-    display: flex;
-    align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
-  }
-  .bd-app-shell .theme-switch button {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
-  .bd-app-shell .content { flex: 1; overflow-y: auto; padding: 28px 32px 48px; }
-  .bd-app-shell .mobile-menu-btn { display: none; }
-
-  .bd-app-shell .cmdk-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 100;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 12vh;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-  }
-  .bd-app-shell .cmdk-backdrop.open { opacity: 1; pointer-events: auto; }
-  .bd-app-shell .cmdk-modal {
-    width: 100%;
-    max-width: 560px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    transform: translateY(-12px) scale(0.98);
-    transition: transform 0.15s ease;
-  }
-  .bd-app-shell .cmdk-backdrop.open .cmdk-modal { transform: translateY(0) scale(1); }
-  .bd-app-shell .cmdk-input-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-muted);
-  }
-  .bd-app-shell .cmdk-input-row input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 14.5px;
-  }
-  .bd-app-shell .cmdk-input-row .kbd {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 6px;
-  }
-  .bd-app-shell .cmdk-list { padding: 8px; max-height: 320px; overflow-y: auto; }
-  .bd-app-shell .cmdk-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    padding: 10px 10px 6px;
-  }
-  .bd-app-shell .cmdk-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    width: 100%;
-    text-align: left;
-    color: var(--text);
-    font-size: 13.5px;
-  }
-  .bd-app-shell .cmdk-item:hover,
-  .bd-app-shell .cmdk-item.hi { background: var(--accent-soft); color: var(--accent); }
-
-  @media (max-width: 1024px) {
-    .bd-app-shell .search-trigger { display: none; }
-  }
-
-  @media (max-width: 760px) {
-    .bd-app-shell .sidebar {
-      position: fixed;
-      z-index: 60;
-      height: 100vh;
-      left: -240px;
-      transition: left 0.2s ease;
-    }
-    .bd-app-shell .sidebar.mobile-open { left: 0; }
-    .bd-app-shell .sidebar.collapsed { width: 240px; }
-    .bd-app-shell .mobile-menu-btn { display: flex; }
-    .bd-app-shell .content { padding: 20px 16px 40px; }
-    .bd-app-shell .topbar { padding: 0 16px; }
-    .bd-app-shell .sidebar-toggle { display: none; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bd-app-shell * { transition: none !important; }
-  }
-`;
-
-const dashboardStyles = `
-  .bd-app-shell .page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  .bd-app-shell .page-header h1 {
-    font-family: var(--font-display);
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .bd-app-shell .page-header p { font-size: 13.5px; color: var(--text-muted); }
-  .bd-app-shell .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    transition: opacity 0.12s ease, transform 0.1s ease;
-  }
-  .bd-app-shell .btn:active { transform: scale(0.97); }
-  .bd-app-shell .btn-primary { background: var(--accent); color: var(--accent-text); }
-  .bd-app-shell .btn-primary:hover { opacity: 0.88; }
-  .bd-app-shell .btn-action {
-    padding: 6px 13px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    color: var(--text);
-    flex-shrink: 0;
-    transition: background 0.12s ease;
-  }
-  .bd-app-shell .btn-action:hover {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-  }
-  .bd-app-shell .btn-action.done {
-    background: var(--success-soft);
-    color: var(--success);
-    border-color: transparent;
-    pointer-events: none;
-  }
-  .bd-app-shell .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-  .bd-app-shell .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px;
-    transition: border-color 0.15s ease, transform 0.15s ease;
-  }
-  .bd-app-shell .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .bd-app-shell .stat-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .bd-app-shell .stat-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-  .bd-app-shell .stat-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-  }
-  .bd-app-shell .stat-value {
-    font-family: var(--font-mono);
-    font-size: 26px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-  .bd-app-shell .stat-meta { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .bd-app-shell .stat-meta.positive { color: var(--success); }
-  .bd-app-shell .stat-meta.warn { color: var(--danger); }
-  .bd-app-shell .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 20px;
-  }
-  .bd-app-shell .panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--border);
-  }
-  .bd-app-shell .panel-head h2 { font-size: 14.5px; font-weight: 600; }
-  .bd-app-shell .panel-link { font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
-  .bd-app-shell .panel-link:hover { color: var(--accent); }
-  .bd-app-shell .panel-body { padding: 6px; }
-  .bd-app-shell .action-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px;
-    border-radius: 9px;
-  }
-  .bd-app-shell .action-row:hover { background: var(--bg); }
-  .bd-app-shell .action-row + .action-row { margin-top: 2px; }
-  .bd-app-shell .action-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .action-icon.warn { background: var(--danger-soft); color: var(--danger); }
-  .bd-app-shell .action-icon.wait { background: var(--accent-soft); color: var(--accent); }
-  .bd-app-shell .action-text { flex: 1; min-width: 0; }
-  .bd-app-shell .action-title { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
-  .bd-app-shell .action-sub { font-size: 12px; color: var(--text-muted); }
-  .bd-app-shell .action-sub .amount { font-family: var(--font-mono); color: var(--text); font-weight: 500; }
-  .bd-app-shell .split-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
-  .bd-app-shell .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .bd-app-shell .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .bd-app-shell .pill-accent { background: var(--accent-soft); color: var(--accent); }
-  .bd-app-shell .pill-accent .dot { background: var(--accent); }
-  .bd-app-shell .pill-success { background: var(--success-soft); color: var(--success); }
-  .bd-app-shell .pill-success .dot { background: var(--success); }
-  .bd-app-shell .pill-danger { background: var(--danger-soft); color: var(--danger); }
-  .bd-app-shell .pill-danger .dot { background: var(--danger); }
-  .bd-app-shell .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); }
-  .bd-app-shell .pill-muted .dot { background: var(--text-muted); }
-  .bd-app-shell .opp-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 12px;
-    border-radius: 9px;
-  }
-  .bd-app-shell .opp-row:hover { background: var(--bg); }
-  .bd-app-shell .opp-info { flex: 1; min-width: 0; }
-  .bd-app-shell .opp-title { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bd-app-shell .opp-client { font-size: 12px; color: var(--text-muted); }
-  .bd-app-shell .opp-value { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
-  .bd-app-shell .feed-item { display: flex; gap: 12px; padding: 11px 12px; }
-  .bd-app-shell .feed-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 3px; }
-  .bd-app-shell .feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
-  .bd-app-shell .feed-dot.accent { background: var(--accent); }
-  .bd-app-shell .feed-dot.success { background: var(--success); }
-  .bd-app-shell .feed-line { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
-  .bd-app-shell .feed-text { font-size: 13px; margin-bottom: 2px; }
-  .bd-app-shell .feed-time { font-size: 11.5px; color: var(--text-muted); }
-
-  @media (max-width: 1024px) {
-    .bd-app-shell .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .bd-app-shell .split-grid { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 760px) {
-    .bd-app-shell .page-header { flex-direction: column; align-items: flex-start; }
-    .bd-app-shell .stats-grid { grid-template-columns: 1fr; }
-  }
-`;
+const notificationItems = [
+    { title: 'Invoice INV-0043 is now overdue', time: '2 hours ago' },
+    { title: 'New lead via public form: Retail Co', time: 'Yesterday' },
+    { title: 'Payment received for INV-0041', time: '2 days ago' },
+] as const;
 
 const iconSprite = `
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -719,6 +108,10 @@ const iconSprite = `
       <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8M12 17v3"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
       <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
@@ -743,28 +136,10 @@ const iconSprite = `
   </svg>
 `;
 
-const commandItems: Array<{
-    section: string;
-    label: string;
-    icon: string;
-    highlighted?: boolean;
-}> = [
-    { section: 'Quick actions', label: 'New Opportunity', icon: 'i-plus', highlighted: true },
-    { section: 'Quick actions', label: 'New Invoice', icon: 'i-file' },
-    { section: 'Jump to', label: 'Opportunities', icon: 'i-kanban' },
-    { section: 'Jump to', label: 'Projects', icon: 'i-briefcase' },
-    { section: 'Jump to', label: 'Contacts', icon: 'i-users' },
-];
-
-const notificationItems = [
-    { title: 'Invoice INV-0043 is now overdue', time: '2 hours ago' },
-    { title: 'New lead via public form: Retail Co', time: 'Yesterday' },
-    { title: 'Payment received for INV-0041', time: '2 days ago' },
-] as const;
-
 export default function BiondeskAppShell({
     children,
     breadcrumbs = [],
+    mainClassName = DEFAULT_MAIN_CLS,
 }: Props) {
     const page = usePage();
     const { auth, currentTeam, sidebarOpen } = page.props;
@@ -776,7 +151,6 @@ export default function BiondeskAppShell({
     const [commandOpen, setCommandOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [userOpen, setUserOpen] = useState(false);
-    const [systemDark, setSystemDark] = useState(false);
     const notificationsRef = useRef<HTMLDivElement | null>(null);
     const userRef = useRef<HTMLDivElement | null>(null);
 
@@ -793,6 +167,9 @@ export default function BiondeskAppShell({
     const proposalCount = Array.isArray(propsBag.documents)
         ? String(propsBag.documents.length)
         : '2';
+    const invoiceCount = Array.isArray(propsBag.invoices)
+        ? String(propsBag.invoices.length)
+        : '4';
 
     const navSections = useMemo<NavSection[]>(() => {
         if (!currentTeam) {
@@ -812,7 +189,7 @@ export default function BiondeskAppShell({
                 items: [
                     { title: 'Proposals', icon: 'i-file', href: proposals(currentTeam.slug), badge: proposalCount },
                     { title: 'Quotations', icon: 'i-quote', badge: '1' },
-                    { title: 'Invoices', icon: 'i-receipt', badge: '3' },
+                    { title: 'Invoices', icon: 'i-receipt', href: invoices(currentTeam.slug), badge: invoiceCount },
                     { title: 'Contacts', icon: 'i-users' },
                 ],
             },
@@ -824,7 +201,7 @@ export default function BiondeskAppShell({
                 ],
             },
         ];
-    }, [currentTeam, opportunityCount, projectCount, proposalCount]);
+    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount]);
 
     useEffect(() => {
         const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -836,18 +213,6 @@ export default function BiondeskAppShell({
         return () => {
             document.documentElement.style.overflow = previousHtmlOverflow;
             document.body.style.overflow = previousBodyOverflow;
-        };
-    }, []);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const apply = (): void => setSystemDark(mediaQuery.matches);
-
-        apply();
-        mediaQuery.addEventListener('change', apply);
-
-        return () => {
-            mediaQuery.removeEventListener('change', apply);
         };
     }, []);
 
@@ -890,9 +255,6 @@ export default function BiondeskAppShell({
         };
     }, []);
 
-    const resolvedTheme =
-        appearance === 'system' ? (systemDark ? 'dark' : 'light') : appearance;
-
     const toggleCollapsed = (): void => {
         const next = !desktopCollapsed;
         setDesktopCollapsed(next);
@@ -900,230 +262,274 @@ export default function BiondeskAppShell({
     };
 
     return (
-        <div className="bd-app-shell" data-theme={resolvedTheme}>
-            <style>{shellStyles}</style>
-            <style>{dashboardStyles}</style>
+        <div className="flex h-screen overflow-hidden bg-bion-bg font-display text-[14px] text-bion-text antialiased">
             <div dangerouslySetInnerHTML={{ __html: iconSprite }} />
 
-            <div className="app-shell">
-                <aside
-                    className={cn(
-                        'sidebar',
-                        desktopCollapsed && 'collapsed',
-                        mobileOpen && 'mobile-open',
-                    )}
+            <aside
+                className={cn(
+                    'group/sidebar relative flex shrink-0 flex-col border-r border-bion-border bg-bion-surface [transition:width_0.2s_ease]',
+                    '[&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px]',
+                    'max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px]',
+                    'max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!',
+                    desktopCollapsed && 'collapsed',
+                    mobileOpen && 'mobile-open',
+                )}
+            >
+                <div className="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-bion-border px-[18px]">
+                    <Link
+                        href={currentTeam ? dashboard(currentTeam.slug) : home()}
+                        className="flex items-center gap-[10px]"
+                    >
+                        <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-bion-border bg-bion-surface-raised">
+                            <span className="h-[7px] w-[7px] rounded-full bg-bion-accent" />
+                        </div>
+                        <span className="overflow-hidden text-[15px] font-semibold whitespace-nowrap group-[.collapsed]/sidebar:hidden">
+                            Biondesk
+                        </span>
+                    </Link>
+                </div>
+
+                <button
+                    type="button"
+                    className="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-bion-border bg-bion-surface text-bion-text-muted shadow-bion-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-bion-accent hover:text-bion-text max-[760px]:hidden"
+                    title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    onClick={toggleCollapsed}
                 >
-                    <div className="sidebar-brand">
-                        <Link
-                            href={currentTeam ? dashboard(currentTeam.slug) : home()}
-                            className="flex items-center gap-[10px]"
+                    <IconUse
+                        icon="i-chevron-left"
+                        small={true}
+                        className="[transition:transform_0.2s_ease] group-[.collapsed]/sidebar:rotate-180"
+                    />
+                </button>
+
+                <nav className="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[12px] py-[16px] group-[.collapsed]/sidebar:overflow-visible!">
+                    {navSections.map((section, index) => (
+                        <div key={section.label ?? `section-${index}`}>
+                            {section.label ? (
+                                <div className="pt-[14px] px-[10px] pb-[6px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">
+                                    {section.label}
+                                </div>
+                            ) : null}
+
+                            {section.items.map((item) => (
+                                <SidebarNavLink
+                                    key={item.title}
+                                    item={item}
+                                    active={item.href ? isCurrentOrParentUrl(item.href) : false}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </nav>
+
+                <div className="shrink-0 border-t border-bion-border px-[12px] py-[10px]">
+                    <Link
+                        href={profile()}
+                        prefetch
+                        className={cn(NAV_ITEM_BASE, 'text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text')}
+                    >
+                        <IconUse icon="i-settings" />
+                        <span className="group-[.collapsed]/sidebar:hidden">Settings</span>
+                        <span className={TOOLTIP_CLS}>Settings</span>
+                    </Link>
+                </div>
+            </aside>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+                <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-bion-border bg-bion-bg px-[24px] max-[760px]:px-[16px]">
+                    <div className="flex items-center gap-[14px]">
+                        <button
+                            type="button"
+                            className="relative hidden h-[34px] w-[34px] items-center justify-center rounded-[8px] text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text max-[760px]:flex"
+                            onClick={() => setMobileOpen((current) => !current)}
                         >
-                            <div className="brand-mark">
-                                <span />
-                            </div>
-                            <span className="brand-name">Biondesk</span>
-                        </Link>
+                            <IconUse icon="i-menu" />
+                        </button>
+                        <span className="text-[13.5px] font-semibold text-bion-text">{currentPageTitle}</span>
                     </div>
 
                     <button
                         type="button"
-                        className="sidebar-toggle"
-                        title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                        onClick={toggleCollapsed}
+                        className="flex w-[280px] shrink-0 items-center gap-[10px] rounded-[8px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[13px] text-bion-text-muted hover:border-bion-accent max-[1024px]:hidden"
+                        onClick={() => setCommandOpen(true)}
                     >
-                        <IconUse icon="i-chevron-left" small={true} />
+                        <IconUse icon="i-search" small={true} />
+                        <span>Search or jump to...</span>
+                        <span className="ml-auto rounded-[4px] border border-bion-border bg-bion-surface-raised px-[6px] py-px font-mono text-[11px]">
+                            ⌘K
+                        </span>
                     </button>
 
-                    <nav className="sidebar-nav">
-                        {navSections.map((section, index) => (
-                            <div key={section.label ?? `section-${index}`}>
-                                {section.label ? (
-                                    <div className="sidebar-section-label">{section.label}</div>
-                                ) : null}
-
-                                {section.items.map((item) => (
-                                    <SidebarNavLink
-                                        key={item.title}
-                                        item={item}
-                                        active={item.href ? isCurrentOrParentUrl(item.href) : false}
-                                        collapsed={desktopCollapsed}
-                                    />
-                                ))}
-                            </div>
-                        ))}
-                    </nav>
-
-                    <div className="sidebar-footer">
-                        <Link
-                            href={profile()}
-                            prefetch
-                            className="nav-item"
-                        >
-                            <IconUse icon="i-settings" />
-                            <span className="nav-label">Settings</span>
-                            <span className="tooltip">Settings</span>
-                        </Link>
-                    </div>
-                </aside>
-
-                <div className="main-area">
-                    <header className="topbar">
-                        <div className="topbar-left">
+                    <div className="flex shrink-0 items-center gap-[8px]">
+                        <div className="flex items-center gap-[2px] rounded-[8px] border border-bion-border bg-bion-surface p-[2px]">
                             <button
                                 type="button"
-                                className="mobile-menu-btn icon-btn"
-                                onClick={() => setMobileOpen((current) => !current)}
+                                className={cn(
+                                    'flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted [&.active]:bg-bion-accent-soft! [&.active]:text-bion-accent!',
+                                    appearance === 'light' && 'active',
+                                )}
+                                title="Light"
+                                onClick={() => updateAppearance('light')}
                             >
-                                <IconUse icon="i-menu" />
+                                <IconUse icon="i-sun" small={true} />
                             </button>
-                            <span className="breadcrumb">{currentPageTitle}</span>
+                            <button
+                                type="button"
+                                className={cn(
+                                    'flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted [&.active]:bg-bion-accent-soft! [&.active]:text-bion-accent!',
+                                    appearance === 'dark' && 'active',
+                                )}
+                                title="Dark"
+                                onClick={() => updateAppearance('dark')}
+                            >
+                                <IconUse icon="i-moon" small={true} />
+                            </button>
+                            <button
+                                type="button"
+                                className={cn(
+                                    'flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted [&.active]:bg-bion-accent-soft! [&.active]:text-bion-accent!',
+                                    appearance === 'system' && 'active',
+                                )}
+                                title="System"
+                                onClick={() => updateAppearance('system')}
+                            >
+                                <IconUse icon="i-monitor" small={true} />
+                            </button>
                         </div>
 
-                        <button
-                            type="button"
-                            className="search-trigger"
-                            onClick={() => setCommandOpen(true)}
-                        >
-                            <IconUse icon="i-search" small={true} />
-                            <span>Search or jump to...</span>
-                            <span className="kbd">⌘K</span>
-                        </button>
-
-                        <div className="topbar-right">
-                            <div className="theme-switch">
-                                <button
-                                    type="button"
-                                    className={appearance === 'light' ? 'active' : undefined}
-                                    title="Light"
-                                    onClick={() => updateAppearance('light')}
-                                >
-                                    <IconUse icon="i-sun" small={true} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className={appearance === 'dark' ? 'active' : undefined}
-                                    title="Dark"
-                                    onClick={() => updateAppearance('dark')}
-                                >
-                                    <IconUse icon="i-moon" small={true} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className={appearance === 'system' ? 'active' : undefined}
-                                    title="System"
-                                    onClick={() => updateAppearance('system')}
-                                >
-                                    <IconUse icon="i-monitor" small={true} />
-                                </button>
-                            </div>
-
-                            <div className="dropdown-wrap" ref={notificationsRef}>
-                                <button
-                                    type="button"
-                                    className="icon-btn"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        setNotificationsOpen((current) => !current);
-                                        setUserOpen(false);
-                                    }}
-                                >
-                                    <IconUse icon="i-bell" />
-                                    <span className="dot" />
-                                </button>
-                                <div
-                                    className={cn(
-                                        'dropdown-panel',
-                                        notificationsOpen && 'open',
-                                    )}
-                                >
-                                    <div className="dropdown-header">Notifications</div>
-                                    {notificationItems.map((item) => (
-                                        <div key={item.title} className="notif-item">
-                                            <div className="notif-title">{item.title}</div>
-                                            <div className="notif-time">{item.time}</div>
-                                        </div>
-                                    ))}
+                        <div className="relative" ref={notificationsRef}>
+                            <button
+                                type="button"
+                                className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setNotificationsOpen((current) => !current);
+                                    setUserOpen(false);
+                                }}
+                            >
+                                <IconUse icon="i-bell" />
+                                <span className="absolute top-[7px] right-[7px] h-[6px] w-[6px] rounded-full border-[1.5px] border-bion-bg bg-bion-danger" />
+                            </button>
+                            <div
+                                className={cn(
+                                    'absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 pointer-events-none shadow-bion-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease]',
+                                    '[&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!',
+                                    notificationsOpen && 'open',
+                                )}
+                            >
+                                <div className="mb-[4px] border-b border-bion-border px-[10px] py-[8px] text-[12.5px] font-semibold">
+                                    Notifications
                                 </div>
-                            </div>
-
-                            <div className="dropdown-wrap" ref={userRef}>
-                                <button
-                                    type="button"
-                                    className="avatar-btn"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        setUserOpen((current) => !current);
-                                        setNotificationsOpen(false);
-                                    }}
-                                >
-                                    <div className="avatar">{initials(auth.user.name)}</div>
-                                    <IconUse
-                                        icon="i-chevron-down"
-                                        small={true}
-                                        className="text-[var(--text-muted)]"
-                                    />
-                                </button>
-                                <div
-                                    className={cn(
-                                        'dropdown-panel',
-                                        userOpen && 'open',
-                                    )}
-                                >
-                                    <Link href={profile()} prefetch className="dropdown-item">
-                                        <IconUse icon="i-user" small={true} />
-                                        Profile
-                                    </Link>
-                                    <Link href={profile()} prefetch className="dropdown-item">
-                                        <IconUse icon="i-settings" small={true} />
-                                        Settings
-                                    </Link>
-                                    <Link
-                                        href={logout()}
-                                        as="button"
-                                        className="dropdown-item danger"
-                                    >
-                                        <IconUse icon="i-logout" small={true} />
-                                        Log out
-                                    </Link>
-                                </div>
+                                {notificationItems.map((item) => (
+                                    <div key={item.title} className="rounded-[7px] p-[10px] hover:bg-bion-bg">
+                                        <div className="mb-[2px] text-[12.5px] font-medium">{item.title}</div>
+                                        <div className="text-[11.5px] text-bion-text-muted">{item.time}</div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </header>
 
-                    <main className="content">{children}</main>
-                </div>
+                        <div className="relative" ref={userRef}>
+                            <button
+                                type="button"
+                                className="flex items-center gap-[8px] rounded-[8px] py-[4px] pr-[8px] pl-[4px] hover:bg-bion-surface-raised"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setUserOpen((current) => !current);
+                                    setNotificationsOpen(false);
+                                }}
+                            >
+                                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-bion-accent text-[11px] font-bold text-bion-accent-text">
+                                    {initials(auth.user.name)}
+                                </div>
+                                <IconUse
+                                    icon="i-chevron-down"
+                                    small={true}
+                                    className="text-bion-text-muted"
+                                />
+                            </button>
+                            <div
+                                className={cn(
+                                    'absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 pointer-events-none shadow-bion-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease]',
+                                    '[&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!',
+                                    userOpen && 'open',
+                                )}
+                            >
+                                <Link
+                                    href={profile()}
+                                    prefetch
+                                    className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
+                                >
+                                    <IconUse icon="i-user" small={true} />
+                                    Profile
+                                </Link>
+                                <Link
+                                    href={profile()}
+                                    prefetch
+                                    className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
+                                >
+                                    <IconUse icon="i-settings" small={true} />
+                                    Settings
+                                </Link>
+                                <Link
+                                    href={logout()}
+                                    as="button"
+                                    className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-danger hover:bg-bion-bg"
+                                >
+                                    <IconUse icon="i-logout" small={true} />
+                                    Log out
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main className={mainClassName}>{children}</main>
             </div>
 
             <div
-                className={cn('cmdk-backdrop', commandOpen && 'open')}
+                className={cn(
+                    'group/modal fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-[12vh] opacity-0 pointer-events-none [transition:opacity_0.15s_ease]',
+                    '[&.open]:opacity-100! [&.open]:pointer-events-auto!',
+                    commandOpen && 'open',
+                )}
                 onClick={(event) => {
                     if (event.target === event.currentTarget) {
                         setCommandOpen(false);
                     }
                 }}
             >
-                <div className="cmdk-modal">
-                    <div className="cmdk-input-row">
+                <div className="w-full max-w-[560px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-12px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+                    <div className="flex items-center gap-[10px] border-b border-bion-border px-[16px] py-[14px] text-bion-text-muted">
                         <IconUse icon="i-search" />
                         <input
                             autoFocus={commandOpen}
                             type="text"
                             placeholder="Search opportunities, projects, invoices..."
+                            className="flex-1 border-none bg-transparent text-[14.5px] text-bion-text outline-none placeholder:text-bion-text-muted"
                         />
-                        <span className="kbd">Esc</span>
+                        <span className="rounded-[4px] border border-bion-border bg-bion-bg px-[6px] py-[2px] font-mono text-[11px]">
+                            Esc
+                        </span>
                     </div>
-                    <div className="cmdk-list">
+                    <div className="max-h-[320px] overflow-y-auto p-[8px]">
                         {Array.from(new Set(commandItems.map((item) => item.section))).map(
                             (section) => (
                                 <div key={section}>
-                                    <div className="cmdk-section-label">{section}</div>
+                                    <div className="px-[10px] pt-[10px] pb-[6px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                        {section}
+                                    </div>
                                     {commandItems
                                         .filter((item) => item.section === section)
                                         .map((item) => (
                                             <button
                                                 key={item.label}
                                                 type="button"
-                                                className={cn('cmdk-item', item.highlighted && 'hi')}
+                                                className={cn(
+                                                    'flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-bion-text hover:bg-bion-accent-soft! hover:text-bion-accent!',
+                                                    '[&.hi]:bg-bion-accent-soft! [&.hi]:text-bion-accent!',
+                                                    item.highlighted && 'hi',
+                                                )}
                                                 onClick={() => setCommandOpen(false)}
                                             >
                                                 <IconUse icon={item.icon} />
@@ -1143,32 +549,33 @@ export default function BiondeskAppShell({
 function SidebarNavLink({
     item,
     active,
-    collapsed,
 }: {
     item: NavItem;
     active: boolean;
-    collapsed: boolean;
 }) {
     const content = (
         <>
             <IconUse icon={item.icon} />
-            <span className="nav-label">{item.title}</span>
-            {item.badge ? <span className="badge">{item.badge}</span> : null}
-            <span className="tooltip">{item.title}</span>
+            <span className="group-[.collapsed]/sidebar:hidden">{item.title}</span>
+            {item.badge ? (
+                <span className="ml-auto font-mono text-[11px] text-bion-text-muted group-[.collapsed]/sidebar:hidden">
+                    {item.badge}
+                </span>
+            ) : null}
+            <span className={TOOLTIP_CLS}>{item.title}</span>
         </>
     );
+
+    const stateClasses = active
+        ? 'bg-bion-accent-soft text-bion-accent'
+        : 'text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text';
 
     if (item.href) {
         return (
             <Link
                 href={item.href}
                 prefetch
-                className={cn('nav-item', active && 'active')}
-                onClick={() => {
-                    if (collapsed) {
-                        return;
-                    }
-                }}
+                className={cn(NAV_ITEM_BASE, stateClasses)}
             >
                 {content}
             </Link>
@@ -1176,7 +583,7 @@ function SidebarNavLink({
     }
 
     return (
-        <button type="button" className="nav-item w-full text-left">
+        <button type="button" className={cn(NAV_ITEM_BASE, stateClasses, 'w-full text-left')}>
             {content}
         </button>
     );
@@ -1192,7 +599,7 @@ function IconUse({
     className?: string;
 }) {
     return (
-        <svg className={cn('icon', small && 'icon-sm', className)}>
+        <svg className={cn(small ? ICON_SM_CLS : ICON_CLS, className)}>
             <use href={`#${icon}`} />
         </svg>
     );

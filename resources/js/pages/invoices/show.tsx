@@ -1,0 +1,359 @@
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { dashboard } from '@/routes';
+import { index as invoices } from '@/routes/invoices';
+import { show as projectShow } from '@/routes/projects';
+import type { BiondeskTone, InvoiceShowPageProps } from '@/types';
+
+const ICON_SM_CLS =
+    'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+
+const BTN =
+    'inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] max-[760px]:flex-1 max-[760px]:justify-center';
+const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised');
+const BTN_PRIMARY = cn(BTN, 'bg-bion-accent text-bion-accent-text hover:opacity-[0.88]');
+
+const BTN_SIDEBAR_GHOST =
+    'inline-flex w-full items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-bion-border bg-transparent text-bion-text hover:border-bion-text-muted justify-center';
+const BTN_SIDEBAR_LIST =
+    'inline-flex w-full items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised justify-start';
+
+const PILL_BASE =
+    'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
+
+const toneClassMap: Record<BiondeskTone, string> = {
+    accent: cn(PILL_BASE, 'bg-bion-accent-soft text-bion-accent'),
+    success: cn(PILL_BASE, 'bg-bion-success-soft text-bion-success'),
+    danger: cn(PILL_BASE, 'bg-bion-danger-soft text-bion-danger'),
+    muted: cn(PILL_BASE, 'border border-bion-border bg-bion-surface-raised text-bion-text-muted'),
+};
+
+const toneDotMap: Record<BiondeskTone, string> = {
+    accent: 'bg-bion-accent',
+    success: 'bg-bion-success',
+    danger: 'bg-bion-danger',
+    muted: 'bg-bion-text-muted',
+};
+
+export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
+    const { currentTeam } = usePage().props;
+    const [linkCopied, setLinkCopied] = useState(false);
+    const [reminderSent, setReminderSent] = useState(false);
+
+    const copyShareLink = async (): Promise<void> => {
+        if (typeof navigator === 'undefined' || !navigator.clipboard) {
+            return;
+        }
+
+        const shareUrl = `https://biondesk.test/i/${invoice.number.toLowerCase()}`;
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setLinkCopied(true);
+            window.setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            return;
+        }
+    };
+
+    return (
+        <>
+            <Head title={invoice.number} />
+
+            <div className="mb-[20px] flex shrink-0 flex-wrap items-start justify-between gap-[16px]">
+                <div>
+                    <h1 className="mb-[6px] font-mono text-[24px] font-bold [letter-spacing:-0.02em]">
+                        {invoice.number}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-[12px] text-[13px] text-bion-text-muted">
+                        <span className={toneClassMap[invoice.tone]}>
+                            <span className={cn('h-[6px] w-[6px] rounded-full', toneDotMap[invoice.tone])} />
+                            {invoice.statusLabel}
+                        </span>
+                        <span>{invoice.dueInLabel}</span>
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-[8px] max-[760px]:w-full max-[760px]:justify-between">
+                    <button type="button" className={BTN_GHOST}>
+                        <svg className={ICON_SM_CLS}>
+                            <use href="#i-eye" />
+                        </svg>
+                        Preview
+                    </button>
+                    <button type="button" className={BTN_GHOST} onClick={copyShareLink}>
+                        <svg className={ICON_SM_CLS}>
+                            <use href="#i-link" />
+                        </svg>
+                        {linkCopied ? 'Link Copied' : 'Copy Link'}
+                    </button>
+                    <button
+                        type="button"
+                        className={BTN_PRIMARY}
+                        onClick={() => setReminderSent(true)}
+                    >
+                        <svg className={ICON_SM_CLS}>
+                            <use href="#i-send" />
+                        </svg>
+                        {reminderSent ? 'Reminder Sent' : 'Send Reminder'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex min-h-0 flex-1 gap-[24px] max-[1100px]:flex-col">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
+                    <div className="flex-1 overflow-y-auto p-[40px] text-bion-text">
+                        <div className="mb-[40px] flex flex-wrap items-start justify-between max-[760px]:flex-col max-[760px]:gap-[24px]">
+                            <div className="flex-1">
+                                <h2 className="mb-[4px] text-[18px] font-semibold">{invoice.business.name}</h2>
+                                <p className="leading-normal text-[13.5px] text-bion-text-muted whitespace-pre-line">
+                                    {invoice.business.address}
+                                    {'\n'}
+                                    {invoice.business.email}
+                                </p>
+                            </div>
+                            <div className="text-right max-[760px]:text-left">
+                                <div className="mb-[2px] text-[12px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                    Invoice Number
+                                </div>
+                                <div className="mb-[12px] font-mono text-[14px] font-medium">{invoice.number}</div>
+
+                                <div className="mb-[2px] text-[12px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                    Date Issued
+                                </div>
+                                <div className="mb-[12px] font-mono text-[14px] font-medium">{invoice.issuedAt}</div>
+
+                                <div className="mb-[2px] text-[12px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                    Due Date
+                                </div>
+                                <div className="mb-[12px] font-mono text-[14px] font-medium">{invoice.dueAt}</div>
+                            </div>
+                        </div>
+
+                        <div className="mb-[32px] rounded-[8px] border border-bion-border bg-bion-surface-raised p-[20px]">
+                            <div className="mb-[6px] text-[12px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                Bill To
+                            </div>
+                            <h3 className="mb-[4px] text-[16px] font-semibold">{invoice.billTo.name}</h3>
+                            <p className="leading-normal text-[13.5px] text-bion-text-muted whitespace-pre-line">
+                                {`Attn: ${invoice.billTo.attn}\n${invoice.billTo.address}\n${invoice.billTo.email}`}
+                            </p>
+                        </div>
+
+                        <div className="mb-[32px] overflow-hidden rounded-[8px] border border-bion-border">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th className="w-1/2 border-b border-bion-border bg-bion-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-bion-text-muted">
+                                            Item &amp; Description
+                                        </th>
+                                        <th className="w-[16.6%] border-b border-bion-border bg-bion-surface-raised px-[16px] py-[10px] text-right text-[12px] font-semibold text-bion-text-muted">
+                                            Qty
+                                        </th>
+                                        <th className="w-[16.6%] border-b border-bion-border bg-bion-surface-raised px-[16px] py-[10px] text-right text-[12px] font-semibold text-bion-text-muted">
+                                            Price
+                                        </th>
+                                        <th className="w-[16.6%] border-b border-bion-border bg-bion-surface-raised px-[16px] py-[10px] text-right text-[12px] font-semibold text-bion-text-muted">
+                                            Total
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="[&_tr:last-child_td]:border-b-0">
+                                    {invoice.lineItems.map((item) => (
+                                        <tr key={item.name}>
+                                            <td className="border-b border-bion-border px-[16px] py-[14px] align-top text-[13.5px]">
+                                                <div className="mb-[4px] font-medium">{item.name}</div>
+                                                <div className="text-[12.5px] leading-[1.4] text-bion-text-muted">
+                                                    {item.description}
+                                                </div>
+                                            </td>
+                                            <td className="border-b border-bion-border px-[16px] py-[14px] text-right align-top font-mono text-[13.5px]">
+                                                {item.qty}
+                                            </td>
+                                            <td className="border-b border-bion-border px-[16px] py-[14px] text-right align-top font-mono text-[13.5px]">
+                                                {item.price}
+                                            </td>
+                                            <td className="border-b border-bion-border px-[16px] py-[14px] text-right align-top font-mono text-[13.5px] font-semibold">
+                                                {item.total}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="flex flex-col items-end gap-[8px] bg-bion-surface-raised px-[24px] py-[16px]">
+                                <div className="flex w-[280px] justify-between text-[13.5px]">
+                                    <span className="text-bion-text-muted">Subtotal</span>
+                                    <span className="font-mono font-medium">{invoice.subtotal}</span>
+                                </div>
+                                <div className="flex w-[280px] justify-between text-[13.5px]">
+                                    <span className="text-bion-text-muted">{invoice.taxLabel}</span>
+                                    <span className="font-mono font-medium">{invoice.taxAmount}</span>
+                                </div>
+                                <div className="mt-[8px] flex w-[280px] justify-between border-t border-dashed border-bion-border pt-[12px] text-[18px] font-bold text-bion-text">
+                                    <span className="text-bion-text-muted">Invoice Total</span>
+                                    <span className="font-mono font-medium text-bion-accent">{invoice.total}</span>
+                                </div>
+                                <div className="mt-[4px] flex w-[280px] justify-between border-t border-bion-border pt-[12px] text-[16px] font-bold">
+                                    <span className="text-bion-text-muted">Amount Due</span>
+                                    <span className="font-mono font-medium">{invoice.amountDue}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-[32px] border-t border-bion-border pt-[24px]">
+                            <h4 className="mb-[8px] text-[13px] font-semibold text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                Payment Instructions
+                            </h4>
+                            <p className="whitespace-pre-wrap text-[13.5px] leading-normal text-bion-text-muted">
+                                {invoice.paymentInstructions}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex w-[340px] shrink-0 flex-col gap-[16px] overflow-y-auto pr-[4px] max-[1100px]:w-full">
+                    <div className="rounded-[12px] border border-bion-border bg-bion-surface p-[16px]">
+                        <div className="mb-[16px] flex items-center justify-between text-[13.5px] font-semibold">
+                            Payment Tracking
+                        </div>
+
+                        <div className="mb-[16px] flex items-center justify-between rounded-[8px] border border-bion-border bg-bion-surface-raised p-[12px]">
+                            <div className="flex flex-col">
+                                <span className="mb-[2px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                    Paid
+                                </span>
+                                <span className="font-mono text-[15px] font-semibold">{invoice.amountPaid}</span>
+                            </div>
+                            <div className="flex flex-col text-right">
+                                <span className="mb-[2px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
+                                    Remaining
+                                </span>
+                                <span className="font-mono text-[15px] font-semibold text-bion-accent">
+                                    {invoice.amountDue}
+                                </span>
+                            </div>
+                        </div>
+
+                        {invoice.payments.length > 0 ? (
+                            <div className="mb-[16px] flex flex-col gap-[10px]">
+                                {invoice.payments.map((payment) => (
+                                    <div
+                                        key={payment.id}
+                                        className="flex items-start gap-[12px] rounded-[8px] border border-bion-border bg-bion-bg px-[12px] py-[10px]"
+                                    >
+                                        <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-bion-success-soft text-bion-success">
+                                            <svg className={ICON_SM_CLS}>
+                                                <use href="#i-check" />
+                                            </svg>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="mb-[2px] flex justify-between">
+                                                <span className="text-[13px] font-semibold">{payment.label}</span>
+                                                <span className="font-mono text-[13px] font-semibold text-bion-success">
+                                                    {payment.amount}
+                                                </span>
+                                            </div>
+                                            <div className="text-[11.5px] text-bion-text-muted">
+                                                Recorded on {payment.recordedAt}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+
+                        <button type="button" className={BTN_SIDEBAR_GHOST}>
+                            <svg className={ICON_SM_CLS}>
+                                <use href="#i-plus" />
+                            </svg>
+                            Record Payment
+                        </button>
+                    </div>
+
+                    <div className="rounded-[12px] border border-bion-border bg-bion-surface p-[16px]">
+                        <div className="mb-[16px] flex items-center justify-between text-[13.5px] font-semibold">
+                            Settings
+                        </div>
+
+                        <div className="mb-[14px]">
+                            <span className="mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]">
+                                Linked Project
+                            </span>
+                            {invoice.linkedProject && currentTeam ? (
+                                <Link
+                                    href={projectShow({
+                                        current_team: currentTeam.slug,
+                                        project: invoice.linkedProject.id,
+                                    })}
+                                    className="block rounded-[8px] border border-bion-border bg-bion-bg px-[12px] py-[10px] text-[13.5px] font-medium"
+                                >
+                                    <svg className={cn(ICON_SM_CLS, 'mr-[6px] inline-block align-[-3px] text-bion-text-muted')}>
+                                        <use href="#i-briefcase" />
+                                    </svg>
+                                    {invoice.linkedProject.title}
+                                </Link>
+                            ) : (
+                                <div className="rounded-[8px] border border-dashed border-bion-border px-[12px] py-[10px] text-[13.5px] text-bion-text-muted">
+                                    No linked project
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mb-0">
+                            <span className="mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]">
+                                Currency
+                            </span>
+                            <select
+                                className="w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none"
+                                defaultValue={invoice.currency}
+                            >
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="IDR">IDR - Indonesian Rupiah</option>
+                                <option value="EUR">EUR - Euro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="rounded-[12px] border border-bion-border bg-bion-surface p-[16px]">
+                        <div className="mb-[16px] flex items-center justify-between text-[13.5px] font-semibold">
+                            Actions
+                        </div>
+                        <div className="flex flex-col gap-[8px]">
+                            <button type="button" className={BTN_SIDEBAR_LIST}>
+                                <svg className={cn(ICON_SM_CLS, 'mr-[4px]')}>
+                                    <use href="#i-bell" />
+                                </svg>
+                                Schedule Auto-Reminder
+                            </button>
+                            <button type="button" className={BTN_SIDEBAR_LIST}>
+                                <svg className={cn(ICON_SM_CLS, 'mr-[4px]')}>
+                                    <use href="#i-download" />
+                                </svg>
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+
+InvoiceShowPage.layout = (props: { currentTeam?: { slug: string } | null; invoice?: { number: string } | null }) => ({
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: props.currentTeam ? dashboard(props.currentTeam.slug) : '/',
+        },
+        {
+            title: 'Invoices',
+            href: props.currentTeam ? invoices(props.currentTeam.slug) : '/',
+        },
+        {
+            title: props.invoice?.number ?? 'Invoice',
+            href: '#',
+        },
+    ],
+    mainClassName:
+        'flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]',
+});

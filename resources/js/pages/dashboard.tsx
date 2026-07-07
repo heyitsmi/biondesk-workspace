@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import PendingInvitationsModal from '@/components/pending-invitations-modal';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type {
     DashboardInvitation,
@@ -13,6 +14,26 @@ type Props = DashboardPageProps & {
 };
 
 const statIconMap = ['i-trend', 'i-wallet', 'i-briefcase', 'i-target'] as const;
+
+const ICON_SM_CLS =
+    'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+
+const PILL_BASE =
+    'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
+
+const pillClasses: Record<string, string> = {
+    accent: 'bg-bion-accent-soft text-bion-accent',
+    success: 'bg-bion-success-soft text-bion-success',
+    danger: 'bg-bion-danger-soft text-bion-danger',
+    muted: 'border border-bion-border bg-bion-surface-raised text-bion-text-muted',
+};
+
+const dotClasses: Record<string, string> = {
+    accent: 'bg-bion-accent',
+    success: 'bg-bion-success',
+    danger: 'bg-bion-danger',
+    muted: 'bg-bion-text-muted',
+};
 
 export default function Dashboard({
     stats,
@@ -58,40 +79,49 @@ export default function Dashboard({
                 onOpenChange={setShowInvitations}
             />
 
-            <div className="page-header">
+            <div className="mb-[24px] flex flex-wrap items-end justify-between gap-[16px] max-[760px]:flex-col max-[760px]:items-start">
                 <div>
-                    <h1>Good morning, {greetingName}</h1>
-                    <p>{dateLine}</p>
+                    <h1 className="mb-[4px] font-display text-[24px] font-bold">
+                        Good morning, {greetingName}
+                    </h1>
+                    <p className="text-[13.5px] text-bion-text-muted">{dateLine}</p>
                 </div>
-                <button type="button" className="btn btn-primary">
-                    <svg className="icon icon-sm">
+                <button
+                    type="button"
+                    className="inline-flex items-center gap-[7px] rounded-[8px] bg-bion-accent px-[16px] py-[9px] text-[13.5px] font-semibold text-bion-accent-text [transition:opacity_0.12s_ease,transform_0.1s_ease] hover:opacity-[0.88] active:scale-[0.97]"
+                >
+                    <svg className={ICON_SM_CLS}>
                         <use href="#i-plus" />
                     </svg>
                     New Opportunity
                 </button>
             </div>
 
-            <div className="stats-grid">
+            <div className="mb-[28px] grid grid-cols-4 gap-[14px] max-[1024px]:grid-cols-2 max-[760px]:grid-cols-1">
                 {stats.map((stat, index) => (
-                    <div key={stat.label} className="stat-card">
-                        <div className="stat-head">
-                            <span className="stat-label">{stat.label}</span>
-                            <div className="stat-icon">
-                                <svg className="icon icon-sm">
+                    <div
+                        key={stat.label}
+                        className="rounded-[12px] border border-bion-border bg-bion-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:-translate-y-[2px] hover:border-bion-accent"
+                    >
+                        <div className="mb-[14px] flex items-center justify-between">
+                            <span className="text-[12px] font-medium text-bion-text-muted uppercase [letter-spacing:0.03em]">
+                                {stat.label}
+                            </span>
+                            <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-bion-border bg-bion-surface-raised text-bion-accent">
+                                <svg className={ICON_SM_CLS}>
                                     <use href={`#${statIconMap[index]}`} />
                                 </svg>
                             </div>
                         </div>
-                        <div className="stat-value">{stat.value}</div>
+                        <div className="mb-[6px] font-mono text-[26px] font-semibold">
+                            {stat.value}
+                        </div>
                         <div
-                            className={[
-                                'stat-meta',
-                                stat.tone === 'success'
-                                    ? 'positive'
-                                    : stat.tone === 'danger'
-                                      ? 'warn'
-                                      : '',
-                            ].join(' ')}
+                            className={cn(
+                                'flex items-center gap-[6px] text-[12px] text-bion-text-muted',
+                                stat.tone === 'success' && 'text-bion-success',
+                                stat.tone === 'danger' && 'text-bion-danger',
+                            )}
                         >
                             {stat.tone === 'success' ? '↑ ' : null}
                             {stat.change}
@@ -100,26 +130,40 @@ export default function Dashboard({
                 ))}
             </div>
 
-            <div className="panel">
-                <div className="panel-head">
-                    <h2>Priority actions</h2>
-                    <button type="button" className="panel-link">
+            <div className="mb-[20px] rounded-[12px] border border-bion-border bg-bion-surface">
+                <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
+                    <h2 className="text-[14.5px] font-semibold">Priority actions</h2>
+                    <button
+                        type="button"
+                        className="flex items-center gap-[4px] text-[12.5px] text-bion-text-muted hover:text-bion-accent"
+                    >
                         View all
-                        <svg className="icon icon-sm">
+                        <svg className={ICON_SM_CLS}>
                             <use href="#i-arrow-up-right" />
                         </svg>
                     </button>
                 </div>
-                <div className="panel-body">
-                    {priorityActions.map((action) => {
+                <div className="p-[6px]">
+                    {priorityActions.map((action, index) => {
                         const done = completedActions.includes(action.id);
 
                         return (
-                            <div key={action.id} className="action-row">
+                            <div
+                                key={action.id}
+                                className={cn(
+                                    'flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bion-bg',
+                                    index > 0 && 'mt-[2px]',
+                                )}
+                            >
                                 <div
-                                    className={`action-icon ${action.tone === 'danger' ? 'warn' : 'wait'}`}
+                                    className={cn(
+                                        'flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px]',
+                                        action.tone === 'danger'
+                                            ? 'bg-bion-danger-soft text-bion-danger'
+                                            : 'bg-bion-accent-soft text-bion-accent',
+                                    )}
                                 >
-                                    <svg className="icon icon-sm">
+                                    <svg className={ICON_SM_CLS}>
                                         <use
                                             href={
                                                 action.tone === 'danger'
@@ -129,20 +173,24 @@ export default function Dashboard({
                                         />
                                     </svg>
                                 </div>
-                                <div className="action-text">
-                                    <div className="action-title">
+                                <div className="min-w-0 flex-1">
+                                    <div className="mb-[2px] text-[13.5px] font-medium">
                                         {action.title}
                                     </div>
-                                    <div className="action-sub">
+                                    <div className="text-[12px] text-bion-text-muted">
                                         {action.company} ·{' '}
-                                        <span className="amount">
+                                        <span className="font-mono font-medium text-bion-text">
                                             {action.amount}
                                         </span>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
-                                    className={`btn-action ${done ? 'done' : ''}`}
+                                    className={cn(
+                                        'shrink-0 rounded-[7px] border border-bion-border bg-bion-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-bion-text [transition:background_0.12s_ease] hover:border-bion-accent hover:bg-bion-accent hover:text-bion-accent-text',
+                                        done &&
+                                            'pointer-events-none border-transparent bg-bion-success-soft text-bion-success hover:border-transparent hover:bg-bion-success-soft hover:text-bion-success',
+                                    )}
                                     onClick={() => markActionDone(action)}
                                 >
                                     {done
@@ -155,43 +203,49 @@ export default function Dashboard({
                 </div>
             </div>
 
-            <div className="split-grid">
-                <div className="panel" style={{ marginBottom: 0 }}>
-                    <div className="panel-head">
-                        <h2>Recent opportunities</h2>
-                        <button type="button" className="panel-link">
+            <div className="grid grid-cols-[1.1fr_0.9fr] gap-[20px] max-[1024px]:grid-cols-1">
+                <div className="rounded-[12px] border border-bion-border bg-bion-surface">
+                    <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
+                        <h2 className="text-[14.5px] font-semibold">Recent opportunities</h2>
+                        <button
+                            type="button"
+                            className="flex items-center gap-[4px] text-[12.5px] text-bion-text-muted hover:text-bion-accent"
+                        >
                             View all
-                            <svg className="icon icon-sm">
+                            <svg className={ICON_SM_CLS}>
                                 <use href="#i-arrow-up-right" />
                             </svg>
                         </button>
                     </div>
-                    <div className="panel-body">
+                    <div className="p-[6px]">
                         {recentOpportunities.map((opportunity) => (
-                            <div key={opportunity.id} className="opp-row">
+                            <div
+                                key={opportunity.id}
+                                className="flex items-center gap-[12px] rounded-[9px] p-[11px_12px] hover:bg-bion-bg"
+                            >
                                 <span
-                                    className={`pill ${
-                                        opportunity.tone === 'accent'
-                                            ? 'pill-accent'
-                                            : opportunity.tone === 'success'
-                                              ? 'pill-success'
-                                              : opportunity.tone === 'danger'
-                                                ? 'pill-danger'
-                                                : 'pill-muted'
-                                    }`}
+                                    className={cn(
+                                        PILL_BASE,
+                                        pillClasses[opportunity.tone] ?? pillClasses.muted,
+                                    )}
                                 >
-                                    <span className="dot" />
+                                    <span
+                                        className={cn(
+                                            'h-[6px] w-[6px] rounded-full',
+                                            dotClasses[opportunity.tone] ?? dotClasses.muted,
+                                        )}
+                                    />
                                     {opportunity.stageLabel}
                                 </span>
-                                <div className="opp-info">
-                                    <div className="opp-title">
+                                <div className="min-w-0 flex-1">
+                                    <div className="mb-[3px] overflow-hidden text-[13.5px] font-medium text-ellipsis whitespace-nowrap">
                                         {opportunity.title}
                                     </div>
-                                    <div className="opp-client">
+                                    <div className="text-[12px] text-bion-text-muted">
                                         {opportunity.client}
                                     </div>
                                 </div>
-                                <span className="opp-value">
+                                <span className="font-mono text-[13px] font-medium">
                                     {opportunity.amount}
                                 </span>
                             </div>
@@ -199,30 +253,28 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                <div className="panel" style={{ marginBottom: 0 }}>
-                    <div className="panel-head">
-                        <h2>Recent activity</h2>
+                <div className="rounded-[12px] border border-bion-border bg-bion-surface">
+                    <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
+                        <h2 className="text-[14.5px] font-semibold">Recent activity</h2>
                     </div>
-                    <div className="panel-body">
+                    <div className="p-[6px]">
                         {activityFeed.map((item, index) => (
-                            <div key={`${item.title}-${item.when}`} className="feed-item">
-                                <div className="feed-dot-wrap">
+                            <div key={`${item.title}-${item.when}`} className="flex gap-[12px] p-[11px_12px]">
+                                <div className="flex shrink-0 flex-col items-center pt-[3px]">
                                     <div
-                                        className={`feed-dot ${
-                                            item.tone === 'accent'
-                                                ? 'accent'
-                                                : item.tone === 'success'
-                                                  ? 'success'
-                                                  : ''
-                                        }`}
+                                        className={cn(
+                                            'h-[7px] w-[7px] rounded-full bg-bion-border',
+                                            item.tone === 'accent' && 'bg-bion-accent',
+                                            item.tone === 'success' && 'bg-bion-success',
+                                        )}
                                     />
                                     {index !== activityFeed.length - 1 ? (
-                                        <div className="feed-line" />
+                                        <div className="mt-[4px] w-px flex-1 bg-bion-border" />
                                     ) : null}
                                 </div>
                                 <div>
-                                    <div className="feed-text">{item.title}</div>
-                                    <div className="feed-time">{item.when}</div>
+                                    <div className="mb-[2px] text-[13px]">{item.title}</div>
+                                    <div className="text-[11.5px] text-bion-text-muted">{item.when}</div>
                                 </div>
                             </div>
                         ))}

@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceCreateController;
+use App\Http\Controllers\InvoicesController;
+use App\Http\Controllers\InvoiceShowController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OpportunitiesController;
 use App\Http\Controllers\ProjectsController;
@@ -24,6 +27,11 @@ Route::prefix('app/{current_team}')
             ->whereNumber('project')
             ->name('projects.show');
         Route::get('proposals', ProposalsController::class)->name('proposals.index');
+        Route::get('invoices', InvoicesController::class)->name('invoices.index');
+        Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
+        Route::get('invoices/{invoice}', InvoiceShowController::class)
+            ->whereNumber('invoice')
+            ->name('invoices.show');
     });
 
 Route::middleware(['auth'])->group(function () {
