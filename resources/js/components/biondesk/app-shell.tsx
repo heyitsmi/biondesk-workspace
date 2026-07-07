@@ -13,6 +13,7 @@ import { index as opportunities } from '@/routes/opportunities';
 import { edit as profile } from '@/routes/profile';
 import { index as projects } from '@/routes/projects';
 import { index as proposals } from '@/routes/proposals';
+import { index as quotations } from '@/routes/quotations';
 import {
     useEffect,
     useMemo,
@@ -170,6 +171,9 @@ export default function BiondeskAppShell({
     const invoiceCount = Array.isArray(propsBag.invoices)
         ? String(propsBag.invoices.length)
         : '4';
+    const quotationCount = Array.isArray(propsBag.quotations)
+        ? String(propsBag.quotations.length)
+        : '4';
 
     const navSections = useMemo<NavSection[]>(() => {
         if (!currentTeam) {
@@ -188,7 +192,7 @@ export default function BiondeskAppShell({
                 label: 'Documents',
                 items: [
                     { title: 'Proposals', icon: 'i-file', href: proposals(currentTeam.slug), badge: proposalCount },
-                    { title: 'Quotations', icon: 'i-quote', badge: '1' },
+                    { title: 'Quotations', icon: 'i-quote', href: quotations(currentTeam.slug), badge: quotationCount },
                     { title: 'Invoices', icon: 'i-receipt', href: invoices(currentTeam.slug), badge: invoiceCount },
                     { title: 'Contacts', icon: 'i-users' },
                 ],
@@ -201,7 +205,7 @@ export default function BiondeskAppShell({
                 ],
             },
         ];
-    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount]);
+    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount, quotationCount]);
 
     useEffect(() => {
         const previousHtmlOverflow = document.documentElement.style.overflow;

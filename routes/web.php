@@ -10,6 +10,9 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectShowController;
 use App\Http\Controllers\ProposalsController;
 use App\Http\Controllers\PublicLeadFormController;
+use App\Http\Controllers\QuotationCreateController;
+use App\Http\Controllers\QuotationsController;
+use App\Http\Controllers\QuotationShowController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +35,11 @@ Route::prefix('app/{current_team}')
         Route::get('invoices/{invoice}', InvoiceShowController::class)
             ->whereNumber('invoice')
             ->name('invoices.show');
+        Route::get('quotations', QuotationsController::class)->name('quotations.index');
+        Route::get('quotations/create', QuotationCreateController::class)->name('quotations.create');
+        Route::get('quotations/{quotation}', QuotationShowController::class)
+            ->whereNumber('quotation')
+            ->name('quotations.show');
     });
 
 Route::middleware(['auth'])->group(function () {
