@@ -9,178 +9,65 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  a { color: inherit; text-decoration: none; }
-  ul { list-style: none; }
-  input, select, textarea { font: inherit; color: inherit; }
-
-  :root {
-    --bg: #F6F7F9; --surface: #FFFFFF; --surface-raised: #FFFFFF; --border: #E4E6EB;
-    --text: #12161F; --text-muted: #6B7280; --accent: #C77F1F; --accent-text: #FFFFFF;
-    --success: #1F8A5F; --danger: #D6383D;
-    --accent-soft: rgba(199,127,31,0.1); --success-soft: rgba(31,138,95,0.1); --danger-soft: rgba(214,56,61,0.1);
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-bg: #F6F7F9;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-border: #E4E6EB;
+    --color-text: #12161F;
+    --color-text-muted: #6B7280;
+    --color-accent: #C77F1F;
+    --color-accent-text: #FFFFFF;
+    --color-success: #1F8A5F;
+    --color-danger: #D6383D;
+    --color-info: #2563EB;
+    --color-accent-soft: rgba(199,127,31,0.1);
+    --color-success-soft: rgba(31,138,95,0.1);
+    --color-danger-soft: rgba(214,56,61,0.1);
+    --color-info-soft: rgba(37,99,235,0.1);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
-    --font-display: 'Instrument Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Instrument Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
   [data-theme="dark"] {
-    --bg: #0B0E14; --surface: #12161F; --surface-raised: #1A1F2B; --border: #232838;
-    --text: #EDEFF3; --text-muted: #8B93A6; --accent: #E8A33D; --accent-text: #12161F;
-    --success: #34A87C; --danger: #E5484D;
-    --accent-soft: rgba(232,163,61,0.12); --success-soft: rgba(52,168,124,0.12); --danger-soft: rgba(229,72,77,0.12);
+    --color-bg: #0B0E14;
+    --color-surface: #12161F;
+    --color-surface-raised: #1A1F2B;
+    --color-border: #232838;
+    --color-text: #EDEFF3;
+    --color-text-muted: #8B93A6;
+    --color-accent: #E8A33D;
+    --color-accent-text: #12161F;
+    --color-success: #34A87C;
+    --color-danger: #E5484D;
+    --color-info: #60A5FA;
+    --color-accent-soft: rgba(232,163,61,0.12);
+    --color-success-soft: rgba(52,168,124,0.12);
+    --color-danger-soft: rgba(229,72,77,0.12);
+    --color-info-soft: rgba(96,165,250,0.12);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
   }
 
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
-  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .icon-sm { width: 15px; height: 15px; }
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-
-  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  ::-webkit-scrollbar { width: 7px; height: 7px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-  .app-shell { display: flex; height: 100vh; overflow: hidden; }
-  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: width 0.2s ease; }
-  .sidebar.collapsed { width: 68px; }
-  .sidebar-brand { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
-  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
-  .sidebar-toggle { position: absolute; top: 16px; right: -14px; width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-raised); z-index: 35; transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
-  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
-  .sidebar-toggle .icon { transition: transform 0.2s ease; }
-  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
-  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
-  .sidebar.collapsed .sidebar-nav { overflow: visible; }
-  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.12s ease, color 0.12s ease; }
-  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar.collapsed .nav-item { justify-content: center; }
-  .sidebar.collapsed .nav-item .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40; box-shadow: var(--shadow-raised); }
-  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
-  .tooltip { display: none; } .sidebar.collapsed .tooltip { display: block; }
-
-  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .topbar { height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg); }
-  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
-  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .breadcrumb a { color: var(--text-muted); flex-shrink: 0; }
-  .breadcrumb a:hover { color: var(--accent); }
-  .breadcrumb .sep { color: var(--border); flex-shrink: 0; }
-  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-  .search-trigger { display: flex; align-items: center; gap: 10px; width: 260px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
-  .search-trigger:hover { border-color: var(--accent); }
-  .search-trigger .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 11px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
-  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
-  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
-  .avatar-btn:hover { background: var(--surface-raised); }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-  .dropdown-wrap { position: relative; }
-  .dropdown-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 240px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 50; opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease; }
-  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
-  .dropdown-item:hover { background: var(--bg); }
-  .dropdown-item.danger { color: var(--danger); }
-  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
-  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
-
-  .content { flex: 1; display: flex; flex-direction: column; padding: 20px 32px 24px; overflow: hidden; min-height: 0; }
-
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease; }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: var(--accent-text); } .btn-primary:hover { opacity: 0.88; }
-  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); } .btn-ghost:hover { background: var(--surface-raised); }
-  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
-  .btn-outline { border: 1px solid var(--border); background: transparent; color: var(--text); } .btn-outline:hover { border-color: var(--text-muted); }
-
-  .doc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; flex-wrap: wrap; gap: 16px; }
-  .doc-title-area h1 { font-size: 24px; font-weight: 700; font-family: var(--font-mono); letter-spacing: -0.02em; }
-
-  .document-layout { display: flex; gap: 24px; flex: 1; min-height: 0; }
-  
-  .document-main-area { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-  .doc-canvas { flex: 1; padding: 40px; overflow-y: auto; color: var(--text); }
-  
-  /* Editable Fields */
-  .input-field { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 14px; transition: border-color 0.15s ease, background 0.15s ease; }
-  .input-field:hover { background: var(--surface-raised); }
-  .input-field:focus { border-color: var(--accent); background: var(--bg); outline: none; }
-  
-  .input-field-border { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13.5px; }
-  .input-field-border:focus { border-color: var(--accent); }
-
-  .invoice-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; gap: 24px; }
-  .invoice-from { flex: 1; }
-  .invoice-from h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; padding: 0 12px; }
-  .invoice-from p { color: var(--text-muted); font-size: 13.5px; line-height: 1.5; padding: 0 12px; }
-  
-  .invoice-details { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; align-items: center; width: 320px; }
-  .invoice-details .d-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; text-align: right; }
-  
-  .invoice-bill-to { margin-bottom: 32px; padding: 20px; background: var(--surface-raised); border-radius: 8px; border: 1px dashed var(--border); display: flex; flex-direction: column; gap: 12px; }
-  .invoice-bill-to .d-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-  
-  /* Editable Line items */
-  .line-items-block { margin-bottom: 24px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .line-items-table { width: 100%; border-collapse: collapse; }
-  .line-items-table th { text-align: left; background: var(--surface-raised); padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-  .line-items-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  .col-item { width: 45%; }
-  .col-qty, .col-price, .col-total { width: 15%; text-align: right; }
-  .col-action { width: 10%; text-align: right; }
-  .th-right { text-align: right !important; }
-  
-  .item-title-input { font-weight: 500; font-family: var(--font-display); margin-bottom: 4px; }
-  .item-desc-input { font-size: 12.5px; color: var(--text-muted); font-family: var(--font-display); resize: vertical; min-height: 40px; }
-  .item-number-input { font-family: var(--font-mono); text-align: right; }
-  
-  .add-item-btn { width: 100%; padding: 12px; text-align: center; font-size: 13px; font-weight: 500; color: var(--accent); background: var(--accent-soft); border: none; cursor: pointer; transition: opacity 0.15s ease; }
-  .add-item-btn:hover { opacity: 0.8; }
-  
-  .totals-area { padding: 16px 24px; background: var(--surface-raised); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; margin-top: -24px; margin-bottom: 32px;}
-  .total-row { display: flex; justify-content: space-between; align-items: center; width: 280px; font-size: 13.5px; }
-  .total-label { color: var(--text-muted); }
-  .total-val { font-family: var(--font-mono); font-weight: 500; }
-  .total-row.grand-total { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border); }
-  .total-row.grand-total .total-val { color: var(--accent); }
-  
-  .invoice-notes { padding-top: 24px; border-top: 1px solid var(--border); margin-top: 32px; }
-  .invoice-notes h4 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-
-  /* Right Sidebar */
-  .document-sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
-  .side-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-  .side-panel-header { font-size: 13.5px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-  
-  .field-group { margin-bottom: 14px; }
-  .field-group:last-child { margin-bottom: 0; }
-  .field-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 7px; display: block; }
-  
-  @media (max-width: 1100px) {
-    .document-layout { flex-direction: column; }
-    .document-sidebar { width: 100%; }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    input, select, textarea { font: inherit; color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    * { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
   }
-  @media (max-width: 760px) {
-    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
-    .sidebar.mobile-open { left: 0; }
-    .sidebar.collapsed { width: 240px; }
-    .icon-btn.mobile-menu-btn { display: flex; }
-    .content { padding: 20px 16px 40px; }
-    .invoice-header-row { flex-direction: column; }
-    .invoice-details { width: 100%; grid-template-columns: 100px 1fr; }
-    .invoice-details .d-label { text-align: left; }
-    .col-qty, .col-price, .col-action { display: none; } /* Simplified mobile table */
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
 </style>
 </head>
@@ -215,93 +102,139 @@
   </defs>
 </svg>
 
-<div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand"><div class="brand-mark"><span></span></div><span class="brand-name">Biondesk</span></div>
-    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar"><svg class="icon icon-sm"><use href="#i-chevron-left"/></svg></button>
-    <nav class="sidebar-nav">
-      <a href="../dashboard.html" class="nav-item"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-label">Dashboard</span><span class="tooltip">Dashboard</span></a>
-      <a href="../opportunities/index.html" class="nav-item"><svg class="icon"><use href="#i-kanban"/></svg><span class="nav-label">Opportunities</span><span class="tooltip">Opportunities</span></a>
-      <a href="../projects/index.html" class="nav-item"><svg class="icon"><use href="#i-briefcase"/></svg><span class="nav-label">Projects</span><span class="tooltip">Projects</span></a>
-      <div class="sidebar-section-label">Documents</div>
-      <a href="../proposals/index.html" class="nav-item"><svg class="icon"><use href="#i-file"/></svg><span class="nav-label">Proposals</span><span class="tooltip">Proposals</span></a>
-      <a href="index.html" class="nav-item active"><svg class="icon"><use href="#i-quote"/></svg><span class="nav-label">Quotations</span><span class="tooltip">Quotations</span></a>
-      <a href="../invoices/index.html" class="nav-item"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-label">Invoices</span><span class="tooltip">Invoices</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-users"/></svg><span class="nav-label">Contacts</span><span class="tooltip">Contacts</span></a>
-      <div class="sidebar-section-label">Workspace</div>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-bell"/></svg><span class="nav-label">Reminders</span><span class="tooltip">Reminders</span></a>
-      <a href="#" class="nav-item"><svg class="icon"><use href="#i-layers"/></svg><span class="nav-label">Profile Library</span><span class="tooltip">Profile Library</span></a>
+<div class="flex h-screen overflow-hidden">
+  <aside class="group/sidebar relative flex shrink-0 flex-col border-r border-border bg-surface [transition:width_0.2s_ease] [&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px] max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px] max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!" id="sidebar">
+    <div class="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-border px-[18px]">
+      <div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-border bg-surface-raised"><span class="h-[7px] w-[7px] rounded-full bg-accent"></span></div>
+      <span class="overflow-hidden text-[15px] font-semibold whitespace-nowrap group-[.collapsed]/sidebar:hidden">Biondesk</span>
+    </div>
+    <button class="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-border bg-surface text-text-muted shadow-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-accent hover:text-text max-[760px]:hidden" id="sidebarToggle" title="Collapse sidebar">
+      <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] [transition:transform_0.2s_ease] group-[.collapsed]/sidebar:rotate-180"><use href="#i-chevron-left"/></svg>
+    </button>
+    <nav class="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[12px] py-[16px] group-[.collapsed]/sidebar:overflow-visible!">
+      <a href="../dashboard.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-grid"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Dashboard</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Dashboard</span>
+      </a>
+      <a href="../opportunities/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Opportunities</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Opportunities</span>
+      </a>
+      <a href="../projects/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Projects</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Projects</span>
+      </a>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Documents</div>
+      <a href="../proposals/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-file"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Proposals</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Proposals</span>
+      </a>
+      <a href="../quotations/index.html" class="nav-item active group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap bg-accent-soft text-accent [transition:background_0.12s_ease,color_0.12s_ease] group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-quote"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Quotations</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Quotations</span>
+      </a>
+      <a href="../invoices/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-receipt"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Invoices</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Invoices</span>
+      </a>
+      <a href="../contacts/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-users"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Contacts</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Contacts</span>
+      </a>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Workspace</div>
+      <a href="../reminders/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Reminders</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Reminders</span>
+      </a>
+      <a href="../profiles/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-layers"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Profile Library</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Profile Library</span>
+      </a>
     </nav>
-    <div class="sidebar-footer"><a href="../settings/index.html" class="nav-item"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span><span class="tooltip">Settings</span></a></div>
+    <div class="shrink-0 border-t border-border px-[12px] py-[10px]">
+      <a href="../settings/index.html" class="nav-item group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Settings</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Settings</span>
+      </a>
+    </div>
   </aside>
 
-  <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn"><svg class="icon"><use href="#i-menu"/></svg></button>
-        <div class="breadcrumb">
-          <a href="index.html"><svg class="icon icon-sm"><use href="#i-arrow-left"/></svg></a>
-          <a href="index.html">Quotations</a>
-          <span class="sep">/</span>
-          <span class="current">New Quotation</span>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-bg px-[24px]">
+      <div class="flex min-w-0 items-center gap-[10px]">
+        <button class="relative hidden h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text max-[760px]:flex" id="mobileMenuBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-menu"/></svg></button>
+        <div class="flex min-w-0 items-center gap-[8px] overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-semibold text-text">
+          <a href="index.html" class="shrink-0 text-text-muted hover:text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-arrow-left"/></svg></a>
+          <a href="index.html" class="shrink-0 text-text-muted hover:text-accent">Quotations</a>
+          <span class="shrink-0 text-border">/</span>
+          <span class="overflow-hidden text-ellipsis whitespace-nowrap">New Quotation</span>
         </div>
       </div>
-      <button class="search-trigger" id="cmdkTrigger">
-        <svg class="icon icon-sm"><use href="#i-search"/></svg><span>Search...</span><span class="kbd">⌘K</span>
+      <button class="flex w-[260px] shrink-0 items-center gap-[10px] rounded-[8px] border border-border bg-surface px-[10px] py-[7px] text-[13px] text-text-muted hover:border-accent max-[1024px]:hidden" id="cmdkTrigger">
+        <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg><span>Search...</span><span class="ml-auto rounded-[4px] border border-border bg-surface-raised px-[6px] py-px font-mono text-[11px]">⌘K</span>
       </button>
-      <div class="topbar-right">
-        <div class="theme-switch" id="themeSwitch">
-          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
-          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
-          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+      <div class="flex shrink-0 items-center gap-[8px]">
+        <div class="flex items-center gap-[2px] rounded-[8px] border border-border bg-surface p-[2px]" id="themeSwitch">
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="light" title="Light"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-sun"/></svg></button>
+          <button class="active flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="dark" title="Dark"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-moon"/></svg></button>
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="system" title="System"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-monitor"/></svg></button>
         </div>
-        <div class="dropdown-wrap">
-          <button class="icon-btn" id="notifBtn"><svg class="icon"><use href="#i-bell"/></svg></button>
-          <div class="dropdown-panel" id="notifPanel"><div class="dropdown-header">Notifications</div><div class="dropdown-item">No new notifications</div></div>
+        <div class="relative">
+          <button class="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text" id="notifBtn"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="notifPanel"><div class="mb-[4px] border-b border-border px-[10px] py-[8px] text-[12.5px] font-semibold">Notifications</div><div class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text">No new notifications</div></div>
         </div>
-        <div class="dropdown-wrap">
-          <button class="avatar-btn" id="userBtn"><div class="avatar">HI</div><svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg></button>
-          <div class="dropdown-panel" id="userPanel">
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
-            <button class="dropdown-item" onclick="window.location.href='../settings/index.html'"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
-            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+        <div class="relative">
+          <button class="flex items-center gap-[8px] rounded-[8px] pt-[4px] pr-[8px] pb-[4px] pl-[4px] hover:bg-surface-raised" id="userBtn"><div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-text">HI</div><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] text-text-muted"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="userPanel">
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-user"/></svg> Profile</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg" onclick="window.location.href='../settings/index.html'"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg> Settings</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-danger hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-logout"/></svg> Log out</button>
           </div>
         </div>
       </div>
     </header>
 
-    <main class="content">
-      <div class="doc-header">
-        <div class="doc-title-area">
-          <h1>New Quotation</h1>
+    <main class="flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]">
+      <div class="mb-[20px] flex shrink-0 flex-wrap items-center justify-between gap-[16px]">
+        <div>
+          <h1 class="font-mono text-[24px] font-bold [letter-spacing:-0.02em]">New Quotation</h1>
         </div>
       </div>
 
-      <div class="document-layout">
-        <!-- CANVAS (LEFT) -->
-        <div class="document-main-area">
-          <div class="doc-canvas">
-            
-            <div class="invoice-header-row">
-              <div class="invoice-from">
-                <h2>Biondesk Studio</h2>
-                <p>123 Creative Street, Tech District<br>Jakarta, Indonesia 12345</p>
+      <div class="flex min-h-0 flex-1 gap-[24px] max-[1100px]:flex-col">
+        <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-border bg-surface">
+          <div class="flex-1 overflow-y-auto p-[40px] text-text">
+
+            <div class="mb-[40px] flex items-start justify-between gap-[24px] max-[760px]:flex-col">
+              <div class="flex-1">
+                <h2 class="mb-[4px] px-[12px] text-[18px] font-semibold">Biondesk Studio</h2>
+                <p class="px-[12px] leading-normal text-[13.5px] text-text-muted">123 Creative Street, Tech District<br>Jakarta, Indonesia 12345</p>
               </div>
-              <div class="invoice-details">
-                <div class="d-label">Quotation #</div>
-                <input type="text" class="input-field input-field-border" value="QUO-2023-018" style="font-family: var(--font-mono);">
-                
-                <div class="d-label">Date Issued</div>
-                <input type="date" class="input-field input-field-border" value="2023-11-20">
-                
-                <div class="d-label">Expiry Date</div>
-                <input type="date" class="input-field input-field-border" value="2023-12-04">
+              <div class="grid w-[320px] grid-cols-[auto_1fr] items-center gap-x-[16px] gap-y-[8px] max-[760px]:w-full max-[760px]:grid-cols-[100px_1fr]">
+                <div class="text-right text-[12px] uppercase text-text-muted [letter-spacing:0.05em] max-[760px]:text-left">Quotation #</div>
+                <input type="text" class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none font-mono" value="QUO-2023-018">
+
+                <div class="text-right text-[12px] uppercase text-text-muted [letter-spacing:0.05em] max-[760px]:text-left">Date Issued</div>
+                <input type="date" class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none" value="2023-11-20">
+
+                <div class="text-right text-[12px] uppercase text-text-muted [letter-spacing:0.05em] max-[760px]:text-left">Expiry Date</div>
+                <input type="date" class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none" value="2023-12-04">
               </div>
             </div>
 
-            <div class="invoice-bill-to">
-              <div class="d-label">Prepared For</div>
-              <select class="input-field-border">
+            <div class="mb-[32px] flex flex-col gap-[12px] rounded-[8px] border border-dashed border-border bg-surface-raised p-[20px]">
+              <div class="text-[12px] uppercase text-text-muted [letter-spacing:0.05em]">Prepared For</div>
+              <select class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none">
                 <option value="">-- Select Client --</option>
                 <option value="1">Acme Corp</option>
                 <option value="2">Globex Inc</option>
@@ -309,47 +242,47 @@
               </select>
             </div>
 
-            <div class="line-items-block">
-              <table class="line-items-table">
+            <div class="mb-[24px] overflow-hidden rounded-[8px] border border-border">
+              <table class="line-items-table w-full border-collapse">
                 <thead>
                   <tr>
-                    <th class="col-item">Item & Description</th>
-                    <th class="col-qty th-right">Qty</th>
-                    <th class="col-price th-right">Price</th>
-                    <th class="col-total th-right">Total</th>
-                    <th class="col-action"></th>
+                    <th class="border-b border-border bg-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-text-muted w-[45%]">Item &amp; Description</th>
+                    <th class="border-b border-border bg-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-text-muted w-[15%] text-right">Qty</th>
+                    <th class="border-b border-border bg-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-text-muted w-[15%] text-right">Price</th>
+                    <th class="border-b border-border bg-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-text-muted w-[15%] text-right">Total</th>
+                    <th class="border-b border-border bg-surface-raised px-[16px] py-[10px] text-left text-[12px] font-semibold text-text-muted w-[10%] text-right"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>
-                      <input type="text" class="input-field item-title-input" placeholder="Item name">
-                      <textarea class="input-field item-desc-input" placeholder="Description (optional)"></textarea>
+                    <td class="border-b border-border p-[8px] align-top">
+                      <input type="text" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none mb-[4px] font-medium" placeholder="Item name">
+                      <textarea class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none min-h-[40px] resize-y text-[12.5px] text-text-muted" placeholder="Description (optional)"></textarea>
                     </td>
-                    <td><input type="number" class="input-field item-number-input" value="1" min="1"></td>
-                    <td><input type="text" class="input-field item-number-input" placeholder="0.00"></td>
-                    <td class="col-total th-right" style="padding-top:16px;">$0.00</td>
-                    <td style="padding-top:12px; text-align:right;">
-                      <button class="icon-btn" style="color:var(--danger); display:inline-flex;" title="Remove Item"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button>
+                    <td class="border-b border-border p-[8px] align-top"><input type="number" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none text-right font-mono" value="1" min="1"></td>
+                    <td class="border-b border-border p-[8px] align-top"><input type="text" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none text-right font-mono" placeholder="0.00"></td>
+                    <td class="col-total w-[15%] border-b border-border p-[8px] pt-[16px] text-right align-top">$0.00</td>
+                    <td class="w-[10%] border-b border-border p-[8px] pt-[12px] text-right align-top">
+                      <button class="relative inline-flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-danger hover:bg-surface-raised" title="Remove Item"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-trash"/></svg></button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <button class="add-item-btn"><svg class="icon icon-sm" style="display:inline; vertical-align:-3px; margin-right:4px;"><use href="#i-plus"/></svg> Add Line Item</button>
-            </div>
-            
-            <div class="totals-area">
-              <div class="total-row"><span class="total-label">Subtotal</span><span class="total-val">$0.00</span></div>
-              <div class="total-row" style="margin: 8px 0;">
-                <span class="total-label">Discount (%)</span>
-                <input type="number" class="input-field-border" value="0" style="width: 80px; text-align: right; padding: 4px 8px;">
-              </div>
-              <div class="total-row grand-total"><span class="total-label">Total Estimate</span><span class="total-val">$0.00</span></div>
+              <button class="add-item-btn w-full bg-accent-soft p-[12px] text-center text-[13px] font-medium text-accent [transition:opacity_0.15s_ease] hover:opacity-80"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] inline-block align-[-3px] mr-[4px]"><use href="#i-plus"/></svg> Add Line Item</button>
             </div>
 
-            <div class="invoice-notes">
-              <h4>Terms & Conditions</h4>
-              <textarea class="input-field-border" rows="5" placeholder="Enter terms and conditions, validity period, or special notes here...">Prices are valid for 14 days from the date of quotation.
+            <div class="totals-area -mt-[24px] mb-[32px] flex flex-col items-end gap-[8px] rounded-b-[8px] border border-t-0 border-border bg-surface-raised px-[24px] py-[16px]">
+              <div class="total-row flex w-[280px] items-center justify-between text-[13.5px]"><span class="total-label text-text-muted">Subtotal</span><span class="total-val font-mono font-medium">$0.00</span></div>
+              <div class="total-row my-[8px] flex w-[280px] items-center justify-between text-[13.5px]">
+                <span class="total-label text-text-muted">Discount (%)</span>
+                <input type="number" class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none w-[80px] px-[8px] py-[4px] text-right" value="0">
+              </div>
+              <div class="total-row grand-total mt-[8px] flex w-[280px] items-center justify-between border-t border-dashed border-border pt-[12px] text-[18px] font-bold text-text"><span class="total-label text-text-muted">Total Estimate</span><span class="total-val font-mono font-medium text-accent">$0.00</span></div>
+            </div>
+
+            <div class="mt-[32px] border-t border-border pt-[24px]">
+              <h4 class="mb-[8px] text-[13px] font-semibold text-text-muted uppercase [letter-spacing:0.05em]">Terms &amp; Conditions</h4>
+              <textarea class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none" rows="5" placeholder="Enter terms and conditions, validity period, or special notes here...">Prices are valid for 14 days from the date of quotation.
 50% deposit required upon acceptance to begin work.
 This is not an invoice.</textarea>
             </div>
@@ -357,49 +290,48 @@ This is not an invoice.</textarea>
           </div>
         </div>
 
-        <!-- SIDEBAR SETTINGS (RIGHT) -->
-        <div class="document-sidebar">
-          
-          <div class="side-panel">
-            <div class="side-panel-header">Publishing</div>
-            <div style="display:flex; flex-direction:column; gap:12px;">
-              <button class="btn btn-primary" style="justify-content: center;"><svg class="icon icon-sm"><use href="#i-check"/></svg> Save & Send to Client</button>
-              <button class="btn btn-outline" style="justify-content: center;">Save as Draft</button>
+        <div class="flex w-[340px] shrink-0 flex-col gap-[16px] overflow-y-auto pr-[4px] max-[1100px]:w-full">
+
+          <div class="rounded-[12px] border border-border bg-surface p-[16px]">
+            <div class="mb-[16px] flex items-center justify-between text-[13.5px] font-semibold">Publishing</div>
+            <div class="flex flex-col gap-[12px]">
+              <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] justify-center bg-accent text-accent-text hover:opacity-[0.88]"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-check"/></svg> Save &amp; Send to Client</button>
+              <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] justify-center border border-border bg-transparent text-text hover:border-text-muted">Save as Draft</button>
             </div>
           </div>
-          
-          <div class="side-panel">
-            <div class="side-panel-header">Settings</div>
-            
-            <div class="field-group">
-              <span class="field-label">Linked Project (Optional)</span>
-              <select class="input-field-border">
+
+          <div class="rounded-[12px] border border-border bg-surface p-[16px]">
+            <div class="mb-[16px] flex items-center justify-between text-[13.5px] font-semibold">Settings</div>
+
+            <div class="mb-[14px]">
+              <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Linked Project (Optional)</span>
+              <select class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none">
                 <option value="">-- No Project --</option>
                 <option value="p1">Website Redesign</option>
                 <option value="p2">Q3 Marketing</option>
               </select>
             </div>
 
-            <div class="field-group">
-              <span class="field-label">Currency</span>
-              <select class="input-field-border">
+            <div class="mb-0">
+              <span class="mb-[7px] block text-[11.5px] uppercase text-text-muted [letter-spacing:0.04em]">Currency</span>
+              <select class="w-full rounded-[8px] border border-border bg-bg px-[12px] py-[9px] text-[13.5px] text-text focus:border-accent focus:outline-none">
                 <option value="USD">USD - US Dollar</option>
                 <option value="IDR">IDR - Indonesian Rupiah</option>
                 <option value="EUR">EUR - Euro</option>
               </select>
             </div>
           </div>
-          
+
         </div>
       </div>
     </main>
+
   </div>
 </div>
 
 <script>
 (function () {
   const root = document.documentElement;
-
   const themeSwitch = document.getElementById('themeSwitch');
   const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
   function applyTheme(choice) {
@@ -449,9 +381,9 @@ This is not an invoice.</textarea>
       row.querySelector('.col-total').textContent = '$' + rowTotal.toFixed(2);
       subtotal += rowTotal;
     });
-    
+
     subtotalEl.textContent = '$' + subtotal.toFixed(2);
-    
+
     const modifier = parseFloat(taxInput.value) || 0;
     const label = document.querySelector('.totals-area .total-row:nth-child(2) .total-label').textContent.toLowerCase();
     let grandTotal = subtotal;
@@ -460,7 +392,7 @@ This is not an invoice.</textarea>
     } else if (label.includes('discount')) {
       grandTotal = subtotal - (subtotal * modifier / 100);
     }
-    
+
     grandTotalEl.textContent = '$' + grandTotal.toFixed(2);
   }
 
@@ -470,16 +402,16 @@ This is not an invoice.</textarea>
   addBtn.addEventListener('click', () => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>
-        <input type="text" class="input-field item-title-input" placeholder="Item name">
-        <textarea class="input-field item-desc-input" placeholder="Description (optional)"></textarea>
-      </td>
-      <td><input type="number" class="input-field item-number-input" value="1" min="1"></td>
-      <td><input type="text" class="input-field item-number-input" placeholder="0.00"></td>
-      <td class="col-total th-right" style="padding-top:16px;">$0.00</td>
-      <td style="padding-top:12px; text-align:right;">
-        <button class="icon-btn" style="color:var(--danger); display:inline-flex;" title="Remove Item"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button>
-      </td>
+      <td class="border-b border-border p-[8px] align-top">
+                  <input type="text" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none mb-[4px] font-medium" placeholder="Item name">
+                  <textarea class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none min-h-[40px] resize-y text-[12.5px] text-text-muted" placeholder="Description (optional)"></textarea>
+              </td>
+              <td class="border-b border-border p-[8px] align-top"><input type="number" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none text-right font-mono" value="1" min="1"></td>
+              <td class="border-b border-border p-[8px] align-top"><input type="text" class="w-full rounded-[6px] border border-transparent bg-transparent px-[12px] py-[8px] text-[14px] text-text [transition:border-color_0.15s_ease,background_0.15s_ease] hover:bg-surface-raised focus:border-accent focus:bg-bg focus:outline-none text-right font-mono" placeholder="0.00"></td>
+              <td class="col-total w-[15%] border-b border-border p-[8px] pt-[16px] text-right align-top">$0.00</td>
+              <td class="w-[10%] border-b border-border p-[8px] pt-[12px] text-right align-top">
+                  <button class="relative inline-flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-danger hover:bg-surface-raised" title="Remove Item"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-trash"/></svg></button>
+              </td>
     `;
     tbody.appendChild(tr);
     calculateTotals();

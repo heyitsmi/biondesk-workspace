@@ -8,44 +8,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        bion: {
-                            bg: '#0B0E14',
-                            surface: '#12161F',
-                            raised: '#1A1F2B',
-                            border: '#232838',
-                            text: '#EDEFF3',
-                            muted: '#8B93A6',
-                            accent: '#E8A33D',
-                            accentText: '#12161F',
-                            success: '#34A87C',
-                            danger: '#E5484D',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['"Instrument Sans"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                    },
-                    boxShadow: {
-                        'glow': '0 0 50px -10px rgba(232, 163, 61, 0.25)',
-                        'raised': '0 12px 40px rgba(0, 0, 0, 0.4)',
-                        'app': '0 24px 80px -12px rgba(0, 0, 0, 0.6)',
-                    },
-                    backgroundImage: {
-                        'radial-glow': 'radial-gradient(circle at 50% 0%, rgba(232, 163, 61, 0.08) 0%, transparent 60%)',
-                    }
-                }
-            }
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bion-bg: #0B0E14;
+            --color-bion-surface: #12161F;
+            --color-bion-raised: #1A1F2B;
+            --color-bion-border: #232838;
+            --color-bion-text: #EDEFF3;
+            --color-bion-muted: #8B93A6;
+            --color-bion-accent: #E8A33D;
+            --color-bion-accentText: #12161F;
+            --color-bion-success: #34A87C;
+            --color-bion-danger: #E5484D;
+            --font-sans: 'Instrument Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --shadow-glow: 0 0 50px -10px rgba(232, 163, 61, 0.25);
+            --shadow-raised: 0 12px 40px rgba(0, 0, 0, 0.4);
+            --shadow-app: 0 24px 80px -12px rgba(0, 0, 0, 0.6);
+            --background-image-radial-glow: radial-gradient(circle at 50% 0%, rgba(232, 163, 61, 0.08) 0%, transparent 60%);
         }
-    </script>
+    </style>
 
     <style>
         body {

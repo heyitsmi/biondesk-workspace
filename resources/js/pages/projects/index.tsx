@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as projects, show as projectShow } from '@/routes/projects';
 import type {
@@ -8,734 +9,42 @@ import type {
     ProjectsPageProps,
 } from '@/types';
 
-const projectStyles = `
-  .bd-app-shell .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 32px 24px;
-    overflow: hidden;
-    min-height: 0;
-  }
-  .bd-app-shell .proj-page {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .bd-app-shell .proj-page .page-description {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .proj-page .toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .proj-page .toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .bd-app-shell .proj-page .view-toggle {
-    display: flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-  }
-  .bd-app-shell .proj-page .view-toggle button {
-    padding: 6px 13px;
-    border-radius: 6px;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .bd-app-shell .proj-page .view-toggle button.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .proj-page .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    width: 260px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .search-box input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .bd-app-shell .proj-page .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    transition: opacity 0.12s ease, transform 0.1s ease;
-  }
-  .bd-app-shell .proj-page .btn:active {
-    transform: scale(0.97);
-  }
-  .bd-app-shell .proj-page .btn-primary {
-    background: var(--accent);
-    color: var(--accent-text);
-  }
-  .bd-app-shell .proj-page .btn-primary:hover {
-    opacity: 0.88;
-  }
-  .bd-app-shell .proj-page .btn-ghost {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .bd-app-shell .proj-page .btn-ghost:hover {
-    background: var(--surface-raised);
-  }
-  .bd-app-shell .proj-page .view-area {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .bd-app-shell .proj-page .board {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    align-items: stretch;
-    padding-bottom: 10px;
-  }
-  .bd-app-shell .proj-page .board-col {
-    width: 272px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-  .bd-app-shell .proj-page .board-col-head {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 6px 12px;
-  }
-  .bd-app-shell .proj-page .stage-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .bd-app-shell .proj-page .stage-label .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-  }
-  .bd-app-shell .proj-page .count {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .board-col-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 4px 6px 4px 4px;
-    border-radius: 10px;
-    transition: background 0.12s ease;
-  }
-  .bd-app-shell .proj-page .board-col-body.drag-over {
-    background: var(--accent-soft);
-  }
-  .bd-app-shell .proj-page .proj-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    cursor: pointer;
-    transition: border-color 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-  }
-  .bd-app-shell .proj-page .proj-card:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-raised);
-  }
-  .bd-app-shell .proj-page .proj-card.dragging {
-    opacity: 0.35;
-  }
-  .bd-app-shell .proj-page .proj-card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .bd-app-shell .proj-page .proj-card-title {
-    font-size: 13.5px;
-    font-weight: 600;
-    line-height: 1.35;
-  }
-  .bd-app-shell .proj-page .card-menu-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .proj-page .card-menu-btn {
-    color: var(--text-muted);
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-  }
-  .bd-app-shell .proj-page .card-menu-btn:hover {
-    background: var(--bg);
-    color: var(--text);
-  }
-  .bd-app-shell .proj-page .card-menu-panel {
-    position: absolute;
-    top: 26px;
-    right: 0;
-    width: 170px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow-raised);
-    padding: 6px;
-    z-index: 20;
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-    pointer-events: none;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-  }
-  .bd-app-shell .proj-page .card-menu-panel.open {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-  }
-  .bd-app-shell .proj-page .card-menu-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding: 6px 8px 4px;
-  }
-  .bd-app-shell .proj-page .card-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 7px;
-    font-size: 13px;
-    color: var(--text);
-    width: 100%;
-    text-align: left;
-  }
-  .bd-app-shell .proj-page .card-menu-item:hover {
-    background: var(--bg);
-  }
-  .bd-app-shell .proj-page .proj-card-client {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-  }
-  .bd-app-shell .proj-page .proj-progress-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 11px;
-  }
-  .bd-app-shell .proj-page .proj-progress-bar {
-    flex: 1;
-    height: 5px;
-    background: var(--border);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .bd-app-shell .proj-page .proj-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 999px;
-    transition: width 0.2s ease;
-  }
-  .bd-app-shell .proj-page .proj-progress-text {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-  .bd-app-shell .proj-page .proj-card-foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11.5px;
-  }
-  .bd-app-shell .proj-page .proj-card-due {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .proj-card-due .icon-sm {
-    width: 12px;
-    height: 12px;
-  }
-  .bd-app-shell .proj-page .reqlog-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--danger-soft);
-    color: var(--danger);
-    font-weight: 600;
-  }
-  .bd-app-shell .proj-page .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    margin-bottom: 0;
-  }
-  .bd-app-shell .proj-page .table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-  .bd-app-shell .proj-page .data-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .bd-app-shell .proj-page .data-table thead {
-    position: sticky;
-    top: 0;
-    background: var(--surface);
-    z-index: 5;
-  }
-  .bd-app-shell .proj-page .data-table th {
-    text-align: left;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    user-select: none;
-  }
-  .bd-app-shell .proj-page .data-table th.sortable {
-    cursor: pointer;
-  }
-  .bd-app-shell .proj-page .th-inner {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .bd-app-shell .proj-page .data-table td {
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .bd-app-shell .proj-page .data-table tbody tr {
-    cursor: pointer;
-    transition: background 0.1s ease;
-  }
-  .bd-app-shell .proj-page .data-table tbody tr:hover td {
-    background: var(--bg);
-  }
-  .bd-app-shell .proj-page .row-title {
-    font-weight: 500;
-    margin-bottom: 2px;
-  }
-  .bd-app-shell .proj-page .row-client,
-  .bd-app-shell .proj-page .cell-muted {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .table-progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 120px;
-  }
-  .bd-app-shell .proj-page .table-progress .proj-progress-bar {
-    width: 60px;
-    flex: 0 0 60px;
-  }
-  .bd-app-shell .proj-page .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .bd-app-shell .proj-page .pill .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .bd-app-shell .proj-page .pill-accent {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .proj-page .pill-accent .dot {
-    background: var(--accent);
-  }
-  .bd-app-shell .proj-page .pill-success {
-    background: var(--success-soft);
-    color: var(--success);
-  }
-  .bd-app-shell .proj-page .pill-success .dot {
-    background: var(--success);
-  }
-  .bd-app-shell .proj-page .pill-danger {
-    background: var(--danger-soft);
-    color: var(--danger);
-  }
-  .bd-app-shell .proj-page .pill-danger .dot {
-    background: var(--danger);
-  }
-  .bd-app-shell .proj-page .pill-muted {
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
-  .bd-app-shell .proj-page .pill-muted .dot {
-    background: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .slideover-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 90;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-  }
-  .bd-app-shell .proj-page .slideover-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .bd-app-shell .proj-page .slideover {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100vh;
-    width: 400px;
-    max-width: 90vw;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    box-shadow: -8px 0 40px rgba(0,0,0,0.3);
-    transform: translateX(100%);
-    transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
-    z-index: 95;
-    display: flex;
-    flex-direction: column;
-  }
-  .bd-app-shell .proj-page .slideover-backdrop.open .slideover {
-    transform: translateX(0);
-  }
-  .bd-app-shell .proj-page .slideover-head {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .bd-app-shell .proj-page .slideover-head h2 {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .bd-app-shell .proj-page .slideover-head p {
-    font-size: 12.5px;
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .slideover-close {
-    color: var(--text-muted);
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    flex-shrink: 0;
-  }
-  .bd-app-shell .proj-page .slideover-close:hover {
-    background: var(--bg);
-    color: var(--text);
-  }
-  .bd-app-shell .proj-page .slideover-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-  }
-  .bd-app-shell .proj-page .field-group {
-    margin-bottom: 20px;
-  }
-  .bd-app-shell .proj-page .field-label {
-    font-size: 11.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin-bottom: 7px;
-    display: block;
-  }
-  .bd-app-shell .proj-page .field-select,
-  .bd-app-shell .proj-page .field-input {
-    width: 100%;
-    padding: 9px 11px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 13.5px;
-  }
-  .bd-app-shell .proj-page .field-select:focus,
-  .bd-app-shell .proj-page .field-input:focus {
-    border-color: var(--accent);
-  }
-  .bd-app-shell .proj-page .sv-section {
-    margin-bottom: 22px;
-  }
-  .bd-app-shell .proj-page .sv-section-label {
-    font-size: 11.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .bd-app-shell .proj-page .task-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .bd-app-shell .proj-page .task-row:last-child {
-    border-bottom: none;
-  }
-  .bd-app-shell .proj-page .task-checkbox {
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
-    border: 1.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: transparent;
-    transition: all 0.12s ease;
-  }
-  .bd-app-shell .proj-page .task-checkbox.checked {
-    background: var(--success);
-    border-color: var(--success);
-    color: #fff;
-  }
-  .bd-app-shell .proj-page .task-title {
-    font-size: 13px;
-    flex: 1;
-  }
-  .bd-app-shell .proj-page .task-title.done {
-    color: var(--text-muted);
-    text-decoration: line-through;
-  }
-  .bd-app-shell .proj-page .task-add-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .bd-app-shell .proj-page .task-add-row input {
-    flex: 1;
-    padding: 7px 10px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 13px;
-    color: var(--text);
-  }
-  .bd-app-shell .proj-page .task-add-row button {
-    padding: 7px 12px;
-    border-radius: 7px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    font-size: 12.5px;
-    font-weight: 600;
-  }
-  .bd-app-shell .proj-page .reqlog-item {
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    margin-bottom: 8px;
-  }
-  .bd-app-shell .proj-page .reqlog-text {
-    font-size: 12.5px;
-    margin-bottom: 6px;
-    line-height: 1.5;
-  }
-  .bd-app-shell .proj-page .reqlog-date {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-bottom: 9px;
-  }
-  .bd-app-shell .proj-page .reqlog-actions {
-    display: flex;
-    gap: 8px;
-  }
-  .bd-app-shell .proj-page .reqlog-actions button {
-    flex: 1;
-    padding: 6px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
-  }
-  .bd-app-shell .proj-page .btn-convert {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .bd-app-shell .proj-page .btn-dismiss {
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-  }
-  .bd-app-shell .proj-page .empty-note {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 6px 0;
-  }
-  .bd-app-shell .proj-page .slideover-foot {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-  }
-  .bd-app-shell .proj-page .slideover-foot .btn {
-    flex: 1;
-    justify-content: center;
-  }
-  .bd-app-shell .proj-page .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-  }
-  .bd-app-shell .proj-page .modal-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .bd-app-shell .proj-page .modal {
-    width: 100%;
-    max-width: 440px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    transform: translateY(-10px) scale(0.98);
-    transition: transform 0.15s ease;
-  }
-  .bd-app-shell .proj-page .modal-backdrop.open .modal {
-    transform: translateY(0) scale(1);
-  }
-  .bd-app-shell .proj-page .modal-head {
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .bd-app-shell .proj-page .modal-head h3 {
-    font-size: 15.5px;
-    font-weight: 700;
-  }
-  .bd-app-shell .proj-page .modal-body {
-    padding: 20px;
-  }
-  .bd-app-shell .proj-page .modal-foot {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-  .bd-app-shell .proj-page .form-row {
-    display: flex;
-    gap: 10px;
-  }
-  .bd-app-shell .proj-page .form-row .field-group {
-    flex: 1;
-  }
-  @media (max-width: 760px) {
-    .bd-app-shell .content {
-      padding: 20px 16px 40px;
-    }
-    .bd-app-shell .proj-page .toolbar {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .bd-app-shell .proj-page .search-box {
-      width: 100%;
-    }
-    .bd-app-shell .proj-page .slideover {
-      width: 100%;
-      max-width: 100%;
-    }
-  }
-`;
+const ICON_CLS =
+    'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+const ICON_SM_CLS =
+    'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
+
+const BTN =
+    'inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97]';
+const BTN_PRIMARY = cn(BTN, 'bg-bion-accent text-bion-accent-text hover:opacity-[0.88]');
+const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised');
+
+const PILL_BASE =
+    'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
+
+const FIELD_LABEL = 'mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
+const FIELD_INPUT =
+    'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
 
 const toneClassMap: Record<BiondeskTone, string> = {
-    accent: 'pill-accent',
-    success: 'pill-success',
-    danger: 'pill-danger',
-    muted: 'pill-muted',
+    accent: cn(PILL_BASE, 'bg-bion-accent-soft text-bion-accent'),
+    success: cn(PILL_BASE, 'bg-bion-success-soft text-bion-success'),
+    danger: cn(PILL_BASE, 'bg-bion-danger-soft text-bion-danger'),
+    muted: cn(PILL_BASE, 'border border-bion-border bg-bion-surface-raised text-bion-text-muted'),
+};
+
+const toneDotMap: Record<BiondeskTone, string> = {
+    accent: 'bg-bion-accent',
+    success: 'bg-bion-success',
+    danger: 'bg-bion-danger',
+    muted: 'bg-bion-text-muted',
 };
 
 const toneColorMap: Record<BiondeskTone, string> = {
-    accent: 'var(--accent)',
-    success: 'var(--success)',
-    danger: 'var(--danger)',
-    muted: 'var(--text-muted)',
+    accent: 'var(--bion-accent)',
+    success: 'var(--bion-success)',
+    danger: 'var(--bion-danger)',
+    muted: 'var(--bion-text-muted)',
 };
 
 export default function ProjectsPage({
@@ -907,45 +216,50 @@ export default function ProjectsPage({
         <>
             <Head title="Projects" />
 
-            <style>{projectStyles}</style>
-
-            <div className="proj-page">
-                <p className="page-description">
+            <div className="flex min-h-0 flex-1 flex-col">
+                <p className="mb-[14px] shrink-0 text-[13px] text-bion-text-muted">
                     Every project&apos;s execution, from tasks to client
                     requests, tracked in one place.
                 </p>
 
-                <div className="toolbar">
-                    <div className="toolbar-left">
-                        <div className="view-toggle">
+                <div className="mb-[16px] flex shrink-0 flex-wrap items-center justify-between gap-[12px] max-[760px]:flex-col max-[760px]:items-stretch">
+                    <div className="flex flex-wrap items-center gap-[12px]">
+                        <div className="flex rounded-[8px] border border-bion-border bg-bion-surface p-[2px]">
                             <button
                                 type="button"
-                                className={view === 'board' ? 'active' : undefined}
+                                className={cn(
+                                    'flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                    view === 'board' && 'bg-bion-accent-soft! text-bion-accent!',
+                                )}
                                 onClick={() => setView('board')}
                             >
-                                <svg className="icon icon-sm">
+                                <svg className={ICON_SM_CLS}>
                                     <use href="#i-kanban" />
                                 </svg>
                                 Board
                             </button>
                             <button
                                 type="button"
-                                className={view === 'list' ? 'active' : undefined}
+                                className={cn(
+                                    'flex items-center gap-[6px] rounded-[6px] px-[13px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
+                                    view === 'list' && 'bg-bion-accent-soft! text-bion-accent!',
+                                )}
                                 onClick={() => setView('list')}
                             >
-                                <svg className="icon icon-sm">
+                                <svg className={ICON_SM_CLS}>
                                     <use href="#i-list" />
                                 </svg>
                                 List
                             </button>
                         </div>
 
-                        <label className="search-box">
-                            <svg className="icon icon-sm">
+                        <label className="flex w-[260px] items-center gap-[8px] rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[7px] text-bion-text-muted max-[760px]:w-full">
+                            <svg className={ICON_SM_CLS}>
                                 <use href="#i-search" />
                             </svg>
                             <input
                                 type="text"
+                                className="flex-1 border-none bg-transparent text-[13px] text-bion-text outline-none"
                                 placeholder="Search projects or clients..."
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
@@ -955,43 +269,39 @@ export default function ProjectsPage({
 
                     <button
                         type="button"
-                        className="btn btn-primary"
+                        className={BTN_PRIMARY}
                         onClick={() => setShowNewProjectModal(true)}
                     >
-                        <svg className="icon icon-sm">
+                        <svg className={ICON_SM_CLS}>
                             <use href="#i-plus" />
                         </svg>
                         New Project
                     </button>
                 </div>
 
-                <div className="view-area">
+                <div className="flex min-h-0 flex-1 flex-col">
                     {view === 'board' ? (
-                        <div className="board">
+                        <div className="flex min-h-0 flex-1 items-stretch gap-[14px] overflow-x-auto overflow-y-hidden pb-[10px]">
                             {groupedItems.map((stage) => (
-                                <div key={stage.key} className="board-col">
-                                    <div className="board-col-head">
-                                        <span className="stage-label">
+                                <div key={stage.key} className="flex w-[272px] shrink-0 flex-col min-h-0">
+                                    <div className="flex shrink-0 items-center justify-between px-[6px] pt-[4px] pb-[12px]">
+                                        <span className="flex items-center gap-[8px] text-[13px] font-semibold">
                                             <span
-                                                className="dot"
-                                                style={{
-                                                    background:
-                                                        toneColorMap[stage.tone],
-                                                }}
+                                                className="h-[7px] w-[7px] rounded-full"
+                                                style={{ background: toneColorMap[stage.tone] }}
                                             />
                                             {stage.label}
                                         </span>
-                                        <span className="count">
+                                        <span className="font-mono text-[12px] text-bion-text-muted">
                                             {stage.items.length}
                                         </span>
                                     </div>
 
                                     <div
-                                        className={`board-col-body ${
-                                            dragOverStage === stage.key
-                                                ? 'drag-over'
-                                                : ''
-                                        }`}
+                                        className={cn(
+                                            'flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto rounded-[10px] p-[4px_6px_4px_4px] [transition:background_0.12s_ease]',
+                                            dragOverStage === stage.key && 'bg-bion-accent-soft',
+                                        )}
                                         onDragOver={(event) => {
                                             event.preventDefault();
                                             setDragOverStage(stage.key);
@@ -1013,15 +323,14 @@ export default function ProjectsPage({
                                                 projectProgress(item);
 
                                             return (
-                                                <button
+                                                <div
                                                     key={item.id}
-                                                    type="button"
-                                                    className={`proj-card ${
-                                                        draggedProjectId ===
-                                                        item.id
-                                                            ? 'dragging'
-                                                            : ''
-                                                    }`}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    className={cn(
+                                                        'cursor-pointer rounded-[10px] border border-bion-border border-l-[3px] bg-bion-surface p-[12px] [transition:border-color_0.12s_ease,box-shadow_0.12s_ease,opacity_0.12s_ease] hover:border-bion-accent hover:shadow-bion-raised',
+                                                        draggedProjectId === item.id && 'opacity-35',
+                                                    )}
                                                     draggable
                                                     style={{
                                                         borderLeftColor:
@@ -1032,6 +341,12 @@ export default function ProjectsPage({
                                                     onClick={() =>
                                                         visitProjectDetail(item.id)
                                                     }
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === 'Enter' || event.key === ' ') {
+                                                            event.preventDefault();
+                                                            visitProjectDetail(item.id);
+                                                        }
+                                                    }}
                                                     onDragStart={() =>
                                                         setDraggedProjectId(
                                                             item.id,
@@ -1044,15 +359,18 @@ export default function ProjectsPage({
                                                         setDragOverStage(null);
                                                     }}
                                                 >
-                                                    <div className="proj-card-head">
-                                                        <span className="proj-card-title">
+                                                    <div className="mb-[8px] flex items-start justify-between gap-[8px]">
+                                                        <span className="text-[13.5px] font-semibold leading-[1.35]">
                                                             {item.title}
                                                         </span>
 
-                                                        <div className="card-menu-wrap">
+                                                        <div
+                                                            className="relative shrink-0"
+                                                            onClick={(event) => event.stopPropagation()}
+                                                        >
                                                             <button
                                                                 type="button"
-                                                                className="card-menu-btn"
+                                                                className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text"
                                                                 onClick={(
                                                                     event,
                                                                 ) => {
@@ -1068,22 +386,21 @@ export default function ProjectsPage({
                                                                     );
                                                                 }}
                                                             >
-                                                                <svg className="icon icon-sm">
+                                                                <svg className={ICON_SM_CLS}>
                                                                     <use href="#i-more" />
                                                                 </svg>
                                                             </button>
 
                                                             <div
-                                                                className={`card-menu-panel ${
-                                                                    menuOpenId ===
-                                                                    item.id
-                                                                        ? 'open'
-                                                                        : ''
-                                                                }`}
+                                                                className={cn(
+                                                                    'absolute top-[26px] right-0 z-20 w-[170px] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 pointer-events-none shadow-bion-raised [transform:translateY(-4px)_scale(0.98)] [transition:opacity_0.12s_ease,transform_0.12s_ease]',
+                                                                    menuOpenId === item.id &&
+                                                                        'opacity-100! pointer-events-auto! [transform:translateY(0)_scale(1)]!',
+                                                                )}
                                                             >
                                                                 <button
                                                                     type="button"
-                                                                    className="card-menu-item"
+                                                                    className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
                                                                     onClick={(
                                                                         event,
                                                                     ) => {
@@ -1094,7 +411,7 @@ export default function ProjectsPage({
                                                                 >
                                                                     View detail
                                                                 </button>
-                                                                <div className="card-menu-label">
+                                                                <div className="px-[8px] pt-[6px] pb-[4px] text-[11px] text-bion-text-muted uppercase">
                                                                     Move to
                                                                 </div>
                                                                 {stages.map(
@@ -1106,7 +423,7 @@ export default function ProjectsPage({
                                                                                 availableStage.key
                                                                             }
                                                                             type="button"
-                                                                            className="card-menu-item"
+                                                                            className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
                                                                             onClick={(
                                                                                 event,
                                                                             ) => {
@@ -1130,34 +447,34 @@ export default function ProjectsPage({
                                                         </div>
                                                     </div>
 
-                                                    <div className="proj-card-client">
+                                                    <div className="mb-[12px] text-[12px] text-bion-text-muted">
                                                         {item.client}
                                                     </div>
 
-                                                    <div className="proj-progress-row">
-                                                        <div className="proj-progress-bar">
+                                                    <div className="mb-[11px] flex items-center gap-[8px]">
+                                                        <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-bion-border">
                                                             <div
-                                                                className="proj-progress-fill"
+                                                                className="h-full rounded-full bg-bion-accent [transition:width_0.2s_ease]"
                                                                 style={{
                                                                     width: `${percent}%`,
                                                                 }}
                                                             />
                                                         </div>
-                                                        <span className="proj-progress-text">
+                                                        <span className="shrink-0 font-mono text-[11px] text-bion-text-muted">
                                                             {done}/{total}
                                                         </span>
                                                     </div>
 
-                                                    <div className="proj-card-foot">
-                                                        <span className="proj-card-due">
-                                                            <svg className="icon icon-sm">
+                                                    <div className="flex items-center justify-between text-[11.5px]">
+                                                        <span className="flex items-center gap-[5px] text-bion-text-muted">
+                                                            <svg className="h-[12px] w-[12px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                                 <use href="#i-calendar" />
                                                             </svg>
                                                             {item.dueAt}
                                                         </span>
                                                         {item.requestLogs.length >
                                                         0 ? (
-                                                            <span className="reqlog-badge">
+                                                            <span className="inline-flex items-center gap-[4px] rounded-full bg-bion-danger-soft px-[8px] py-[2px] font-semibold text-bion-danger">
                                                                 {
                                                                     item.requestLogs
                                                                         .length
@@ -1170,7 +487,7 @@ export default function ProjectsPage({
                                                             </span>
                                                         ) : null}
                                                     </div>
-                                                </button>
+                                                </div>
                                             );
                                         })}
                                     </div>
@@ -1178,30 +495,36 @@ export default function ProjectsPage({
                             ))}
                         </div>
                     ) : (
-                        <div className="panel">
-                            <div className="table-wrap">
-                                <table className="data-table">
-                                    <thead>
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
+                            <div className="min-h-0 flex-1 overflow-y-auto">
+                                <table className="w-full border-collapse">
+                                    <thead className="sticky top-0 z-[5] bg-bion-surface">
                                         <tr>
-                                            <th>Project</th>
-                                            <th>Status</th>
-                                            <th>Progress</th>
+                                            <th className="border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em] select-none">
+                                                Project
+                                            </th>
+                                            <th className="border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em] select-none">
+                                                Status
+                                            </th>
+                                            <th className="border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em] select-none">
+                                                Progress
+                                            </th>
                                             <th
-                                                className="sortable"
+                                                className="cursor-pointer border-b border-bion-border px-[16px] py-[12px] text-left text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em] select-none"
                                                 onClick={() =>
                                                     setSortAsc((current) => !current)
                                                 }
                                             >
-                                                <span className="th-inner">
+                                                <span className="inline-flex items-center gap-[4px]">
                                                     Due Date
-                                                    <svg className="icon icon-sm">
+                                                    <svg className={ICON_SM_CLS}>
                                                         <use href="#i-chevron-down" />
                                                     </svg>
                                                 </span>
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="[&_tr:last-child_td]:border-b-0">
                                         {listItems.map((item) => {
                                             const { done, total, percent } =
                                                 projectProgress(item);
@@ -1209,54 +532,52 @@ export default function ProjectsPage({
                                             return (
                                                 <tr
                                                     key={item.id}
+                                                    className="cursor-pointer [transition:background_0.1s_ease] hover:[&>td]:bg-bion-bg"
                                                     onClick={() =>
                                                         visitProjectDetail(item.id)
                                                     }
                                                 >
-                                                    <td>
-                                                        <div className="row-title">
+                                                    <td className="border-b border-bion-border px-[16px] py-[13px] text-[13px]">
+                                                        <div className="mb-[2px] font-medium">
                                                             {item.title}
                                                         </div>
-                                                        <div className="row-client">
+                                                        <div className="text-[12px] text-bion-text-muted">
                                                             {item.client}
                                                         </div>
                                                     </td>
-                                                    <td>
+                                                    <td className="border-b border-bion-border px-[16px] py-[13px] text-[13px]">
                                                         <span
-                                                            className={`pill ${
+                                                            className={
                                                                 toneClassMap[
                                                                     item.tone
                                                                 ]
-                                                            }`}
+                                                            }
                                                         >
-                                                            <span className="dot" />
+                                                            <span
+                                                                className={cn(
+                                                                    'h-[6px] w-[6px] rounded-full',
+                                                                    toneDotMap[item.tone],
+                                                                )}
+                                                            />
                                                             {item.stageLabel}
                                                         </span>
                                                     </td>
-                                                    <td>
-                                                        <div className="table-progress">
-                                                            <div className="proj-progress-bar">
+                                                    <td className="border-b border-bion-border px-[16px] py-[13px] text-[13px]">
+                                                        <div className="flex w-[120px] items-center gap-[8px]">
+                                                            <div className="h-[5px] w-[60px] shrink-0 overflow-hidden rounded-full bg-bion-border">
                                                                 <div
-                                                                    className="proj-progress-fill"
+                                                                    className="h-full rounded-full bg-bion-accent [transition:width_0.2s_ease]"
                                                                     style={{
                                                                         width: `${percent}%`,
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <span
-                                                                className="cell-muted"
-                                                                style={{
-                                                                    fontFamily:
-                                                                        'var(--font-mono)',
-                                                                    fontSize:
-                                                                        '11px',
-                                                                }}
-                                                            >
+                                                            <span className="font-mono text-[11px] text-bion-text-muted">
                                                                 {done}/{total}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="cell-muted">
+                                                    <td className="border-b border-bion-border px-[16px] py-[13px] text-[12px] text-bion-text-muted">
                                                         {item.dueAt}
                                                     </td>
                                                 </tr>
@@ -1270,34 +591,35 @@ export default function ProjectsPage({
                 </div>
 
                 <div
-                    className={`modal-backdrop ${
-                        showNewProjectModal ? 'open' : ''
-                    }`}
+                    className={cn(
+                        'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!',
+                        showNewProjectModal && 'open',
+                    )}
                     onClick={(event) => {
                         if (event.target === event.currentTarget) {
                             setShowNewProjectModal(false);
                         }
                     }}
                 >
-                    <div className="modal">
-                        <div className="modal-head">
-                            <h3>New Project</h3>
+                    <div className="w-full max-w-[440px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+                        <div className="flex items-center justify-between border-b border-bion-border p-[18px_20px]">
+                            <h3 className="text-[15.5px] font-bold">New Project</h3>
                             <button
                                 type="button"
-                                className="slideover-close"
+                                className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text"
                                 onClick={() => setShowNewProjectModal(false)}
                             >
-                                <svg className="icon">
+                                <svg className={ICON_CLS}>
                                     <use href="#i-x" />
                                 </svg>
                             </button>
                         </div>
 
-                        <div className="modal-body">
-                            <div className="field-group">
-                                <span className="field-label">Title</span>
+                        <div className="max-h-[65vh] overflow-y-auto p-[20px]">
+                            <div className="mb-[16px]">
+                                <span className={FIELD_LABEL}>Title</span>
                                 <input
-                                    className="field-input"
+                                    className={FIELD_INPUT}
                                     placeholder="e.g. Website Redesign"
                                     value={newProjectForm.title}
                                     onChange={(event) =>
@@ -1309,11 +631,11 @@ export default function ProjectsPage({
                                 />
                             </div>
 
-                            <div className="form-row">
-                                <div className="field-group">
-                                    <span className="field-label">Client</span>
+                            <div className="flex gap-[10px]">
+                                <div className="mb-[16px] flex-1">
+                                    <span className={FIELD_LABEL}>Client</span>
                                     <input
-                                        className="field-input"
+                                        className={FIELD_INPUT}
                                         placeholder="Client name"
                                         value={newProjectForm.client}
                                         onChange={(event) =>
@@ -1324,12 +646,12 @@ export default function ProjectsPage({
                                         }
                                     />
                                 </div>
-                                <div className="field-group">
-                                    <span className="field-label">
+                                <div className="mb-[16px] flex-1">
+                                    <span className={FIELD_LABEL}>
                                         Due date
                                     </span>
                                     <input
-                                        className="field-input"
+                                        className={FIELD_INPUT}
                                         placeholder="e.g. Aug 15"
                                         value={newProjectForm.dueAt}
                                         onChange={(event) =>
@@ -1343,17 +665,17 @@ export default function ProjectsPage({
                             </div>
                         </div>
 
-                        <div className="modal-foot">
+                        <div className="flex justify-end gap-[10px] border-t border-bion-border p-[16px_20px]">
                             <button
                                 type="button"
-                                className="btn btn-ghost"
+                                className={BTN_GHOST}
                                 onClick={() => setShowNewProjectModal(false)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className={BTN_PRIMARY}
                                 onClick={createProject}
                             >
                                 Create Project
@@ -1377,4 +699,6 @@ ProjectsPage.layout = (props: { currentTeam?: { slug: string } | null }) => ({
             href: props.currentTeam ? projects(props.currentTeam.slug) : '/',
         },
     ],
+    mainClassName:
+        'flex min-h-0 flex-1 flex-col overflow-hidden px-[32px] pt-[20px] pb-[24px] max-[760px]:px-[16px] max-[760px]:pb-[40px]',
 });

@@ -223,6 +223,166 @@ export type ProposalsPageProps = {
     };
 };
 
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+
+export type InvoiceListItem = {
+    id: number;
+    number: string;
+    client: string;
+    context: string;
+    status: InvoiceStatus;
+    statusLabel: string;
+    tone: BiondeskTone;
+    issuedAt: string;
+    issuedSort: number;
+    dueAt: string;
+    dueSort: number;
+    amount: string;
+    amountValue: number;
+};
+
+export type InvoicesPageProps = {
+    invoices: InvoiceListItem[];
+};
+
+export type InvoiceDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type InvoicePayment = {
+    id: number;
+    label: string;
+    amount: string;
+    recordedAt: string;
+};
+
+export type InvoiceDetail = InvoiceListItem & {
+    dueInLabel: string;
+    business: {
+        name: string;
+        address: string;
+        email: string;
+    };
+    billTo: {
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    lineItems: InvoiceDetailLineItem[];
+    subtotal: string;
+    taxLabel: string;
+    taxAmount: string;
+    total: string;
+    amountPaid: string;
+    amountDue: string;
+    paymentInstructions: string;
+    payments: InvoicePayment[];
+    linkedProject: { id: number; title: string } | null;
+    currency: string;
+};
+
+export type InvoiceShowPageProps = {
+    invoice: InvoiceDetail;
+};
+
+export type InvoiceCreateClientOption = {
+    id: number;
+    name: string;
+};
+
+export type InvoiceCreateProjectOption = {
+    id: number;
+    title: string;
+};
+
+export type InvoiceCreatePageProps = {
+    nextNumber: string;
+    defaultIssuedAt: string;
+    defaultDueAt: string;
+    clients: InvoiceCreateClientOption[];
+    projects: InvoiceCreateProjectOption[];
+};
+
+export type QuotationStatus = 'draft' | 'pending' | 'accepted' | 'declined';
+
+export type QuotationListItem = {
+    id: number;
+    number: string;
+    client: string;
+    context: string;
+    status: QuotationStatus;
+    statusLabel: string;
+    tone: BiondeskTone;
+    issuedAt: string;
+    issuedSort: number;
+    expiryAt: string;
+    expirySort: number;
+    amount: string;
+    amountValue: number;
+};
+
+export type QuotationsPageProps = {
+    quotations: QuotationListItem[];
+};
+
+export type QuotationDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type QuotationDetail = QuotationListItem & {
+    validityLabel: string;
+    business: {
+        name: string;
+        address: string;
+        email: string;
+    };
+    preparedFor: {
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    lineItems: QuotationDetailLineItem[];
+    subtotal: string;
+    discountLabel: string;
+    discountAmount: string;
+    total: string;
+    terms: string;
+    linkedProject: { id: number; title: string } | null;
+    currency: string;
+};
+
+export type QuotationShowPageProps = {
+    quotation: QuotationDetail;
+};
+
+export type QuotationCreateClientOption = {
+    id: number;
+    name: string;
+};
+
+export type QuotationCreateProjectOption = {
+    id: number;
+    title: string;
+};
+
+export type QuotationCreatePageProps = {
+    nextNumber: string;
+    defaultIssuedAt: string;
+    defaultExpiryAt: string;
+    clients: QuotationCreateClientOption[];
+    projects: QuotationCreateProjectOption[];
+};
+
 export type PublicLeadFormPageProps = {
     team: {
         name: string;

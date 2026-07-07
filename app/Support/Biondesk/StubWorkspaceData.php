@@ -756,6 +756,473 @@ class StubWorkspaceData
     }
 
     /**
+     * Get the stubbed invoices page data.
+     *
+     * @return array<string, mixed>
+     */
+    public function invoices(Team $team): array
+    {
+        return [
+            'invoices' => [
+                [
+                    'id' => 42,
+                    'number' => 'INV-2023-042',
+                    'client' => 'Acme Corp',
+                    'context' => 'Website Redesign (Milestone 1)',
+                    'status' => 'draft',
+                    'statusLabel' => 'Draft',
+                    'tone' => 'muted',
+                    'issuedAt' => '-',
+                    'issuedSort' => 0,
+                    'dueAt' => 'Nov 15, 2023',
+                    'dueSort' => 20231115,
+                    'amount' => '$2,500.00',
+                    'amountValue' => 2500,
+                ],
+                [
+                    'id' => 41,
+                    'number' => 'INV-2023-041',
+                    'client' => 'Globex Inc',
+                    'context' => 'Q3 Marketing Campaign',
+                    'status' => 'sent',
+                    'statusLabel' => 'Sent',
+                    'tone' => 'accent',
+                    'issuedAt' => 'Oct 10, 2023',
+                    'issuedSort' => 20231010,
+                    'dueAt' => 'Oct 24, 2023',
+                    'dueSort' => 20231024,
+                    'amount' => '$1,200.00',
+                    'amountValue' => 1200,
+                ],
+                [
+                    'id' => 40,
+                    'number' => 'INV-2023-040',
+                    'client' => 'Stark Industries',
+                    'context' => 'SEO Audit',
+                    'status' => 'paid',
+                    'statusLabel' => 'Paid',
+                    'tone' => 'success',
+                    'issuedAt' => 'Oct 01, 2023',
+                    'issuedSort' => 20231001,
+                    'dueAt' => 'Oct 15, 2023',
+                    'dueSort' => 20231015,
+                    'amount' => '$800.00',
+                    'amountValue' => 800,
+                ],
+                [
+                    'id' => 39,
+                    'number' => 'INV-2023-039',
+                    'client' => 'Wayne Enterprises',
+                    'context' => 'App Wireframing',
+                    'status' => 'overdue',
+                    'statusLabel' => 'Overdue',
+                    'tone' => 'danger',
+                    'issuedAt' => 'Sep 15, 2023',
+                    'issuedSort' => 20230915,
+                    'dueAt' => 'Sep 30, 2023',
+                    'dueSort' => 20230930,
+                    'amount' => '$3,400.00',
+                    'amountValue' => 3400,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed invoice detail page data, or null when the invoice cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function invoiceDetail(Team $team, int $invoiceId): ?array
+    {
+        $invoice = null;
+
+        foreach ($this->invoices($team)['invoices'] as $candidate) {
+            if (($candidate['id'] ?? null) === $invoiceId) {
+                $invoice = $candidate;
+                break;
+            }
+        }
+
+        $detail = $this->invoiceDetailRecords()[$invoiceId] ?? null;
+
+        if ($invoice === null || $detail === null) {
+            return null;
+        }
+
+        return [
+            'invoice' => array_merge($invoice, $detail, [
+                'business' => [
+                    'name' => 'Biondesk Studio',
+                    'address' => "123 Creative Street, Tech District\nJakarta, Indonesia 12345",
+                    'email' => 'hello@biondesk.com',
+                ],
+            ]),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function invoiceDetailRecords(): array
+    {
+        $paymentInstructions = "Please transfer the amount due to the following bank account:\n".
+            "Bank: TechBank International\n".
+            "Account Name: Biondesk Studio\n".
+            "Account Number: 1234-5678-9012\n".
+            "SWIFT: TECHIDJA\n\n".
+            'Or pay via Stripe: https://stripe.com/pay/biondesk';
+
+        return [
+            42 => [
+                'dueInLabel' => 'Due in 14 days',
+                'billTo' => [
+                    'name' => 'Acme Corp',
+                    'attn' => 'John Doe',
+                    'address' => "456 Enterprise Blvd, Suite 200\nSan Francisco, CA 94103",
+                    'email' => 'john.doe@acmecorp.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'Website Redesign - Phase 1', 'description' => 'UI/UX prototyping for Home, About, and Services pages. Includes 2 rounds of revisions.', 'qty' => 1, 'price' => '$2,000.00', 'total' => '$2,000.00'],
+                    ['name' => 'SEO Audit', 'description' => 'Comprehensive technical and on-page SEO audit of the current platform.', 'qty' => 1, 'price' => '$500.00', 'total' => '$500.00'],
+                ],
+                'subtotal' => '$2,500.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$2,500.00',
+                'amountPaid' => '$0.00',
+                'amountDue' => '$2,500.00',
+                'paymentInstructions' => $paymentInstructions,
+                'payments' => [],
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            41 => [
+                'dueInLabel' => 'Due in 14 days',
+                'billTo' => [
+                    'name' => 'Globex Inc',
+                    'attn' => 'Hank Scorpio',
+                    'address' => "1 Globex Plaza\nCypress Creek, FL 33428",
+                    'email' => 'hank@globex.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'Q3 Marketing Campaign', 'description' => 'Paid social and search campaign management for Q3, including creative production.', 'qty' => 1, 'price' => '$1,200.00', 'total' => '$1,200.00'],
+                ],
+                'subtotal' => '$1,200.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$1,200.00',
+                'amountPaid' => '$0.00',
+                'amountDue' => '$1,200.00',
+                'paymentInstructions' => $paymentInstructions,
+                'payments' => [],
+                'linkedProject' => ['id' => 14, 'title' => 'API Integration Layer'],
+                'currency' => 'USD',
+            ],
+            40 => [
+                'dueInLabel' => 'Paid in full',
+                'billTo' => [
+                    'name' => 'Stark Industries',
+                    'attn' => 'Pepper Potts',
+                    'address' => "200 Park Avenue\nNew York, NY 10166",
+                    'email' => 'pepper@stark.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'SEO Audit', 'description' => 'Technical SEO audit and recommendations report.', 'qty' => 1, 'price' => '$800.00', 'total' => '$800.00'],
+                ],
+                'subtotal' => '$800.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$800.00',
+                'amountPaid' => '$800.00',
+                'amountDue' => '$0.00',
+                'paymentInstructions' => $paymentInstructions,
+                'payments' => [
+                    ['id' => 1, 'label' => 'Bank Transfer', 'amount' => '$800.00', 'recordedAt' => 'Oct 12, 2023'],
+                ],
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            39 => [
+                'dueInLabel' => '9 days overdue',
+                'billTo' => [
+                    'name' => 'Wayne Enterprises',
+                    'attn' => 'Lucius Fox',
+                    'address' => "1007 Mountain Drive\nGotham, NJ 07001",
+                    'email' => 'lucius@wayne.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'App Wireframing', 'description' => 'Low and high fidelity wireframes for the mobile companion app.', 'qty' => 1, 'price' => '$3,400.00', 'total' => '$3,400.00'],
+                ],
+                'subtotal' => '$3,400.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$3,400.00',
+                'amountPaid' => '$0.00',
+                'amountDue' => '$3,400.00',
+                'paymentInstructions' => $paymentInstructions,
+                'payments' => [],
+                'linkedProject' => ['id' => 15, 'title' => 'Marketing Site'],
+                'currency' => 'USD',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-invoice page.
+     *
+     * @return array<string, mixed>
+     */
+    public function invoiceCreateContext(Team $team): array
+    {
+        return [
+            'nextNumber' => 'INV-2023-043',
+            'defaultIssuedAt' => now()->toDateString(),
+            'defaultDueAt' => now()->addDays(14)->toDateString(),
+            'clients' => [
+                ['id' => 1, 'name' => 'Acme Corp'],
+                ['id' => 2, 'name' => 'Globex Inc'],
+                ['id' => 3, 'name' => 'Stark Industries'],
+                ['id' => 4, 'name' => 'Wayne Enterprises'],
+            ],
+            'projects' => [
+                ['id' => 11, 'title' => 'Portfolio Redesign'],
+                ['id' => 12, 'title' => 'Fintech Brand Identity'],
+                ['id' => 13, 'title' => 'E-commerce Backend'],
+                ['id' => 14, 'title' => 'API Integration Layer'],
+                ['id' => 15, 'title' => 'Marketing Site'],
+                ['id' => 16, 'title' => 'Legacy System Migration'],
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed quotations page data.
+     *
+     * @return array<string, mixed>
+     */
+    public function quotations(Team $team): array
+    {
+        return [
+            'quotations' => [
+                [
+                    'id' => 14,
+                    'number' => 'QUO-2023-014',
+                    'client' => 'Acme Corp',
+                    'context' => 'Website Redesign',
+                    'status' => 'draft',
+                    'statusLabel' => 'Draft',
+                    'tone' => 'muted',
+                    'issuedAt' => '-',
+                    'issuedSort' => 0,
+                    'expiryAt' => 'Nov 15, 2023',
+                    'expirySort' => 20231115,
+                    'amount' => '$2,500.00',
+                    'amountValue' => 2500,
+                ],
+                [
+                    'id' => 13,
+                    'number' => 'QUO-2023-013',
+                    'client' => 'Globex Inc',
+                    'context' => 'Q3 Marketing Campaign',
+                    'status' => 'pending',
+                    'statusLabel' => 'Pending',
+                    'tone' => 'accent',
+                    'issuedAt' => 'Oct 10, 2023',
+                    'issuedSort' => 20231010,
+                    'expiryAt' => 'Oct 24, 2023',
+                    'expirySort' => 20231024,
+                    'amount' => '$1,200.00',
+                    'amountValue' => 1200,
+                ],
+                [
+                    'id' => 12,
+                    'number' => 'QUO-2023-012',
+                    'client' => 'Stark Industries',
+                    'context' => 'SEO Audit',
+                    'status' => 'accepted',
+                    'statusLabel' => 'Accepted',
+                    'tone' => 'success',
+                    'issuedAt' => 'Oct 01, 2023',
+                    'issuedSort' => 20231001,
+                    'expiryAt' => 'Oct 15, 2023',
+                    'expirySort' => 20231015,
+                    'amount' => '$800.00',
+                    'amountValue' => 800,
+                ],
+                [
+                    'id' => 11,
+                    'number' => 'QUO-2023-011',
+                    'client' => 'Wayne Enterprises',
+                    'context' => 'App Wireframing',
+                    'status' => 'declined',
+                    'statusLabel' => 'Declined',
+                    'tone' => 'danger',
+                    'issuedAt' => 'Sep 15, 2023',
+                    'issuedSort' => 20230915,
+                    'expiryAt' => 'Sep 30, 2023',
+                    'expirySort' => 20230930,
+                    'amount' => '$3,400.00',
+                    'amountValue' => 3400,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed quotation detail page data, or null when the quotation cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function quotationDetail(Team $team, int $quotationId): ?array
+    {
+        $quotation = null;
+
+        foreach ($this->quotations($team)['quotations'] as $candidate) {
+            if (($candidate['id'] ?? null) === $quotationId) {
+                $quotation = $candidate;
+                break;
+            }
+        }
+
+        $detail = $this->quotationDetailRecords()[$quotationId] ?? null;
+
+        if ($quotation === null || $detail === null) {
+            return null;
+        }
+
+        return [
+            'quotation' => array_merge($quotation, $detail, [
+                'business' => [
+                    'name' => 'Biondesk Studio',
+                    'address' => "123 Creative Street, Tech District\nJakarta, Indonesia 12345",
+                    'email' => 'hello@biondesk.com',
+                ],
+            ]),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function quotationDetailRecords(): array
+    {
+        $terms = "This is a quotation on the goods or services named, subject to the conditions noted below:\n".
+            "1. Prices are valid for 14 days from the date of quotation.\n".
+            "2. 50% deposit required upon acceptance to begin work.\n".
+            '3. This is not an invoice. An official invoice will be sent after the quotation is accepted.';
+
+        return [
+            14 => [
+                'validityLabel' => 'Valid for 14 days',
+                'preparedFor' => [
+                    'name' => 'Acme Corp',
+                    'attn' => 'John Doe',
+                    'address' => "456 Enterprise Blvd, Suite 200\nSan Francisco, CA 94103",
+                    'email' => 'john.doe@acmecorp.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'Website Redesign - Phase 1', 'description' => 'UI/UX prototyping for Home, About, and Services pages. Includes 2 rounds of revisions.', 'qty' => 1, 'price' => '$2,000.00', 'total' => '$2,000.00'],
+                    ['name' => 'SEO Audit', 'description' => 'Comprehensive technical and on-page SEO audit of the current platform.', 'qty' => 1, 'price' => '$500.00', 'total' => '$500.00'],
+                ],
+                'subtotal' => '$2,500.00',
+                'discountLabel' => 'Discount (0%)',
+                'discountAmount' => '$0.00',
+                'total' => '$2,500.00',
+                'terms' => $terms,
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            13 => [
+                'validityLabel' => 'Valid for 14 days (Expires Oct 24, 2023)',
+                'preparedFor' => [
+                    'name' => 'Globex Inc',
+                    'attn' => 'Sarah Connor',
+                    'address' => "789 Innovation Drive\nAustin, TX 78701",
+                    'email' => 'sarah.connor@globex.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'Q3 Marketing Campaign', 'description' => 'Setup and management of digital ad campaigns across social media channels for Q3.', 'qty' => 1, 'price' => '$1,000.00', 'total' => '$1,000.00'],
+                    ['name' => 'Ad Creatives', 'description' => 'Set of 5 custom ad graphics and copywriting.', 'qty' => 1, 'price' => '$200.00', 'total' => '$200.00'],
+                ],
+                'subtotal' => '$1,200.00',
+                'discountLabel' => 'Discount (0%)',
+                'discountAmount' => '$0.00',
+                'total' => '$1,200.00',
+                'terms' => $terms,
+                'linkedProject' => ['id' => 14, 'title' => 'API Integration Layer'],
+                'currency' => 'USD',
+            ],
+            12 => [
+                'validityLabel' => 'Accepted on Oct 05, 2023',
+                'preparedFor' => [
+                    'name' => 'Stark Industries',
+                    'attn' => 'Pepper Potts',
+                    'address' => "200 Park Avenue\nNew York, NY 10166",
+                    'email' => 'pepper@stark.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'SEO Audit', 'description' => 'Technical SEO audit and recommendations report.', 'qty' => 1, 'price' => '$800.00', 'total' => '$800.00'],
+                ],
+                'subtotal' => '$800.00',
+                'discountLabel' => 'Discount (0%)',
+                'discountAmount' => '$0.00',
+                'total' => '$800.00',
+                'terms' => $terms,
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            11 => [
+                'validityLabel' => 'Expired Sep 30, 2023',
+                'preparedFor' => [
+                    'name' => 'Wayne Enterprises',
+                    'attn' => 'Lucius Fox',
+                    'address' => "1007 Mountain Drive\nGotham, NJ 07001",
+                    'email' => 'lucius@wayne.com',
+                ],
+                'lineItems' => [
+                    ['name' => 'App Wireframing', 'description' => 'Low and high fidelity wireframes for the mobile companion app.', 'qty' => 1, 'price' => '$3,400.00', 'total' => '$3,400.00'],
+                ],
+                'subtotal' => '$3,400.00',
+                'discountLabel' => 'Discount (0%)',
+                'discountAmount' => '$0.00',
+                'total' => '$3,400.00',
+                'terms' => $terms,
+                'linkedProject' => ['id' => 15, 'title' => 'Marketing Site'],
+                'currency' => 'USD',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-quotation page.
+     *
+     * @return array<string, mixed>
+     */
+    public function quotationCreateContext(Team $team): array
+    {
+        return [
+            'nextNumber' => 'QUO-2023-015',
+            'defaultIssuedAt' => now()->toDateString(),
+            'defaultExpiryAt' => now()->addDays(14)->toDateString(),
+            'clients' => [
+                ['id' => 1, 'name' => 'Acme Corp'],
+                ['id' => 2, 'name' => 'Globex Inc'],
+                ['id' => 3, 'name' => 'Stark Industries'],
+                ['id' => 4, 'name' => 'Wayne Enterprises'],
+            ],
+            'projects' => [
+                ['id' => 11, 'title' => 'Portfolio Redesign'],
+                ['id' => 12, 'title' => 'Fintech Brand Identity'],
+                ['id' => 13, 'title' => 'E-commerce Backend'],
+                ['id' => 14, 'title' => 'API Integration Layer'],
+                ['id' => 15, 'title' => 'Marketing Site'],
+                ['id' => 16, 'title' => 'Legacy System Migration'],
+            ],
+        ];
+    }
+
+    /**
      * Get the stubbed public lead form data.
      *
      * @return array<string, mixed>

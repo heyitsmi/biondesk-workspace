@@ -9,342 +9,61 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<style>
-  /* ================= reset ================= */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  a { color: inherit; text-decoration: none; }
-  ul { list-style: none; }
-  input { font: inherit; color: inherit; }
-
-  /* ================= tokens ================= */
-  :root {
-    --bg: #F6F7F9;
-    --surface: #FFFFFF;
-    --surface-raised: #FFFFFF;
-    --border: #E4E6EB;
-    --text: #12161F;
-    --text-muted: #6B7280;
-    --accent: #C77F1F;
-    --accent-text: #FFFFFF;
-    --success: #1F8A5F;
-    --danger: #D6383D;
-    --accent-soft: rgba(199,127,31,0.1);
-    --success-soft: rgba(31,138,95,0.1);
-    --danger-soft: rgba(214,56,61,0.1);
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  /* ================= tokens (Tailwind theme vars, overridden per data-theme) ================= */
+  @theme {
+    --color-bg: #F6F7F9;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-border: #E4E6EB;
+    --color-text: #12161F;
+    --color-text-muted: #6B7280;
+    --color-accent: #C77F1F;
+    --color-accent-text: #FFFFFF;
+    --color-success: #1F8A5F;
+    --color-danger: #D6383D;
+    --color-accent-soft: rgba(199,127,31,0.1);
+    --color-success-soft: rgba(31,138,95,0.1);
+    --color-danger-soft: rgba(214,56,61,0.1);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
     --font-display: 'Instrument Sans', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
   [data-theme="dark"] {
-    --bg: #0B0E14;
-    --surface: #12161F;
-    --surface-raised: #1A1F2B;
-    --border: #232838;
-    --text: #EDEFF3;
-    --text-muted: #8B93A6;
-    --accent: #E8A33D;
-    --accent-text: #12161F;
-    --success: #34A87C;
-    --danger: #E5484D;
-    --accent-soft: rgba(232,163,61,0.12);
-    --success-soft: rgba(52,168,124,0.12);
-    --danger-soft: rgba(229,72,77,0.12);
+    --color-bg: #0B0E14;
+    --color-surface: #12161F;
+    --color-surface-raised: #1A1F2B;
+    --color-border: #232838;
+    --color-text: #EDEFF3;
+    --color-text-muted: #8B93A6;
+    --color-accent: #E8A33D;
+    --color-accent-text: #12161F;
+    --color-success: #34A87C;
+    --color-danger: #E5484D;
+    --color-accent-soft: rgba(232,163,61,0.12);
+    --color-success-soft: rgba(52,168,124,0.12);
+    --color-danger-soft: rgba(229,72,77,0.12);
     --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-display);
-    font-size: 14px;
-    -webkit-font-smoothing: antialiased;
-    transition: background 0.15s ease, color 0.15s ease;
+  /* ================= base (bare-tag resets, not component classes) ================= */
+  @layer base {
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    input { font: inherit; color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
   }
-
-  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .icon-sm { width: 15px; height: 15px; }
-
-  a:focus-visible, button:focus-visible, input:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
-
-  /* ================= layout shell ================= */
-  .app-shell { display: flex; height: 100vh; overflow: hidden; }
-
-  /* ---- sidebar ---- */
-  .sidebar {
-    width: 240px;
-    flex-shrink: 0;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: width 0.2s ease;
-  }
-  .sidebar.collapsed { width: 68px; }
-
-  /* Floating collapse/expand toggle, nempel di border, sejajar baris logo */
-  .sidebar-toggle {
-    position: absolute;
-    top: 16px;
-    right: -14px;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    box-shadow: var(--shadow-raised);
-    z-index: 35;
-    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-  }
-  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
-  .sidebar-toggle .icon { transition: transform 0.2s ease; }
-  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
-  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
-  .sidebar-brand {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 18px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
-  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
-
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
-  .sidebar.collapsed .sidebar-nav { overflow: visible; }
-  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-size: 13.5px;
-    font-weight: 500;
-    white-space: nowrap;
-    position: relative;
-    transition: background 0.12s ease, color 0.12s ease;
-  }
-  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar.collapsed .nav-item { justify-content: center; }
-  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
-  .sidebar.collapsed .nav-item .badge { display: none; }
-
-  .sidebar.collapsed .nav-item .tooltip {
-    position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-    margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border);
-    padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap;
-    opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40;
-    box-shadow: var(--shadow-raised);
-  }
-  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
-  .tooltip { display: none; }
-  .sidebar.collapsed .tooltip { display: block; }
-
-  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
-
-  /* ---- main area ---- */
-  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
-  .topbar {
-    height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
-    background: var(--bg);
-  }
-  .topbar-left { display: flex; align-items: center; gap: 14px; }
-  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
-  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); }
-
-  .search-trigger {
-    display: flex; align-items: center; gap: 10px;
-    width: 280px; padding: 7px 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
-    font-size: 13px;
-  }
-  .search-trigger:hover { border-color: var(--accent); }
-  .search-trigger .kbd {
-    margin-left: auto; font-family: var(--font-mono); font-size: 11px;
-    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
-  }
-
-  .topbar-right { display: flex; align-items: center; gap: 8px; }
-  .icon-btn {
-    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); position: relative;
-  }
-  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
-  .icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); border: 1.5px solid var(--bg); }
-
-  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
-  .avatar-btn:hover { background: var(--surface-raised); }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-
-  /* ---- dropdowns ---- */
-  .dropdown-wrap { position: relative; }
-  .dropdown-panel {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 260px;
-    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px;
-    box-shadow: var(--shadow-raised); padding: 6px; z-index: 50;
-    opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none;
-    transition: opacity 0.14s ease, transform 0.14s ease;
-  }
-  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
-  .dropdown-item:hover { background: var(--bg); }
-  .dropdown-item.danger { color: var(--danger); }
-  .notif-item { padding: 10px; border-radius: 7px; }
-  .notif-item:hover { background: var(--bg); }
-  .notif-item .notif-title { font-size: 12.5px; font-weight: 500; margin-bottom: 2px; }
-  .notif-item .notif-time { font-size: 11.5px; color: var(--text-muted); }
-
-  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
-  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
-
-  /* ================= content ================= */
-  .content { flex: 1; overflow-y: auto; padding: 28px 32px 48px; }
-
-  .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-  .page-header h1 { font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-  .page-header p { font-size: 13.5px; color: var(--text-muted); }
-  .btn {
-    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px;
-    font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: var(--accent-text); }
-  .btn-primary:hover { opacity: 0.88; }
-  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-  .btn-ghost:hover { background: var(--surface-raised); }
-  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
-
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
-    transition: border-color 0.15s ease, transform 0.15s ease;
-  }
-  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .stat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
-  .stat-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-  .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; margin-bottom: 6px; }
-  .stat-meta { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .stat-meta.positive { color: var(--success); }
-  .stat-meta.warn { color: var(--danger); }
-
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
-  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .pill-accent { background: var(--accent-soft); color: var(--accent); }
-  .pill-accent .dot { background: var(--accent); }
-  .pill-success { background: var(--success-soft); color: var(--success); }
-  .pill-success .dot { background: var(--success); }
-  .pill-danger { background: var(--danger-soft); color: var(--danger); }
-  .pill-danger .dot { background: var(--danger); }
-  .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); }
-  .pill-muted .dot { background: var(--text-muted); }
-
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; }
-  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
-  .panel-head h2 { font-size: 14.5px; font-weight: 600; }
-  .panel-link { font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
-  .panel-link:hover { color: var(--accent); }
-  .panel-body { padding: 6px; }
-
-  .action-row { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 9px; }
-  .action-row:hover { background: var(--bg); }
-  .action-row + .action-row { margin-top: 2px; }
-  .action-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .action-icon.warn { background: var(--danger-soft); color: var(--danger); }
-  .action-icon.wait { background: var(--accent-soft); color: var(--accent); }
-  .action-text { flex: 1; min-width: 0; }
-  .action-title { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
-  .action-sub { font-size: 12px; color: var(--text-muted); }
-  .action-sub .amount { font-family: var(--font-mono); color: var(--text); font-weight: 500; }
-
-  .btn-action {
-    padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 600;
-    background: var(--surface-raised); border: 1px solid var(--border); color: var(--text); flex-shrink: 0;
-    transition: background 0.12s ease;
-  }
-  .btn-action:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .btn-action.done { background: var(--success-soft); color: var(--success); border-color: transparent; pointer-events: none; }
-
-  .split-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
-
-  .opp-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 9px; }
-  .opp-row:hover { background: var(--bg); }
-  .opp-info { flex: 1; min-width: 0; }
-  .opp-title { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .opp-client { font-size: 12px; color: var(--text-muted); }
-  .opp-value { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
-
-  .feed-item { display: flex; gap: 12px; padding: 11px 12px; }
-  .feed-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 3px; }
-  .feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
-  .feed-dot.accent { background: var(--accent); }
-  .feed-dot.success { background: var(--success); }
-  .feed-line { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
-  .feed-text { font-size: 13px; margin-bottom: 2px; }
-  .feed-time { font-size: 11.5px; color: var(--text-muted); }
-
-  .cmdk-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
-    display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh;
-    opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
-  }
-  .cmdk-backdrop.open { opacity: 1; pointer-events: auto; }
-  .cmdk-modal {
-    width: 100%; max-width: 560px; background: var(--surface-raised); border: 1px solid var(--border);
-    border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    transform: translateY(-12px) scale(0.98); transition: transform 0.15s ease;
-  }
-  .cmdk-backdrop.open .cmdk-modal { transform: translateY(0) scale(1); }
-  .cmdk-input-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
-  .cmdk-input-row input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14.5px; }
-  .cmdk-input-row .kbd { font-family: var(--font-mono); font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; }
-  .cmdk-list { padding: 8px; max-height: 320px; overflow-y: auto; }
-  .cmdk-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 10px 10px 6px; }
-  .cmdk-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; width: 100%; text-align: left; color: var(--text); font-size: 13.5px; }
-  .cmdk-item:hover, .cmdk-item.hi { background: var(--accent-soft); color: var(--accent); }
-  .cmdk-item .icon { color: inherit; }
-
-  @media (max-width: 1024px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .split-grid { grid-template-columns: 1fr; }
-    .search-trigger { display: none; }
-  }
-  @media (max-width: 760px) {
-    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
-    .sidebar.mobile-open { left: 0; }
-    .sidebar.collapsed { width: 240px; }
-    .icon-btn.mobile-menu-btn { display: flex; }
-    .stats-grid { grid-template-columns: 1fr; }
-    .content { padding: 20px 16px 40px; }
-    .page-header { flex-direction: column; align-items: flex-start; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
 </style>
 </head>
-<body>
+<body class="bg-bg text-text font-display text-[14px] antialiased [transition:background_0.15s_ease,color_0.15s_ease]">
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -380,297 +99,297 @@
   </defs>
 </svg>
 
-<div class="app-shell">
+<div class="flex h-screen overflow-hidden">
 
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-mark"><span></span></div>
-      <span class="brand-name">Biondesk</span>
+  <aside class="group/sidebar relative flex shrink-0 flex-col border-r border-border bg-surface [transition:width_0.2s_ease] [&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px] max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px] max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!" id="sidebar">
+    <div class="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-border px-[18px]">
+      <div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-border bg-surface-raised"><span class="h-[7px] w-[7px] rounded-full bg-accent"></span></div>
+      <span class="overflow-hidden text-[15px] font-semibold whitespace-nowrap group-[.collapsed]/sidebar:hidden">Biondesk</span>
     </div>
 
-    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
-      <svg class="icon icon-sm"><use href="#i-chevron-left"/></svg>
+    <button class="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-border bg-surface text-text-muted shadow-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-accent hover:text-text max-[760px]:hidden" id="sidebarToggle" title="Collapse sidebar">
+      <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] [transition:transform_0.2s_ease] group-[.collapsed]/sidebar:rotate-180"><use href="#i-chevron-left"/></svg>
     </button>
 
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item active">
-        <svg class="icon"><use href="#i-grid"/></svg>
-        <span class="nav-label">Dashboard</span>
-        <span class="tooltip">Dashboard</span>
+    <nav class="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[12px] py-[16px] group-[.collapsed]/sidebar:overflow-visible!">
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap bg-accent-soft text-accent [transition:background_0.12s_ease,color_0.12s_ease] group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-grid"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Dashboard</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Dashboard</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-kanban"/></svg>
-        <span class="nav-label">Opportunities</span>
-        <span class="badge">6</span>
-        <span class="tooltip">Opportunities</span>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Opportunities</span>
+        <span class="ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">6</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Opportunities</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-briefcase"/></svg>
-        <span class="nav-label">Projects</span>
-        <span class="badge">4</span>
-        <span class="tooltip">Projects</span>
-      </a>
-
-      <div class="sidebar-section-label">Documents</div>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-file"/></svg>
-        <span class="nav-label">Proposals</span>
-        <span class="badge">2</span>
-        <span class="tooltip">Proposals</span>
-      </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-quote"/></svg>
-        <span class="nav-label">Quotations</span>
-        <span class="badge">1</span>
-        <span class="tooltip">Quotations</span>
-      </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-receipt"/></svg>
-        <span class="nav-label">Invoices</span>
-        <span class="badge">3</span>
-        <span class="tooltip">Invoices</span>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Projects</span>
+        <span class="ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">4</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Projects</span>
       </a>
 
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-users"/></svg>
-        <span class="nav-label">Contacts</span>
-        <span class="tooltip">Contacts</span>
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Documents</div>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-file"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Proposals</span>
+        <span class="ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">2</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Proposals</span>
+      </a>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-quote"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Quotations</span>
+        <span class="ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">1</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Quotations</span>
+      </a>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-receipt"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Invoices</span>
+        <span class="ml-auto font-mono text-[11px] text-text-muted group-[.collapsed]/sidebar:hidden">3</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Invoices</span>
       </a>
 
-      <div class="sidebar-section-label">Workspace</div>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-bell"/></svg>
-        <span class="nav-label">Reminders</span>
-        <span class="tooltip">Reminders</span>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-users"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Contacts</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Contacts</span>
       </a>
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-layers"/></svg>
-        <span class="nav-label">Profile Library</span>
-        <span class="tooltip">Profile Library</span>
+
+      <div class="pt-[14px] px-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">Workspace</div>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Reminders</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Reminders</span>
+      </a>
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-layers"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Profile Library</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Profile Library</span>
       </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <a href="#" class="nav-item">
-        <svg class="icon"><use href="#i-settings"/></svg>
-        <span class="nav-label">Settings</span>
-        <span class="tooltip">Settings</span>
+    <div class="shrink-0 border-t border-border px-[12px] py-[10px]">
+      <a href="#" class="group/nav relative flex items-center gap-[12px] rounded-[8px] px-[10px] py-[9px] text-[13.5px] font-medium whitespace-nowrap text-text-muted [transition:background_0.12s_ease,color_0.12s_ease] hover:bg-surface-raised hover:text-text group-[.collapsed]/sidebar:justify-center">
+        <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg>
+        <span class="group-[.collapsed]/sidebar:hidden">Settings</span>
+        <span class="hidden group-[.collapsed]/sidebar:block! group-[.collapsed]/sidebar:absolute group-[.collapsed]/sidebar:left-full group-[.collapsed]/sidebar:top-1/2 group-[.collapsed]/sidebar:-translate-y-1/2 group-[.collapsed]/sidebar:ml-[10px] group-[.collapsed]/sidebar:rounded-[6px] group-[.collapsed]/sidebar:border group-[.collapsed]/sidebar:border-border group-[.collapsed]/sidebar:bg-surface-raised group-[.collapsed]/sidebar:px-[10px] group-[.collapsed]/sidebar:py-[5px] group-[.collapsed]/sidebar:text-[12px] group-[.collapsed]/sidebar:whitespace-nowrap group-[.collapsed]/sidebar:opacity-0 group-[.collapsed]/sidebar:pointer-events-none group-[.collapsed]/sidebar:z-40 group-[.collapsed]/sidebar:shadow-raised group-[.collapsed]/sidebar:[transition:opacity_0.15s_ease] group-[.collapsed]/sidebar:group-hover/nav:opacity-100!">Settings</span>
       </a>
     </div>
   </aside>
 
-  <div class="main-area">
+  <div class="flex min-w-0 flex-1 flex-col">
 
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn">
-          <svg class="icon"><use href="#i-menu"/></svg>
+    <header class="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-bg px-[24px]">
+      <div class="flex items-center gap-[14px]">
+        <button class="relative hidden h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text max-[760px]:flex" id="mobileMenuBtn">
+          <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-menu"/></svg>
         </button>
-        <span class="breadcrumb">Dashboard</span>
+        <span class="text-[13.5px] font-semibold text-text">Dashboard</span>
       </div>
 
-      <button class="search-trigger" id="cmdkTrigger">
-        <svg class="icon icon-sm"><use href="#i-search"/></svg>
+      <button class="flex w-[280px] items-center gap-[10px] rounded-[8px] border border-border bg-surface px-[10px] py-[7px] text-[13px] text-text-muted hover:border-accent max-[1024px]:hidden" id="cmdkTrigger">
+        <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg>
         <span>Search or jump to...</span>
-        <span class="kbd">⌘K</span>
+        <span class="ml-auto rounded-[4px] border border-border bg-surface-raised px-[6px] py-px font-mono text-[11px]">⌘K</span>
       </button>
 
-      <div class="topbar-right">
-        <div class="theme-switch" id="themeSwitch">
-          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
-          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
-          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+      <div class="flex items-center gap-[8px]">
+        <div class="flex items-center gap-[2px] rounded-[8px] border border-border bg-surface p-[2px]" id="themeSwitch">
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="light" title="Light"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-sun"/></svg></button>
+          <button class="active flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="dark" title="Dark"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-moon"/></svg></button>
+          <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-text-muted [&.active]:bg-accent-soft! [&.active]:text-accent!" data-theme-choice="system" title="System"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-monitor"/></svg></button>
         </div>
 
-        <div class="dropdown-wrap">
-          <button class="icon-btn" id="notifBtn">
-            <svg class="icon"><use href="#i-bell"/></svg>
-            <span class="dot"></span>
+        <div class="relative">
+          <button class="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] text-text-muted hover:bg-surface-raised hover:text-text" id="notifBtn">
+            <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-bell"/></svg>
+            <span class="absolute top-[7px] right-[7px] h-[6px] w-[6px] rounded-full bg-danger [border:1.5px_solid_var(--color-bg)]"></span>
           </button>
-          <div class="dropdown-panel" id="notifPanel">
-            <div class="dropdown-header">Notifications</div>
-            <div class="notif-item">
-              <div class="notif-title">Invoice INV-0043 is now overdue</div>
-              <div class="notif-time">2 hours ago</div>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[260px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="notifPanel">
+            <div class="mb-[4px] border-b border-border px-[10px] py-[8px] text-[12.5px] font-semibold">Notifications</div>
+            <div class="rounded-[7px] p-[10px] hover:bg-bg">
+              <div class="mb-[2px] text-[12.5px] font-medium">Invoice INV-0043 is now overdue</div>
+              <div class="text-[11.5px] text-text-muted">2 hours ago</div>
             </div>
-            <div class="notif-item">
-              <div class="notif-title">New lead via public form: Retail Co</div>
-              <div class="notif-time">Yesterday</div>
+            <div class="rounded-[7px] p-[10px] hover:bg-bg">
+              <div class="mb-[2px] text-[12.5px] font-medium">New lead via public form: Retail Co</div>
+              <div class="text-[11.5px] text-text-muted">Yesterday</div>
             </div>
-            <div class="notif-item">
-              <div class="notif-title">Payment received for INV-0041</div>
-              <div class="notif-time">2 days ago</div>
+            <div class="rounded-[7px] p-[10px] hover:bg-bg">
+              <div class="mb-[2px] text-[12.5px] font-medium">Payment received for INV-0041</div>
+              <div class="text-[11.5px] text-text-muted">2 days ago</div>
             </div>
           </div>
         </div>
 
-        <div class="dropdown-wrap">
-          <button class="avatar-btn" id="userBtn">
-            <div class="avatar">HI</div>
-            <svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg>
+        <div class="relative">
+          <button class="flex items-center gap-[8px] rounded-[8px] pt-[4px] pr-[8px] pb-[4px] pl-[4px] hover:bg-surface-raised" id="userBtn">
+            <div class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-text">HI</div>
+            <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round] text-text-muted"><use href="#i-chevron-down"/></svg>
           </button>
-          <div class="dropdown-panel" id="userPanel">
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
-            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
-            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+          <div class="dropdown-panel absolute right-0 top-[calc(100%+8px)] z-50 w-[260px] rounded-[10px] border border-border bg-surface-raised p-[6px] opacity-0 pointer-events-none shadow-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!" id="userPanel">
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-user"/></svg> Profile</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-text hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-settings"/></svg> Settings</button>
+            <button class="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-danger hover:bg-bg"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-logout"/></svg> Log out</button>
           </div>
         </div>
       </div>
     </header>
 
-    <main class="content">
-      <div class="page-header">
+    <main class="flex-1 overflow-y-auto px-[32px] pt-[28px] pb-[48px] max-[760px]:px-[16px] max-[760px]:pt-[20px] max-[760px]:pb-[40px]">
+      <div class="mb-[24px] flex flex-wrap items-end justify-between gap-[16px] max-[760px]:flex-col max-[760px]:items-start">
         <div>
-          <h1>Good morning, Hilmi</h1>
-          <p>Tuesday, July 7 &middot; Here's what needs your attention today.</p>
+          <h1 class="mb-[4px] font-display text-[24px] font-bold">Good morning, Hilmi</h1>
+          <p class="text-[13.5px] text-text-muted">Tuesday, July 7 &middot; Here's what needs your attention today.</p>
         </div>
-        <button class="btn btn-primary">
-          <svg class="icon icon-sm"><use href="#i-plus"/></svg>
+        <button class="inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold bg-accent text-accent-text [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] hover:opacity-[0.88]">
+          <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-plus"/></svg>
           New Opportunity
         </button>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-head">
-            <span class="stat-label">Pipeline Value</span>
-            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-trend"/></svg></div>
+      <div class="mb-[28px] grid grid-cols-4 gap-[14px] max-[1024px]:grid-cols-2 max-[760px]:grid-cols-1">
+        <div class="rounded-[12px] border border-border bg-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:border-accent hover:-translate-y-[2px]">
+          <div class="mb-[14px] flex items-center justify-between">
+            <span class="text-[12px] font-medium text-text-muted uppercase [letter-spacing:0.03em]">Pipeline Value</span>
+            <div class="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-border bg-surface-raised text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-trend"/></svg></div>
           </div>
-          <div class="stat-value">$47,200</div>
-          <div class="stat-meta positive">&uarr; 12% vs last month</div>
+          <div class="mb-[6px] font-mono text-[26px] font-semibold">$47,200</div>
+          <div class="flex items-center gap-[6px] text-[12px] text-success">&uarr; 12% vs last month</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-head">
-            <span class="stat-label">To Be Collected</span>
-            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-wallet"/></svg></div>
+        <div class="rounded-[12px] border border-border bg-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:border-accent hover:-translate-y-[2px]">
+          <div class="mb-[14px] flex items-center justify-between">
+            <span class="text-[12px] font-medium text-text-muted uppercase [letter-spacing:0.03em]">To Be Collected</span>
+            <div class="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-border bg-surface-raised text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-wallet"/></svg></div>
           </div>
-          <div class="stat-value">$8,450</div>
-          <div class="stat-meta warn">2 invoices overdue</div>
+          <div class="mb-[6px] font-mono text-[26px] font-semibold">$8,450</div>
+          <div class="flex items-center gap-[6px] text-[12px] text-danger">2 invoices overdue</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-head">
-            <span class="stat-label">Active Projects</span>
-            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-briefcase"/></svg></div>
+        <div class="rounded-[12px] border border-border bg-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:border-accent hover:-translate-y-[2px]">
+          <div class="mb-[14px] flex items-center justify-between">
+            <span class="text-[12px] font-medium text-text-muted uppercase [letter-spacing:0.03em]">Active Projects</span>
+            <div class="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-border bg-surface-raised text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg></div>
           </div>
-          <div class="stat-value">6</div>
-          <div class="stat-meta">2 waiting on client</div>
+          <div class="mb-[6px] font-mono text-[26px] font-semibold">6</div>
+          <div class="flex items-center gap-[6px] text-[12px] text-text-muted">2 waiting on client</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-head">
-            <span class="stat-label">Win Rate</span>
-            <div class="stat-icon"><svg class="icon icon-sm"><use href="#i-target"/></svg></div>
+        <div class="rounded-[12px] border border-border bg-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:border-accent hover:-translate-y-[2px]">
+          <div class="mb-[14px] flex items-center justify-between">
+            <span class="text-[12px] font-medium text-text-muted uppercase [letter-spacing:0.03em]">Win Rate</span>
+            <div class="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-border bg-surface-raised text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-target"/></svg></div>
           </div>
-          <div class="stat-value">68%</div>
-          <div class="stat-meta">Based on last 12 deals</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Priority actions</h2>
-          <a href="#" class="panel-link">View all <svg class="icon icon-sm"><use href="#i-arrow-up-right"/></svg></a>
-        </div>
-        <div class="panel-body">
-          <div class="action-row">
-            <div class="action-icon warn"><svg class="icon icon-sm"><use href="#i-alert"/></svg></div>
-            <div class="action-text">
-              <div class="action-title">Invoice INV-0043 is 5 days overdue</div>
-              <div class="action-sub">Wayne Enterprises &middot; <span class="amount">$12,000</span></div>
-            </div>
-            <button class="btn-action" data-action="Send Reminder">Send Reminder</button>
-          </div>
-          <div class="action-row">
-            <div class="action-icon wait"><svg class="icon icon-sm"><use href="#i-clock"/></svg></div>
-            <div class="action-text">
-              <div class="action-title">Fintech Brand Identity waiting on client for 8 days</div>
-              <div class="action-sub">Nexus Corp &middot; <span class="amount">$8,500</span></div>
-            </div>
-            <button class="btn-action" data-action="Nudged">Nudge Client</button>
-          </div>
-          <div class="action-row">
-            <div class="action-icon wait"><svg class="icon icon-sm"><use href="#i-clock"/></svg></div>
-            <div class="action-text">
-              <div class="action-title">Web App Redesign lead has had no activity for 6 days</div>
-              <div class="action-sub">Acme Corp &middot; <span class="amount">$5,000</span></div>
-            </div>
-            <button class="btn-action" data-action="Followed up">Follow Up</button>
-          </div>
+          <div class="mb-[6px] font-mono text-[26px] font-semibold">68%</div>
+          <div class="flex items-center gap-[6px] text-[12px] text-text-muted">Based on last 12 deals</div>
         </div>
       </div>
 
-      <div class="split-grid">
-        <div class="panel" style="margin-bottom:0;">
-          <div class="panel-head">
-            <h2>Recent opportunities</h2>
-            <a href="#" class="panel-link">View all <svg class="icon icon-sm"><use href="#i-arrow-up-right"/></svg></a>
+      <div class="mb-[20px] rounded-[12px] border border-border bg-surface">
+        <div class="flex items-center justify-between border-b border-border px-[18px] py-[16px]">
+          <h2 class="text-[14.5px] font-semibold">Priority actions</h2>
+          <a href="#" class="flex items-center gap-[4px] text-[12.5px] text-text-muted hover:text-accent">View all <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+        <div class="p-[6px] space-y-[2px]">
+          <div class="flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bg">
+            <div class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-danger-soft text-danger"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-alert"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <div class="mb-[2px] text-[13.5px] font-medium">Invoice INV-0043 is 5 days overdue</div>
+              <div class="text-[12px] text-text-muted">Wayne Enterprises &middot; <span class="font-mono font-medium text-text">$12,000</span></div>
+            </div>
+            <button class="shrink-0 rounded-[7px] border border-border bg-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-text [transition:background_0.12s_ease] hover:border-accent hover:bg-accent hover:text-accent-text [&.done]:pointer-events-none! [&.done]:border-transparent! [&.done]:bg-success-soft! [&.done]:text-success!" data-action="Send Reminder">Send Reminder</button>
           </div>
-          <div class="panel-body">
-            <div class="opp-row">
-              <span class="pill pill-muted"><span class="dot"></span>Inbox</span>
-              <div class="opp-info">
-                <div class="opp-title">Web App Redesign</div>
-                <div class="opp-client">Acme Corp</div>
-              </div>
-              <span class="opp-value">$5,000</span>
+          <div class="flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bg">
+            <div class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-accent-soft text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-clock"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <div class="mb-[2px] text-[13.5px] font-medium">Fintech Brand Identity waiting on client for 8 days</div>
+              <div class="text-[12px] text-text-muted">Nexus Corp &middot; <span class="font-mono font-medium text-text">$8,500</span></div>
             </div>
-            <div class="opp-row">
-              <span class="pill pill-accent"><span class="dot"></span>Negotiation</span>
-              <div class="opp-info">
-                <div class="opp-title">Fintech Brand Identity</div>
-                <div class="opp-client">Nexus Corp</div>
-              </div>
-              <span class="opp-value">$8,500</span>
+            <button class="shrink-0 rounded-[7px] border border-border bg-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-text [transition:background_0.12s_ease] hover:border-accent hover:bg-accent hover:text-accent-text [&.done]:pointer-events-none! [&.done]:border-transparent! [&.done]:bg-success-soft! [&.done]:text-success!" data-action="Nudged">Nudge Client</button>
+          </div>
+          <div class="flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bg">
+            <div class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-accent-soft text-accent"><svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-clock"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <div class="mb-[2px] text-[13.5px] font-medium">Web App Redesign lead has had no activity for 6 days</div>
+              <div class="text-[12px] text-text-muted">Acme Corp &middot; <span class="font-mono font-medium text-text">$5,000</span></div>
             </div>
-            <div class="opp-row">
-              <span class="pill pill-success"><span class="dot"></span>Won</span>
-              <div class="opp-info">
-                <div class="opp-title">Marketing Site</div>
-                <div class="opp-client">Wayne Ent.</div>
+            <button class="shrink-0 rounded-[7px] border border-border bg-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-text [transition:background_0.12s_ease] hover:border-accent hover:bg-accent hover:text-accent-text [&.done]:pointer-events-none! [&.done]:border-transparent! [&.done]:bg-success-soft! [&.done]:text-success!" data-action="Followed up">Follow Up</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid gap-[20px] [grid-template-columns:1.1fr_0.9fr] max-[1024px]:grid-cols-1">
+        <div class="rounded-[12px] border border-border bg-surface">
+          <div class="flex items-center justify-between border-b border-border px-[18px] py-[16px]">
+            <h2 class="text-[14.5px] font-semibold">Recent opportunities</h2>
+            <a href="#" class="flex items-center gap-[4px] text-[12.5px] text-text-muted hover:text-accent">View all <svg class="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-arrow-up-right"/></svg></a>
+          </div>
+          <div class="p-[6px]">
+            <div class="flex items-center gap-[12px] rounded-[9px] px-[12px] py-[11px] hover:bg-bg">
+              <span class="inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap border border-border bg-surface-raised text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-text-muted"></span>Inbox</span>
+              <div class="min-w-0 flex-1">
+                <div class="mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium">Web App Redesign</div>
+                <div class="text-[12px] text-text-muted">Acme Corp</div>
               </div>
-              <span class="opp-value">$12,000</span>
+              <span class="font-mono text-[13px] font-medium">$5,000</span>
             </div>
-            <div class="opp-row">
-              <span class="pill pill-muted"><span class="dot"></span>Drafting</span>
-              <div class="opp-info">
-                <div class="opp-title">E-commerce Backend</div>
-                <div class="opp-client">Retail Co</div>
+            <div class="flex items-center gap-[12px] rounded-[9px] px-[12px] py-[11px] hover:bg-bg">
+              <span class="inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap bg-accent-soft text-accent"><span class="h-[6px] w-[6px] rounded-full bg-accent"></span>Negotiation</span>
+              <div class="min-w-0 flex-1">
+                <div class="mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium">Fintech Brand Identity</div>
+                <div class="text-[12px] text-text-muted">Nexus Corp</div>
               </div>
-              <span class="opp-value">$12,000</span>
+              <span class="font-mono text-[13px] font-medium">$8,500</span>
+            </div>
+            <div class="flex items-center gap-[12px] rounded-[9px] px-[12px] py-[11px] hover:bg-bg">
+              <span class="inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap bg-success-soft text-success"><span class="h-[6px] w-[6px] rounded-full bg-success"></span>Won</span>
+              <div class="min-w-0 flex-1">
+                <div class="mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium">Marketing Site</div>
+                <div class="text-[12px] text-text-muted">Wayne Ent.</div>
+              </div>
+              <span class="font-mono text-[13px] font-medium">$12,000</span>
+            </div>
+            <div class="flex items-center gap-[12px] rounded-[9px] px-[12px] py-[11px] hover:bg-bg">
+              <span class="inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap border border-border bg-surface-raised text-text-muted"><span class="h-[6px] w-[6px] rounded-full bg-text-muted"></span>Drafting</span>
+              <div class="min-w-0 flex-1">
+                <div class="mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium">E-commerce Backend</div>
+                <div class="text-[12px] text-text-muted">Retail Co</div>
+              </div>
+              <span class="font-mono text-[13px] font-medium">$12,000</span>
             </div>
           </div>
         </div>
 
-        <div class="panel" style="margin-bottom:0;">
-          <div class="panel-head">
-            <h2>Recent activity</h2>
+        <div class="rounded-[12px] border border-border bg-surface">
+          <div class="flex items-center justify-between border-b border-border px-[18px] py-[16px]">
+            <h2 class="text-[14.5px] font-semibold">Recent activity</h2>
           </div>
-          <div class="panel-body">
-            <div class="feed-item">
-              <div class="feed-dot-wrap"><div class="feed-dot accent"></div><div class="feed-line"></div></div>
+          <div class="p-[6px]">
+            <div class="flex gap-[12px] px-[12px] py-[11px]">
+              <div class="flex shrink-0 flex-col items-center pt-[3px]"><div class="h-[7px] w-[7px] rounded-full bg-accent"></div><div class="mt-[4px] w-px flex-1 bg-border"></div></div>
               <div>
-                <div class="feed-text">Proposal sent to Nexus Corp</div>
-                <div class="feed-time">2 hours ago</div>
+                <div class="mb-[2px] text-[13px]">Proposal sent to Nexus Corp</div>
+                <div class="text-[11.5px] text-text-muted">2 hours ago</div>
               </div>
             </div>
-            <div class="feed-item">
-              <div class="feed-dot-wrap"><div class="feed-dot success"></div><div class="feed-line"></div></div>
+            <div class="flex gap-[12px] px-[12px] py-[11px]">
+              <div class="flex shrink-0 flex-col items-center pt-[3px]"><div class="h-[7px] w-[7px] rounded-full bg-success"></div><div class="mt-[4px] w-px flex-1 bg-border"></div></div>
               <div>
-                <div class="feed-text">Payment received for INV-0041 ($3,200)</div>
-                <div class="feed-time">5 hours ago</div>
+                <div class="mb-[2px] text-[13px]">Payment received for INV-0041 ($3,200)</div>
+                <div class="text-[11.5px] text-text-muted">5 hours ago</div>
               </div>
             </div>
-            <div class="feed-item">
-              <div class="feed-dot-wrap"><div class="feed-dot"></div><div class="feed-line"></div></div>
+            <div class="flex gap-[12px] px-[12px] py-[11px]">
+              <div class="flex shrink-0 flex-col items-center pt-[3px]"><div class="h-[7px] w-[7px] rounded-full bg-border"></div><div class="mt-[4px] w-px flex-1 bg-border"></div></div>
               <div>
-                <div class="feed-text">New lead via public form: Retail Co</div>
-                <div class="feed-time">Yesterday</div>
+                <div class="mb-[2px] text-[13px]">New lead via public form: Retail Co</div>
+                <div class="text-[11.5px] text-text-muted">Yesterday</div>
               </div>
             </div>
-            <div class="feed-item">
-              <div class="feed-dot-wrap"><div class="feed-dot"></div></div>
+            <div class="flex gap-[12px] px-[12px] py-[11px]">
+              <div class="flex shrink-0 flex-col items-center pt-[3px]"><div class="h-[7px] w-[7px] rounded-full bg-border"></div></div>
               <div>
-                <div class="feed-text">Task completed: Database schema</div>
-                <div class="feed-time">2 days ago</div>
+                <div class="mb-[2px] text-[13px]">Task completed: Database schema</div>
+                <div class="text-[11.5px] text-text-muted">2 days ago</div>
               </div>
             </div>
           </div>
@@ -680,21 +399,21 @@
   </div>
 </div>
 
-<div class="cmdk-backdrop" id="cmdkBackdrop">
-  <div class="cmdk-modal">
-    <div class="cmdk-input-row">
-      <svg class="icon"><use href="#i-search"/></svg>
-      <input type="text" placeholder="Search opportunities, projects, invoices..." id="cmdkInput" autocomplete="off">
-      <span class="kbd">Esc</span>
+<div class="group/cmdk fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-[12vh] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!" id="cmdkBackdrop">
+  <div class="w-full max-w-[560px] rounded-[14px] border border-border bg-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-12px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/cmdk:[transform:translateY(0)_scale(1)]!">
+    <div class="flex items-center gap-[10px] border-b border-border px-[16px] py-[14px] text-text-muted">
+      <svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-search"/></svg>
+      <input type="text" class="flex-1 border-none bg-transparent text-[14.5px] text-text outline-none" placeholder="Search opportunities, projects, invoices..." id="cmdkInput" autocomplete="off">
+      <span class="rounded-[4px] border border-border bg-bg px-[6px] py-[2px] font-mono text-[11px]">Esc</span>
     </div>
-    <div class="cmdk-list">
-      <div class="cmdk-section-label">Quick actions</div>
-      <button class="cmdk-item hi"><svg class="icon"><use href="#i-plus"/></svg> New Opportunity</button>
-      <button class="cmdk-item"><svg class="icon"><use href="#i-file"/></svg> New Invoice</button>
-      <div class="cmdk-section-label">Jump to</div>
-      <button class="cmdk-item"><svg class="icon"><use href="#i-kanban"/></svg> Opportunities</button>
-      <button class="cmdk-item"><svg class="icon"><use href="#i-briefcase"/></svg> Projects</button>
-      <button class="cmdk-item"><svg class="icon"><use href="#i-users"/></svg> Contacts</button>
+    <div class="max-h-[320px] overflow-y-auto p-[8px]">
+      <div class="px-[10px] pt-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.05em]">Quick actions</div>
+      <button class="flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-plus"/></svg> New Opportunity</button>
+      <button class="flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-text hover:bg-accent-soft hover:text-accent"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-file"/></svg> New Invoice</button>
+      <div class="px-[10px] pt-[10px] pb-[6px] text-[11px] text-text-muted uppercase [letter-spacing:0.05em]">Jump to</div>
+      <button class="flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-text hover:bg-accent-soft hover:text-accent"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-kanban"/></svg> Opportunities</button>
+      <button class="flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-text hover:bg-accent-soft hover:text-accent"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-briefcase"/></svg> Projects</button>
+      <button class="flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-text hover:bg-accent-soft hover:text-accent"><svg class="w-[18px] h-[18px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"><use href="#i-users"/></svg> Contacts</button>
     </div>
   </div>
 </div>
@@ -771,7 +490,7 @@
     if (e.key === 'Escape') closeCmdk();
   });
 
-  document.querySelectorAll('.btn-action').forEach(btn => {
+  document.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const label = btn.dataset.action;
       btn.textContent = label + ' ✓';
