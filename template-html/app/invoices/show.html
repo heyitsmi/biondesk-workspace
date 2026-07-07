@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Detail — Biondesk</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+  input, select, textarea { font: inherit; color: inherit; }
+
+  :root {
+    --bg: #F6F7F9; --surface: #FFFFFF; --surface-raised: #FFFFFF; --border: #E4E6EB;
+    --text: #12161F; --text-muted: #6B7280; --accent: #C77F1F; --accent-text: #FFFFFF;
+    --success: #1F8A5F; --danger: #D6383D;
+    --accent-soft: rgba(199,127,31,0.1); --success-soft: rgba(31,138,95,0.1); --danger-soft: rgba(214,56,61,0.1);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
+    --font-display: 'Instrument Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  [data-theme="dark"] {
+    --bg: #0B0E14; --surface: #12161F; --surface-raised: #1A1F2B; --border: #232838;
+    --text: #EDEFF3; --text-muted: #8B93A6; --accent: #E8A33D; --accent-text: #12161F;
+    --success: #34A87C; --danger: #E5484D;
+    --accent-soft: rgba(232,163,61,0.12); --success-soft: rgba(52,168,124,0.12); --danger-soft: rgba(229,72,77,0.12);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
+  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .icon-sm { width: 15px; height: 15px; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  .app-shell { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: width 0.2s ease; }
+  .sidebar.collapsed { width: 68px; }
+  .sidebar-brand { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
+  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
+  .sidebar-toggle { position: absolute; top: 16px; right: -14px; width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-raised); z-index: 35; transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
+  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .sidebar-toggle .icon { transition: transform 0.2s ease; }
+  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
+  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar.collapsed .sidebar-nav { overflow: visible; }
+  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.12s ease, color 0.12s ease; }
+  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar.collapsed .nav-item { justify-content: center; }
+  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .sidebar.collapsed .nav-item .badge { display: none; }
+  .sidebar.collapsed .nav-item .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40; box-shadow: var(--shadow-raised); }
+  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
+  .tooltip { display: none; } .sidebar.collapsed .tooltip { display: block; }
+  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
+
+  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar { height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg); }
+  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
+  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .breadcrumb a { color: var(--text-muted); flex-shrink: 0; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep { color: var(--border); flex-shrink: 0; }
+  .breadcrumb .current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .search-trigger { display: flex; align-items: center; gap: 10px; width: 260px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
+  .search-trigger:hover { border-color: var(--accent); }
+  .search-trigger .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 11px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); position: relative; }
+  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
+  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
+  .avatar-btn:hover { background: var(--surface-raised); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .dropdown-wrap { position: relative; }
+  .dropdown-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 240px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 50; opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease; }
+  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; }
+  .dropdown-item:hover { background: var(--bg); }
+  .dropdown-item.danger { color: var(--danger); }
+  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
+
+  .content { flex: 1; display: flex; flex-direction: column; padding: 20px 32px 24px; overflow: hidden; min-height: 0; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .pill-accent { background: var(--accent-soft); color: var(--accent); } .pill-accent .dot { background: var(--accent); }
+  .pill-success { background: var(--success-soft); color: var(--success); } .pill-success .dot { background: var(--success); }
+  .pill-danger { background: var(--danger-soft); color: var(--danger); } .pill-danger .dot { background: var(--danger); }
+  .pill-muted { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); } .pill-muted .dot { background: var(--text-muted); }
+
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; pointer-events: none; }
+  .btn-primary { background: var(--accent); color: var(--accent-text); } .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); } .btn-ghost:hover { background: var(--surface-raised); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+  .btn-outline { border: 1px solid var(--border); background: transparent; color: var(--text); } .btn-outline:hover { border-color: var(--text-muted); }
+
+  /* Document specific styles */
+  .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-shrink: 0; flex-wrap: wrap; gap: 16px; }
+  .doc-title-area h1 { font-size: 24px; font-weight: 700; font-family: var(--font-mono); margin-bottom: 6px; letter-spacing: -0.02em; }
+  .doc-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
+  .doc-meta-item { display: flex; align-items: center; gap: 5px; }
+  .doc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .document-layout { display: flex; gap: 24px; flex: 1; min-height: 0; }
+  
+  .document-main-area { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+  .doc-canvas { flex: 1; padding: 40px; overflow-y: auto; color: var(--text); }
+  
+  /* Invoice Paper styling */
+  .invoice-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+  .invoice-from { flex: 1; }
+  .invoice-from h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .invoice-from p { color: var(--text-muted); font-size: 13.5px; line-height: 1.5; }
+  .invoice-details { text-align: right; }
+  .invoice-details .d-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .invoice-details .d-value { font-family: var(--font-mono); font-size: 14px; margin-bottom: 12px; font-weight: 500; }
+  
+  .invoice-bill-to { margin-bottom: 32px; padding: 20px; background: var(--surface-raised); border-radius: 8px; border: 1px solid var(--border); }
+  .invoice-bill-to .d-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .invoice-bill-to h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .invoice-bill-to p { color: var(--text-muted); font-size: 13.5px; line-height: 1.5; }
+
+  /* Line items table */
+  .line-items-block { margin-bottom: 32px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .line-items-table { width: 100%; border-collapse: collapse; }
+  .line-items-table th { text-align: left; background: var(--surface-raised); padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .line-items-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: top; }
+  .line-items-table tbody tr:last-child td { border-bottom: none; }
+  .col-item { width: 50%; }
+  .col-qty, .col-price, .col-total { width: 16.6%; text-align: right; font-family: var(--font-mono); }
+  .col-total { font-weight: 600; }
+  .th-right { text-align: right !important; font-family: var(--font-display) !important; }
+  .item-title { font-weight: 500; margin-bottom: 4px; font-family: var(--font-display); }
+  .item-desc { font-size: 12.5px; color: var(--text-muted); font-family: var(--font-display); line-height: 1.4; }
+  
+  .totals-area { padding: 16px 24px; background: var(--surface-raised); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .total-row { display: flex; justify-content: space-between; width: 280px; font-size: 13.5px; }
+  .total-label { color: var(--text-muted); }
+  .total-val { font-family: var(--font-mono); font-weight: 500; }
+  .total-row.grand-total { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .total-row.grand-total .total-val { color: var(--accent); }
+  
+  .amount-due-row { display: flex; justify-content: space-between; width: 280px; font-size: 16px; font-weight: 700; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .amount-due-row .total-val { font-family: var(--font-mono); }
+  
+  .invoice-notes { padding-top: 24px; border-top: 1px solid var(--border); margin-top: 32px; }
+  .invoice-notes h4 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .invoice-notes p { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; white-space: pre-wrap; }
+
+  /* Right Sidebar */
+  .document-sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
+  .side-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .side-panel-header { font-size: 13.5px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  
+  /* Payment Tracking styles */
+  .payment-stat-box { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .stat-block { display: flex; flex-direction: column; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; }
+  .stat-value { font-family: var(--font-mono); font-weight: 600; font-size: 15px; }
+  .stat-value.pending { color: var(--accent); }
+  
+  .payment-history { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .payment-record { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+  .payment-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--success-soft); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .payment-info { flex: 1; min-width: 0; }
+  .payment-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
+  .payment-method { font-weight: 600; font-size: 13px; }
+  .payment-amount { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--success); }
+  .payment-date { font-size: 11.5px; color: var(--text-muted); }
+
+  .field-group { margin-bottom: 14px; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 7px; display: block; }
+  select.field-select, input.field-input, textarea.field-input { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13.5px; }
+  select.field-select:focus, input.field-input:focus, textarea.field-input:focus { border-color: var(--accent); }
+  
+  @media (max-width: 1100px) {
+    .document-layout { flex-direction: column; }
+    .document-sidebar { width: 100%; }
+  }
+  @media (max-width: 1024px) { .search-trigger { display: none; } }
+  @media (max-width: 760px) {
+    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
+    .sidebar.mobile-open { left: 0; }
+    .sidebar.collapsed { width: 240px; }
+    .icon-btn.mobile-menu-btn { display: flex; }
+    .content { padding: 20px 16px 40px; }
+    .doc-actions { width: 100%; justify-content: space-between; }
+    .doc-actions .btn { flex: 1; justify-content: center; }
+    .invoice-header-row { flex-direction: column; gap: 24px; }
+    .invoice-details { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Basic Icons -->
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M3 12h18"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M14 2v5h5"/><path d="M8 13h8M8 17h8M8 9h3"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3V2a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 10l1.5 1.5L14 8"/><path d="M8 15h8"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 2h12v19l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="8.5" r="2.6"/><path d="M15.8 12.3c2.6.4 4.7 2.4 4.7 5.4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 19a2 2 0 004 0"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-3.6l-.5 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.5 2.6h3.6l.5-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6z"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8M12 17v3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  </defs>
+</svg>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-mark"><span></span></div><span class="brand-name">Biondesk</span></div>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar"><svg class="icon icon-sm"><use href="#i-chevron-left"/></svg></button>
+    <nav class="sidebar-nav">
+      <a href="../dashboard.html" class="nav-item"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-label">Dashboard</span><span class="tooltip">Dashboard</span></a>
+      <a href="../opportunities/index.html" class="nav-item"><svg class="icon"><use href="#i-kanban"/></svg><span class="nav-label">Opportunities</span><span class="tooltip">Opportunities</span></a>
+      <a href="../projects/index.html" class="nav-item"><svg class="icon"><use href="#i-briefcase"/></svg><span class="nav-label">Projects</span><span class="tooltip">Projects</span></a>
+      <div class="sidebar-section-label">Documents</div>
+      <a href="../proposals/index.html" class="nav-item"><svg class="icon"><use href="#i-file"/></svg><span class="nav-label">Proposals</span><span class="tooltip">Proposals</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-quote"/></svg><span class="nav-label">Quotations</span><span class="tooltip">Quotations</span></a>
+      <a href="index.html" class="nav-item active"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-label">Invoices</span><span class="tooltip">Invoices</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-users"/></svg><span class="nav-label">Contacts</span><span class="tooltip">Contacts</span></a>
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-bell"/></svg><span class="nav-label">Reminders</span><span class="tooltip">Reminders</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-layers"/></svg><span class="nav-label">Profile Library</span><span class="tooltip">Profile Library</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-item"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span><span class="tooltip">Settings</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn"><svg class="icon"><use href="#i-menu"/></svg></button>
+        <div class="breadcrumb">
+          <a href="index.html"><svg class="icon icon-sm"><use href="#i-arrow-left"/></svg></a>
+          <a href="index.html">Invoices</a>
+          <span class="sep">/</span>
+          <span class="current">INV-2023-042</span>
+        </div>
+      </div>
+      <button class="search-trigger" id="cmdkTrigger">
+        <svg class="icon icon-sm"><use href="#i-search"/></svg><span>Search or jump to...</span><span class="kbd">⌘K</span>
+      </button>
+      <div class="topbar-right">
+        <div class="theme-switch" id="themeSwitch">
+          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
+          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
+          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+        </div>
+        <div class="dropdown-wrap">
+          <button class="icon-btn" id="notifBtn"><svg class="icon"><use href="#i-bell"/></svg></button>
+          <div class="dropdown-panel" id="notifPanel"><div class="dropdown-header">Notifications</div><div class="dropdown-item">No new notifications</div></div>
+        </div>
+        <div class="dropdown-wrap">
+          <button class="avatar-btn" id="userBtn"><div class="avatar">HI</div><svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-panel" id="userPanel">
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
+            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="doc-header">
+        <div class="doc-title-area">
+          <h1>INV-2023-042</h1>
+          <div class="doc-meta">
+            <div class="doc-meta-item"><span class="pill pill-accent"><span class="dot"></span>Sent</span></div>
+            <div class="doc-meta-item">Due in 14 days (Nov 15, 2023)</div>
+          </div>
+        </div>
+        <div class="doc-actions">
+          <button class="btn btn-ghost"><svg class="icon icon-sm"><use href="#i-eye"/></svg> Preview</button>
+          <button class="btn btn-ghost"><svg class="icon icon-sm"><use href="#i-link"/></svg> Copy Link</button>
+          <button class="btn btn-primary"><svg class="icon icon-sm"><use href="#i-send"/></svg> Send Reminder</button>
+        </div>
+      </div>
+
+      <div class="document-layout">
+        <!-- INVOICE CANVAS (LEFT) -->
+        <div class="document-main-area">
+          <div class="doc-canvas">
+            
+            <div class="invoice-header-row">
+              <div class="invoice-from">
+                <h2>Biondesk Studio</h2>
+                <p>123 Creative Street, Tech District<br>Jakarta, Indonesia 12345<br>hello@biondesk.com</p>
+              </div>
+              <div class="invoice-details">
+                <div class="d-label">Invoice Number</div>
+                <div class="d-value">INV-2023-042</div>
+                
+                <div class="d-label">Date Issued</div>
+                <div class="d-value">Nov 01, 2023</div>
+                
+                <div class="d-label">Due Date</div>
+                <div class="d-value">Nov 15, 2023</div>
+              </div>
+            </div>
+
+            <div class="invoice-bill-to">
+              <div class="d-label">Bill To</div>
+              <h3>Acme Corp</h3>
+              <p>Attn: John Doe<br>456 Enterprise Blvd, Suite 200<br>San Francisco, CA 94103<br>john.doe@acmecorp.com</p>
+            </div>
+
+            <div class="line-items-block">
+              <table class="line-items-table">
+                <thead>
+                  <tr>
+                    <th class="col-item">Item & Description</th>
+                    <th class="col-qty th-right">Qty</th>
+                    <th class="col-price th-right">Price</th>
+                    <th class="col-total th-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="item-title">Website Redesign - Phase 1</div>
+                      <div class="item-desc">UI/UX prototyping for Home, About, and Services pages. Includes 2 rounds of revisions.</div>
+                    </td>
+                    <td class="col-qty th-right">1</td>
+                    <td class="col-price th-right">$2,000.00</td>
+                    <td class="col-total th-right">$2,000.00</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="item-title">SEO Audit</div>
+                      <div class="item-desc">Comprehensive technical and on-page SEO audit of the current platform.</div>
+                    </td>
+                    <td class="col-qty th-right">1</td>
+                    <td class="col-price th-right">$500.00</td>
+                    <td class="col-total th-right">$500.00</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="totals-area">
+                <div class="total-row"><span class="total-label">Subtotal</span><span class="total-val">$2,500.00</span></div>
+                <div class="total-row"><span class="total-label">Tax (0%)</span><span class="total-val">$0.00</span></div>
+                <div class="total-row grand-total"><span class="total-label">Invoice Total</span><span class="total-val">$2,500.00</span></div>
+                <div class="amount-due-row"><span class="total-label">Amount Due</span><span class="total-val">$1,500.00</span></div>
+              </div>
+            </div>
+
+            <div class="invoice-notes">
+              <h4>Payment Instructions</h4>
+              <p>Please transfer the amount due to the following bank account:<br>Bank: TechBank International<br>Account Name: Biondesk Studio<br>Account Number: 1234-5678-9012<br>SWIFT: TECHIDJA<br><br>Or pay via Stripe: https://stripe.com/pay/biondesk</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SIDEBAR SETTINGS (RIGHT) -->
+        <div class="document-sidebar">
+          
+          <!-- PAYMENT TRACKING (Crucial Feature) -->
+          <div class="side-panel">
+            <div class="side-panel-header">Payment Tracking</div>
+            
+            <div class="payment-stat-box">
+              <div class="stat-block">
+                <span class="stat-label">Paid</span>
+                <span class="stat-value">$1,000.00</span>
+              </div>
+              <div class="stat-block" style="text-align: right;">
+                <span class="stat-label">Remaining</span>
+                <span class="stat-value pending">$1,500.00</span>
+              </div>
+            </div>
+
+            <div class="payment-history">
+              <div class="payment-record">
+                <div class="payment-icon"><svg class="icon icon-sm"><use href="#i-check"/></svg></div>
+                <div class="payment-info">
+                  <div class="payment-top">
+                    <span class="payment-method">Bank Transfer (DP)</span>
+                    <span class="payment-amount">$1,000.00</span>
+                  </div>
+                  <div class="payment-date">Recorded on Nov 02, 2023</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%; justify-content: center;"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Record Payment</button>
+          </div>
+          
+          <!-- DOCUMENT SETTINGS -->
+          <div class="side-panel">
+            <div class="side-panel-header">Settings</div>
+            
+            <div class="field-group">
+              <span class="field-label">Linked Project</span>
+              <a href="../projects/show.html" style="display:block; padding: 10px 12px; background:var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13.5px; font-weight: 500;">
+                <svg class="icon icon-sm" style="display:inline; vertical-align:-3px; margin-right:6px; color:var(--text-muted)"><use href="#i-briefcase"/></svg>
+                Website Redesign
+              </a>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Currency</span>
+              <select class="field-select">
+                <option value="USD">USD - US Dollar</option>
+                <option value="IDR">IDR - Indonesian Rupiah</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- REMINDERS & EXPORT -->
+          <div class="side-panel">
+            <div class="side-panel-header">Actions</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn btn-ghost" style="justify-content: flex-start;"><svg class="icon icon-sm" style="margin-right:4px;"><use href="#i-bell"/></svg> Schedule Auto-Reminder</button>
+              <button class="btn btn-ghost" style="justify-content: flex-start;"><svg class="icon icon-sm" style="margin-right:4px;"><use href="#i-download"/></svg> Download PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  const root = document.documentElement;
+
+  const themeSwitch = document.getElementById('themeSwitch');
+  const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(choice) {
+    const resolved = choice === 'system' ? (systemPref.matches ? 'dark' : 'light') : choice;
+    root.setAttribute('data-theme', resolved);
+    themeSwitch.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.themeChoice === choice));
+    localStorage.setItem('biondesk-theme', choice);
+  }
+  themeSwitch.addEventListener('click', (e) => { const b = e.target.closest('button[data-theme-choice]'); if (b) applyTheme(b.dataset.themeChoice); });
+  systemPref.addEventListener('change', () => { if (localStorage.getItem('biondesk-theme') === 'system') applyTheme('system'); });
+  applyTheme(localStorage.getItem('biondesk-theme') || 'dark');
+
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  function setCollapsed(state) { sidebar.classList.toggle('collapsed', state); localStorage.setItem('biondesk-sidebar-collapsed', state ? '1' : '0'); }
+  sidebarToggle.addEventListener('click', () => setCollapsed(!sidebar.classList.contains('collapsed')));
+  if (localStorage.getItem('biondesk-sidebar-collapsed') === '1') setCollapsed(true);
+  document.getElementById('mobileMenuBtn').addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
+
+  function setupDropdown(btnId, panelId) {
+    const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panel.classList.contains('open');
+      document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open'));
+      if (!isOpen) panel.classList.add('open');
+    });
+  }
+  setupDropdown('notifBtn', 'notifPanel');
+  setupDropdown('userBtn', 'userPanel');
+  document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open')));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Biondesk</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* Base styles and theme engine */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+  input, select, textarea { font: inherit; color: inherit; }
+
+  :root {
+    --bg: #F6F7F9; --surface: #FFFFFF; --surface-raised: #FFFFFF; --border: #E4E6EB;
+    --text: #12161F; --text-muted: #6B7280; --accent: #C77F1F; --accent-text: #FFFFFF;
+    --success: #1F8A5F; --danger: #D6383D;
+    --accent-soft: rgba(199,127,31,0.1); --success-soft: rgba(31,138,95,0.1); --danger-soft: rgba(214,56,61,0.1);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.08);
+    --font-display: 'Instrument Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  [data-theme="dark"] {
+    --bg: #0B0E14; --surface: #12161F; --surface-raised: #1A1F2B; --border: #232838;
+    --text: #EDEFF3; --text-muted: #8B93A6; --accent: #E8A33D; --accent-text: #12161F;
+    --success: #34A87C; --danger: #E5484D;
+    --accent-soft: rgba(232,163,61,0.12); --success-soft: rgba(52,168,124,0.12); --danger-soft: rgba(229,72,77,0.12);
+    --shadow-raised: 0 4px 16px rgba(0,0,0,0.24);
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--font-display); font-size: 14px; -webkit-font-smoothing: antialiased; }
+  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .icon-sm { width: 15px; height: 15px; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ================= shell ================= */
+  .app-shell { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: width 0.2s ease; }
+  .sidebar.collapsed { width: 68px; }
+  .sidebar-brand { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-mark span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .brand-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; }
+  .sidebar.collapsed .brand-name, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-section-label { display: none; }
+  .sidebar-toggle { position: absolute; top: 16px; right: -14px; width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-raised); z-index: 35; transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
+  .sidebar-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .sidebar-toggle .icon { transition: transform 0.2s ease; }
+  .sidebar.collapsed .sidebar-toggle .icon { transform: rotate(180deg); }
+  @media (max-width: 760px) { .sidebar-toggle { display: none; } }
+  
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar.collapsed .sidebar-nav { overflow: visible; }
+  .sidebar-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 14px 10px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.12s ease, color 0.12s ease; }
+  .nav-item:hover { background: var(--surface-raised); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar.collapsed .nav-item { justify-content: center; }
+  .nav-item .badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .sidebar.collapsed .nav-item .badge { display: none; }
+  .sidebar.collapsed .nav-item .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; background: var(--surface-raised); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 40; box-shadow: var(--shadow-raised); }
+  .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
+  .tooltip { display: none; } .sidebar.collapsed .tooltip { display: block; }
+  .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; }
+
+  .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar { height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg); }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .icon-btn.mobile-menu-btn { display: none; color: var(--text-muted); }
+  .breadcrumb { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); position: relative; }
+  .icon-btn:hover { background: var(--surface-raised); color: var(--text); }
+  .icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); border: 1.5px solid var(--bg); }
+  .avatar-btn { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 8px; }
+  .avatar-btn:hover { background: var(--surface-raised); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  
+  .dropdown-wrap { position: relative; }
+  .dropdown-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 240px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-raised); padding: 6px; z-index: 50; opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease; }
+  .dropdown-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .dropdown-header { padding: 8px 10px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; font-size: 13px; color: var(--text); width: 100%; text-align: left; transition: background 0.1s; }
+  .dropdown-item:hover { background: var(--bg); }
+  .dropdown-item.danger { color: var(--danger); }
+  
+  .theme-switch { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+  .theme-switch button { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.1s; }
+  .theme-switch button.active { background: var(--accent-soft); color: var(--accent); }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; transition: opacity 0.12s ease, transform 0.1s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-text); } .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); } .btn-ghost:hover { background: var(--surface-raised); }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); } .btn-danger:hover { background: var(--danger); color: #fff; }
+
+  /* Content Area */
+  .content { flex: 1; display: flex; flex-direction: column; padding: 24px 32px; overflow-y: auto; }
+  
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 32px; }
+  
+  /* Settings Layout */
+  .settings-layout { display: flex; gap: 40px; align-items: flex-start; }
+  
+  .settings-nav { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 24px; }
+  .settings-nav-item { padding: 10px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.12s ease; }
+  .settings-nav-item:hover { background: var(--surface-raised); color: var(--text); }
+  .settings-nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  
+  .settings-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 32px; max-width: 800px; padding-bottom: 60px; }
+  
+  .settings-section-header { margin-bottom: 20px; }
+  .settings-section-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .settings-section-desc { font-size: 13.5px; color: var(--text-muted); }
+  
+  .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-raised); overflow: hidden; }
+  .settings-card-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+  .settings-card-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--surface-raised); display: flex; justify-content: flex-end; gap: 12px; align-items: center; }
+  
+  /* Form Elements */
+  .form-row { display: flex; gap: 20px; }
+  .form-row .form-group { flex: 1; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+  .form-label .hint { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: border-color 0.15s ease; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  
+  .help-text { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
+  
+  /* Upload Area */
+  .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; background: var(--bg); transition: border-color 0.15s ease; cursor: pointer; }
+  .upload-area:hover { border-color: var(--accent); }
+  .upload-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-raised); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .upload-text { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .upload-subtext { font-size: 12px; color: var(--text-muted); }
+  
+  /* Switch */
+  .switch-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .switch-row:last-child { border-bottom: none; }
+  .switch-label { display: flex; flex-direction: column; gap: 4px; }
+  .switch-title { font-size: 13.5px; font-weight: 500; }
+  .switch-desc { font-size: 12.5px; color: var(--text-muted); }
+  
+  .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .2s; border-radius: 24px; }
+  .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+  .toggle-switch input:checked + .toggle-slider { background-color: var(--success); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+  /* Draggable list for services */
+  .draggable-list { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--bg); }
+  .draggable-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+  .drag-handle { cursor: grab; color: var(--text-muted); display: flex; }
+  .draggable-item input { flex: 1; border: none; background: transparent; outline: none; font-size: 13.5px; color: var(--text); }
+  
+  @media (max-width: 1024px) {
+    .settings-layout { flex-direction: column; }
+    .settings-nav { width: 100%; flex-direction: row; overflow-x: auto; position: static; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .settings-nav-item { white-space: nowrap; }
+  }
+  @media (max-width: 760px) {
+    .sidebar { position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s ease; }
+    .sidebar.mobile-open { left: 0; }
+    .sidebar.collapsed { width: 240px; }
+    .icon-btn.mobile-menu-btn { display: flex; }
+    .content { padding: 20px 16px; }
+    .form-row { flex-direction: column; gap: 16px; }
+    .settings-card-footer { flex-direction: column; }
+    .settings-card-footer .btn { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Basic Icons -->
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M3 12h18"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M14 2v5h5"/><path d="M8 13h8M8 17h8M8 9h3"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3V2a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 10l1.5 1.5L14 8"/><path d="M8 15h8"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 2h12v19l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="8.5" r="2.6"/><path d="M15.8 12.3c2.6.4 4.7 2.4 4.7 5.4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 19a2 2 0 004 0"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-3.6l-.5 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.5 2.6h3.6l.5-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6z"/></symbol>
+    
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8M12 17v3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="i-drag" viewBox="0 0 24 24"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-credit-card" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></symbol>
+  </defs>
+</svg>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><span></span></div>
+      <span class="brand-name">Biondesk</span>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar"><svg class="icon icon-sm"><use href="#i-chevron-left"/></svg></button>
+
+    <nav class="sidebar-nav">
+      <a href="../dashboard.html" class="nav-item"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-label">Dashboard</span><span class="tooltip">Dashboard</span></a>
+      <a href="../opportunities/index.html" class="nav-item"><svg class="icon"><use href="#i-kanban"/></svg><span class="nav-label">Opportunities</span><span class="tooltip">Opportunities</span></a>
+      <a href="../projects/index.html" class="nav-item"><svg class="icon"><use href="#i-briefcase"/></svg><span class="nav-label">Projects</span><span class="tooltip">Projects</span></a>
+
+      <div class="sidebar-section-label">Documents</div>
+      <a href="../proposals/index.html" class="nav-item"><svg class="icon"><use href="#i-file"/></svg><span class="nav-label">Proposals</span><span class="tooltip">Proposals</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-quote"/></svg><span class="nav-label">Quotations</span><span class="tooltip">Quotations</span></a>
+      <a href="../invoices/index.html" class="nav-item"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-label">Invoices</span><span class="tooltip">Invoices</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-users"/></svg><span class="nav-label">Contacts</span><span class="tooltip">Contacts</span></a>
+
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-bell"/></svg><span class="nav-label">Reminders</span><span class="tooltip">Reminders</span></a>
+      <a href="#" class="nav-item"><svg class="icon"><use href="#i-layers"/></svg><span class="nav-label">Profile Library</span><span class="tooltip">Profile Library</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="index.html" class="nav-item active"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span><span class="tooltip">Settings</span></a>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+    
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn icon-btn" id="mobileMenuBtn"><svg class="icon"><use href="#i-menu"/></svg></button>
+        <span class="breadcrumb">Settings</span>
+      </div>
+      <div class="topbar-right">
+        <div class="theme-switch" id="themeSwitch">
+          <button data-theme-choice="light" title="Light"><svg class="icon icon-sm"><use href="#i-sun"/></svg></button>
+          <button data-theme-choice="dark" class="active" title="Dark"><svg class="icon icon-sm"><use href="#i-moon"/></svg></button>
+          <button data-theme-choice="system" title="System"><svg class="icon icon-sm"><use href="#i-monitor"/></svg></button>
+        </div>
+        <div class="dropdown-wrap">
+          <button class="icon-btn" id="notifBtn"><svg class="icon"><use href="#i-bell"/></svg></button>
+          <div class="dropdown-panel" id="notifPanel"><div class="dropdown-header">Notifications</div><div class="dropdown-item">No new notifications</div></div>
+        </div>
+        <div class="dropdown-wrap">
+          <button class="avatar-btn" id="userBtn"><div class="avatar">HI</div><svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-panel" id="userPanel">
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile</button>
+            <button class="dropdown-item"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Settings</button>
+            <button class="dropdown-item danger"><svg class="icon icon-sm"><use href="#i-logout"/></svg> Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SETTINGS CONTENT -->
+    <main class="content">
+      <h1 class="page-title">Settings</h1>
+
+      <div class="settings-layout">
+        
+        <!-- Inner Sidebar Nav -->
+        <nav class="settings-nav" id="settingsNav">
+          <a class="settings-nav-item" data-target="profile"><svg class="icon icon-sm"><use href="#i-user"/></svg> Profile details</a>
+          <a class="settings-nav-item" data-target="security"><svg class="icon icon-sm"><use href="#i-shield"/></svg> Security & Password</a>
+          <a class="settings-nav-item" data-target="workspace"><svg class="icon icon-sm"><use href="#i-briefcase"/></svg> Workspace info</a>
+          <a class="settings-nav-item active" data-target="lead-form"><svg class="icon icon-sm"><use href="#i-link"/></svg> Public Lead Form</a>
+          <a class="settings-nav-item" data-target="billing"><svg class="icon icon-sm"><use href="#i-credit-card"/></svg> Billing & Plan</a>
+        </nav>
+
+        <!-- Right Content Areas -->
+        <div class="settings-content">
+          
+          <!-- TAB: PROFILE DETAILS (Hidden for now, just to show how JS tab works) -->
+          <div id="tab-profile" style="display:none;">
+            <div class="settings-section-header">
+              <h2 class="settings-section-title">Profile details</h2>
+              <p class="settings-section-desc">Manage your personal information and preferences.</p>
+            </div>
+            
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Profile Picture</label>
+                  <div style="display:flex; align-items:center; gap: 16px;">
+                    <div class="avatar" style="width: 56px; height: 56px; font-size: 20px;">HI</div>
+                    <button class="btn btn-ghost">Change avatar</button>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-input" value="Hilmi">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input" value="Hidayat">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <input type="email" class="form-input" value="hilmi@biondesk.com" disabled>
+                  <p class="help-text">Your email address cannot be changed here. Contact support to transfer ownership.</p>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary">Save changes</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- TAB: SECURITY & PASSWORD -->
+          <div id="tab-security" style="display:none;">
+            <div class="settings-section-header">
+              <h2 class="settings-section-title">Security & Password</h2>
+              <p class="settings-section-desc">Manage your password and security settings to keep your account safe.</p>
+            </div>
+            
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Current Password</label>
+                  <input type="password" class="form-input" placeholder="Enter current password">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-input" placeholder="New password">
+                    <p class="help-text">Minimum 8 characters, include at least one number and special character.</p>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-input" placeholder="Confirm new password">
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary">Update password</button>
+              </div>
+            </div>
+
+            <h3 style="font-size:15px; font-weight:600; margin:24px 0 12px;">Two-Factor Authentication (2FA)</h3>
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="switch-row" style="border-bottom:none; padding:0;">
+                  <div class="switch-label">
+                    <span class="switch-title">Authenticator App</span>
+                    <span class="switch-desc">Use an app like Google Authenticator or Authy to generate security codes.</span>
+                  </div>
+                  <button class="btn btn-ghost">Set up 2FA</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: WORKSPACE INFO -->
+          <div id="tab-workspace" style="display:none;">
+            <div class="settings-section-header">
+              <h2 class="settings-section-title">Workspace info</h2>
+              <p class="settings-section-desc">Manage your team's workspace details and branding.</p>
+            </div>
+            
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Workspace Logo</label>
+                  <div style="display:flex; align-items:center; gap: 16px;">
+                    <div class="avatar" style="width: 56px; height: 56px; font-size: 20px; border-radius: 12px; background: var(--surface-raised); border: 1px dashed var(--border); color: var(--text-muted);">
+                      <svg class="icon"><use href="#i-image"/></svg>
+                    </div>
+                    <button class="btn btn-ghost">Upload logo</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Workspace Name</label>
+                  <input type="text" class="form-input" value="Biondesk Studio">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Workspace URL</label>
+                  <div style="display:flex; align-items:center;">
+                    <span style="padding: 10px 14px; background: var(--surface-raised); border: 1px solid var(--border); border-right: none; border-radius: 8px 0 0 8px; color: var(--text-muted); font-size: 14px;">biondesk.com/w/</span>
+                    <input type="text" class="form-input" value="biondesk-studio" style="border-radius: 0 8px 8px 0;">
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary">Save changes</button>
+              </div>
+            </div>
+
+            <h3 style="font-size:15px; font-weight:600; margin:24px 0 12px; color: var(--danger);">Danger Zone</h3>
+            <div class="settings-card" style="border-color: var(--danger-soft);">
+              <div class="settings-card-body">
+                <div class="switch-row" style="border-bottom:none; padding:0;">
+                  <div class="switch-label">
+                    <span class="switch-title" style="color: var(--danger);">Delete Workspace</span>
+                    <span class="switch-desc">Permanently delete this workspace and all its data. This action cannot be undone.</span>
+                  </div>
+                  <button class="btn btn-danger">Delete workspace</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: PUBLIC LEAD FORM (Active) -->
+          <div id="tab-lead-form">
+            <div class="settings-section-header">
+              <h2 class="settings-section-title">Public Lead Form</h2>
+              <p class="settings-section-desc">Customize the inquiry form you share with potential clients.</p>
+            </div>
+            
+            <!-- Link Sharing Card -->
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Your public form link</label>
+                  <div style="display:flex; gap:10px;">
+                    <input type="text" class="form-input" value="https://biondesk.com/f/studio-biondesk" readonly style="color:var(--text-muted); background:var(--bg);">
+                    <button class="btn btn-ghost"><svg class="icon icon-sm"><use href="#i-link"/></svg> Copy</button>
+                    <a href="../../public/lead-form.html" target="_blank" class="btn btn-ghost">Preview</a>
+                  </div>
+                  <p class="help-text">Share this link anywhere to collect leads directly into your Opportunities pipeline.</p>
+                </div>
+                
+                <div class="switch-row" style="border-top:1px solid var(--border); padding-top:20px; margin-top:4px;">
+                  <div class="switch-label">
+                    <span class="switch-title">Enable Public Form</span>
+                    <span class="switch-desc">If disabled, the link will show a "Currently not accepting new projects" message.</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <h3 style="font-size:15px; font-weight:600; margin:24px 0 12px;">Appearance</h3>
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Brand Logo</label>
+                  <div class="upload-area">
+                    <div class="upload-icon"><svg class="icon"><use href="#i-image"/></svg></div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-subtext">SVG, PNG, JPG (max 2MB)</div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Form Title</label>
+                  <input type="text" class="form-input" value="Work with Biondesk Studio">
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Welcome Message</label>
+                  <textarea class="form-textarea">Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.</textarea>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Background Theme</label>
+                  <select class="form-select">
+                    <option value="dark" selected>Dark Mode (Default)</option>
+                    <option value="light">Light Mode</option>
+                    <option value="brand">Brand Color Auto-Match</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary">Save Appearance</button>
+              </div>
+            </div>
+
+            <!-- Services Options Settings -->
+            <h3 style="font-size:15px; font-weight:600; margin:24px 0 12px;">Form Fields & Services</h3>
+            <div class="settings-card">
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">"What do you need help with?" Options <span class="hint">Clients can select multiple</span></label>
+                  
+                  <div class="draggable-list" id="servicesList">
+                    <div class="draggable-item">
+                      <div class="drag-handle"><svg class="icon icon-sm"><use href="#i-drag"/></svg></div>
+                      <input type="text" value="Brand Identity">
+                      <button class="btn-ghost" style="padding:4px; color:var(--danger);"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+                    </div>
+                    <div class="draggable-item">
+                      <div class="drag-handle"><svg class="icon icon-sm"><use href="#i-drag"/></svg></div>
+                      <input type="text" value="Web Design">
+                      <button class="btn-ghost" style="padding:4px; color:var(--danger);"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+                    </div>
+                    <div class="draggable-item">
+                      <div class="drag-handle"><svg class="icon icon-sm"><use href="#i-drag"/></svg></div>
+                      <input type="text" value="App Development">
+                      <button class="btn-ghost" style="padding:4px; color:var(--danger);"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+                    </div>
+                    <div class="draggable-item">
+                      <div class="drag-handle"><svg class="icon icon-sm"><use href="#i-drag"/></svg></div>
+                      <input type="text" value="Marketing Strategy">
+                      <button class="btn-ghost" style="padding:4px; color:var(--danger);"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+                    </div>
+                  </div>
+                  
+                  <button class="btn btn-ghost" style="margin-top:4px; align-self:flex-start;"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Add Service</button>
+                </div>
+
+                <div class="switch-row" style="border-top:1px solid var(--border); padding-top:20px;">
+                  <div class="switch-label">
+                    <span class="switch-title">Ask for Estimated Budget</span>
+                    <span class="switch-desc">Show a dropdown for clients to select their budget range.</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div class="switch-row">
+                  <div class="switch-label">
+                    <span class="switch-title">Allow File Attachments</span>
+                    <span class="switch-desc">Clients can upload briefs or reference images (up to 10MB).</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary">Save Fields</button>
+              </div>
+            </div>
+
+          </div>
+          <!-- END TAB: PUBLIC LEAD FORM -->
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  const root = document.documentElement;
+
+  // Theme Logic
+  const themeSwitch = document.getElementById('themeSwitch');
+  const systemPref = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(choice) {
+    const resolved = choice === 'system' ? (systemPref.matches ? 'dark' : 'light') : choice;
+    root.setAttribute('data-theme', resolved);
+    themeSwitch.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.themeChoice === choice));
+    localStorage.setItem('biondesk-theme', choice);
+  }
+  themeSwitch.addEventListener('click', (e) => { const b = e.target.closest('button[data-theme-choice]'); if (b) applyTheme(b.dataset.themeChoice); });
+  systemPref.addEventListener('change', () => { if (localStorage.getItem('biondesk-theme') === 'system') applyTheme('system'); });
+  applyTheme(localStorage.getItem('biondesk-theme') || 'dark');
+
+  // Sidebar Layout
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  function setCollapsed(state) { sidebar.classList.toggle('collapsed', state); localStorage.setItem('biondesk-sidebar-collapsed', state ? '1' : '0'); }
+  sidebarToggle.addEventListener('click', () => setCollapsed(!sidebar.classList.contains('collapsed')));
+  if (localStorage.getItem('biondesk-sidebar-collapsed') === '1') setCollapsed(true);
+  document.getElementById('mobileMenuBtn').addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
+
+  // Dropdowns
+  function setupDropdown(btnId, panelId) {
+    const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panel.classList.contains('open');
+      document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open'));
+      if (!isOpen) panel.classList.add('open');
+    });
+  }
+  setupDropdown('notifBtn', 'notifPanel');
+  setupDropdown('userBtn', 'userPanel');
+  document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel.open').forEach(p => p.classList.remove('open')));
+
+  // Tab Navigation Logic
+  const navItems = document.querySelectorAll('.settings-nav-item');
+  const tabs = {
+    'profile': document.getElementById('tab-profile'),
+    'security': document.getElementById('tab-security'),
+    'workspace': document.getElementById('tab-workspace'),
+    'lead-form': document.getElementById('tab-lead-form')
+  };
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      navItems.forEach(nav => nav.classList.remove('active'));
+      item.classList.add('active');
+      
+      const target = item.dataset.target;
+      
+      Object.keys(tabs).forEach(key => {
+        if (tabs[key]) {
+          tabs[key].style.display = key === target ? 'block' : 'none';
+        }
+      });
+      
+      if (!tabs[target]) {
+        // Fallback for unbuilt tabs
+        alert('This tab is not mocked up yet in this HTML template.');
+        item.classList.remove('active');
+        document.querySelector('[data-target="lead-form"]').classList.add('active');
+        if (tabs['lead-form']) tabs['lead-form'].style.display = 'block';
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
