@@ -1223,6 +1223,277 @@ class StubWorkspaceData
     }
 
     /**
+     * Get the stubbed contacts page data.
+     *
+     * @return array<string, mixed>
+     */
+    public function contacts(Team $team): array
+    {
+        return [
+            'contacts' => $this->contactRecords(),
+            'contactsCount' => (string) count($this->contactRecords()),
+            'defaultFilters' => [
+                'search' => '',
+                'type' => '',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-contact page.
+     *
+     * @return array<string, mixed>
+     */
+    public function contactCreateContext(Team $team): array
+    {
+        return [
+            'contactsCount' => (string) count($this->contactRecords()),
+            'defaults' => [
+                'type' => 'client',
+                'company' => '',
+                'firstName' => '',
+                'lastName' => '',
+                'email' => '',
+                'phone' => '',
+                'role' => '',
+                'location' => '',
+                'website' => '',
+                'notes' => '',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed contact detail page data, or null when the contact cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function contactDetail(Team $team, int $contactId): ?array
+    {
+        $contact = null;
+
+        foreach ($this->contactRecords() as $candidate) {
+            if (($candidate['id'] ?? null) === $contactId) {
+                $contact = $candidate;
+                break;
+            }
+        }
+
+        $detail = $this->contactDetailRecords($team)[$contactId] ?? null;
+
+        if ($contact === null || $detail === null) {
+            return null;
+        }
+
+        return [
+            'contactsCount' => (string) count($this->contactRecords()),
+            'contact' => array_merge($contact, $detail),
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the edit-contact page.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function contactEditContext(Team $team, int $contactId): ?array
+    {
+        return $this->contactDetail($team, $contactId);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function contactRecords(): array
+    {
+        return [
+            [
+                'id' => 124,
+                'code' => 'CNT-00124',
+                'fullName' => 'John Smith',
+                'firstName' => 'John',
+                'lastName' => 'Smith',
+                'initials' => 'JS',
+                'company' => 'Acme Corp',
+                'email' => 'john@acmecorp.com',
+                'phone' => '+1 (555) 123-4567',
+                'type' => 'client',
+                'typeLabel' => 'Client',
+                'typeTone' => 'accent',
+                'status' => 'active',
+                'statusLabel' => 'Active',
+                'statusTone' => 'success',
+            ],
+            [
+                'id' => 125,
+                'code' => 'CNT-00125',
+                'fullName' => 'Alice Doe',
+                'firstName' => 'Alice',
+                'lastName' => 'Doe',
+                'initials' => 'AD',
+                'company' => 'Globex Inc',
+                'email' => 'alice@globex.inc',
+                'phone' => '+1 (555) 987-6543',
+                'type' => 'lead',
+                'typeLabel' => 'Lead',
+                'typeTone' => 'muted',
+                'status' => 'prospect',
+                'statusLabel' => 'Prospect',
+                'statusTone' => 'accent',
+            ],
+            [
+                'id' => 126,
+                'code' => 'CNT-00126',
+                'fullName' => 'Marcus Tan',
+                'firstName' => 'Marcus',
+                'lastName' => 'Tan',
+                'initials' => 'MT',
+                'company' => 'Northstar Capital',
+                'email' => 'marcus@northstar.cap',
+                'phone' => '+1 (555) 381-2910',
+                'type' => 'client',
+                'typeLabel' => 'Client',
+                'typeTone' => 'accent',
+                'status' => 'active',
+                'statusLabel' => 'Active',
+                'statusTone' => 'success',
+            ],
+            [
+                'id' => 127,
+                'code' => 'CNT-00127',
+                'fullName' => 'Nina Vega',
+                'firstName' => 'Nina',
+                'lastName' => 'Vega',
+                'initials' => 'NV',
+                'company' => 'Pixel Marsh',
+                'email' => 'nina@pixelmarsh.co',
+                'phone' => '+1 (555) 220-1113',
+                'type' => 'vendor',
+                'typeLabel' => 'Vendor',
+                'typeTone' => 'muted',
+                'status' => 'active',
+                'statusLabel' => 'Active',
+                'statusTone' => 'success',
+            ],
+            [
+                'id' => 128,
+                'code' => 'CNT-00128',
+                'fullName' => 'Omar Vega',
+                'firstName' => 'Omar',
+                'lastName' => 'Vega',
+                'initials' => 'OV',
+                'company' => 'Initech',
+                'email' => 'omar@initech.com',
+                'phone' => '+1 (555) 700-4433',
+                'type' => 'lead',
+                'typeLabel' => 'Lead',
+                'typeTone' => 'muted',
+                'status' => 'inactive',
+                'statusLabel' => 'Inactive',
+                'statusTone' => 'danger',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function contactDetailRecords(Team $team): array
+    {
+        return [
+            124 => [
+                'role' => 'Marketing Director',
+                'location' => 'New York, United States',
+                'website' => 'https://acmecorp.com',
+                'notes' => "Primary point of contact for redesign and invoice approvals.\nPrefers concise updates and email summaries after meetings.",
+                'billingAddress' => "123 Corporate Blvd, Suite 200\nNew York, NY 10001\nUnited States",
+                'relatedProjects' => [
+                    ['id' => 11, 'title' => 'Portfolio Redesign', 'stageLabel' => 'Not Started', 'tone' => 'muted', 'dueAt' => 'Jul 28'],
+                    ['id' => 15, 'title' => 'Marketing Site', 'stageLabel' => 'Completed', 'tone' => 'success', 'dueAt' => 'Jul 14'],
+                ],
+                'relatedInvoices' => [
+                    ['id' => 42, 'number' => 'INV-2023-042', 'amount' => '$2,500.00', 'statusLabel' => 'Draft', 'tone' => 'muted', 'dueAt' => 'Nov 15, 2023'],
+                    ['id' => 39, 'number' => 'INV-2023-039', 'amount' => '$3,400.00', 'statusLabel' => 'Overdue', 'tone' => 'danger', 'dueAt' => 'Sep 30, 2023'],
+                ],
+                'notesAndFiles' => [
+                    ['id' => 1, 'label' => 'Kickoff preferences', 'kind' => 'note', 'meta' => 'Updated 2 days ago'],
+                    ['id' => 2, 'label' => 'Brand brief.pdf', 'kind' => 'file', 'meta' => 'Uploaded last week'],
+                    ['id' => 3, 'label' => 'Invoice requirements', 'kind' => 'note', 'meta' => 'Added yesterday'],
+                ],
+                'activity' => [
+                    ['id' => 1, 'title' => 'Invoice INV-2023-045 was paid.', 'description' => 'Payment confirmed and logged for the latest milestone.', 'when' => 'Oct 24, 2023 at 2:30 PM', 'tone' => 'success'],
+                    ['id' => 2, 'title' => 'Proposal follow-up email sent.', 'description' => "Shared next steps and timeline options with {$team->name}.", 'when' => 'Oct 21, 2023 at 9:00 AM', 'tone' => 'accent'],
+                    ['id' => 3, 'title' => 'Contact updated.', 'description' => 'Phone number and role were refreshed from the latest client call.', 'when' => 'Oct 18, 2023 at 4:45 PM', 'tone' => 'muted'],
+                ],
+            ],
+            125 => [
+                'role' => 'Operations Lead',
+                'location' => 'Austin, United States',
+                'website' => 'https://globex.inc',
+                'notes' => 'Warm inbound lead from referral network. Discovery call scheduled next Tuesday.',
+                'billingAddress' => "500 Innovation Way\nAustin, TX 78701\nUnited States",
+                'relatedProjects' => [],
+                'relatedInvoices' => [],
+                'notesAndFiles' => [
+                    ['id' => 4, 'label' => 'Discovery notes', 'kind' => 'note', 'meta' => 'Created today'],
+                ],
+                'activity' => [
+                    ['id' => 4, 'title' => 'Lead added to contacts.', 'description' => 'Created from opportunity pipeline to centralize follow-up.', 'when' => 'Today at 8:15 AM', 'tone' => 'accent'],
+                ],
+            ],
+            126 => [
+                'role' => 'Co-founder',
+                'location' => 'Singapore',
+                'website' => 'https://northstar.cap',
+                'notes' => 'High-trust client with fast turnaround on approvals.',
+                'billingAddress' => "12 Robinson Road\nSingapore 048545",
+                'relatedProjects' => [
+                    ['id' => 12, 'title' => 'Fintech Brand Identity', 'stageLabel' => 'In Progress', 'tone' => 'accent', 'dueAt' => 'Jul 20'],
+                ],
+                'relatedInvoices' => [
+                    ['id' => 41, 'number' => 'INV-2023-041', 'amount' => '$1,200.00', 'statusLabel' => 'Sent', 'tone' => 'accent', 'dueAt' => 'Oct 24, 2023'],
+                ],
+                'notesAndFiles' => [
+                    ['id' => 5, 'label' => 'Brand references', 'kind' => 'file', 'meta' => 'Uploaded 3 days ago'],
+                ],
+                'activity' => [
+                    ['id' => 5, 'title' => 'Proposal accepted.', 'description' => 'Scope approved and ready for next billing step.', 'when' => 'Yesterday at 1:10 PM', 'tone' => 'success'],
+                ],
+            ],
+            127 => [
+                'role' => 'Production Partner',
+                'location' => 'Bandung, Indonesia',
+                'website' => 'https://pixelmarsh.co',
+                'notes' => 'Vendor contact for motion assets and export support.',
+                'billingAddress' => "Jalan Braga 45\nBandung 40111\nIndonesia",
+                'relatedProjects' => [],
+                'relatedInvoices' => [],
+                'notesAndFiles' => [
+                    ['id' => 6, 'label' => 'Vendor agreement', 'kind' => 'file', 'meta' => 'Uploaded 2 weeks ago'],
+                ],
+                'activity' => [
+                    ['id' => 6, 'title' => 'Vendor profile verified.', 'description' => 'Scope and preferred payment terms reviewed.', 'when' => 'Last week', 'tone' => 'muted'],
+                ],
+            ],
+            128 => [
+                'role' => 'IT Manager',
+                'location' => 'Dallas, United States',
+                'website' => 'https://initech.com',
+                'notes' => 'Old lead that paused procurement this quarter.',
+                'billingAddress' => "410 Commerce Street\nDallas, TX 75201\nUnited States",
+                'relatedProjects' => [],
+                'relatedInvoices' => [],
+                'notesAndFiles' => [
+                    ['id' => 7, 'label' => 'Migration summary', 'kind' => 'note', 'meta' => 'Archived 8 days ago'],
+                ],
+                'activity' => [
+                    ['id' => 7, 'title' => 'Lead marked inactive.', 'description' => 'Pipeline closed after budget freeze update.', 'when' => '8 days ago', 'tone' => 'danger'],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Get the stubbed public lead form data.
      *
      * @return array<string, mixed>

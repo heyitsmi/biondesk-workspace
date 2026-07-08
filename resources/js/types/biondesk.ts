@@ -187,6 +187,109 @@ export type ProjectShowPageProps = {
     }>;
 };
 
+export type ContactType = 'client' | 'lead' | 'vendor';
+
+export type ContactStatus = 'active' | 'prospect' | 'inactive';
+
+export type ContactFormValues = {
+    type: ContactType;
+    company: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    role: string;
+    location: string;
+    website: string;
+    notes: string;
+};
+
+export type ContactListItem = {
+    id: number;
+    code: string;
+    fullName: string;
+    firstName: string;
+    lastName: string;
+    initials: string;
+    company: string;
+    email: string;
+    phone: string;
+    type: ContactType;
+    typeLabel: string;
+    typeTone: BiondeskTone;
+    status: ContactStatus;
+    statusLabel: string;
+    statusTone: BiondeskTone;
+};
+
+export type ContactRelatedProject = {
+    id: number;
+    title: string;
+    stageLabel: string;
+    tone: BiondeskTone;
+    dueAt: string;
+};
+
+export type ContactRelatedInvoice = {
+    id: number;
+    number: string;
+    amount: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    dueAt: string;
+};
+
+export type ContactNoteFile = {
+    id: number;
+    label: string;
+    kind: 'note' | 'file';
+    meta: string;
+};
+
+export type ContactActivityItem = {
+    id: number;
+    title: string;
+    description: string;
+    when: string;
+    tone: BiondeskTone;
+};
+
+export type ContactDetail = ContactListItem & {
+    role: string;
+    location: string;
+    website: string;
+    notes: string;
+    billingAddress: string;
+    relatedProjects: ContactRelatedProject[];
+    relatedInvoices: ContactRelatedInvoice[];
+    notesAndFiles: ContactNoteFile[];
+    activity: ContactActivityItem[];
+};
+
+export type ContactsIndexPageProps = {
+    contacts: ContactListItem[];
+    contactsCount: string;
+    defaultFilters: {
+        search: string;
+        type: '' | ContactType;
+    };
+};
+
+export type ContactCreatePageProps = {
+    contactsCount: string;
+    defaults: ContactFormValues;
+};
+
+export type ContactEditPageProps = {
+    contactsCount: string;
+    contact: ContactDetail;
+};
+
+export type ContactShowPageProps = {
+    contactsCount: string;
+    contact: ContactDetail;
+};
+
 export type ProposalLineItem = {
     label: string;
     amount: string;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceCreateController;
 use App\Http\Controllers\InvoicesController;
@@ -29,6 +30,16 @@ Route::prefix('app/{current_team}')
         Route::get('projects/{project}', ProjectShowController::class)
             ->whereNumber('project')
             ->name('projects.show');
+        Route::controller(ContactController::class)->group(function () {
+            Route::get('contacts', 'index')->name('contacts.index');
+            Route::get('contacts/create', 'create')->name('contacts.create');
+            Route::get('contacts/{contact}', 'show')
+                ->whereNumber('contact')
+                ->name('contacts.show');
+            Route::get('contacts/{contact}/edit', 'edit')
+                ->whereNumber('contact')
+                ->name('contacts.edit');
+        });
         Route::get('proposals', ProposalsController::class)->name('proposals.index');
         Route::get('invoices', InvoicesController::class)->name('invoices.index');
         Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
