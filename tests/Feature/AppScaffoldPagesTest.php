@@ -14,6 +14,9 @@ test('app scaffold pages require authentication and verification', function () {
     $this->get(route('projects.show', ['current_team' => $team->slug, 'project' => 12]))
         ->assertRedirect(route('login'));
 
+    $this->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->assertRedirect(route('login'));
+
     $this->get(route('contacts.index', ['current_team' => $team->slug]))
         ->assertRedirect(route('login'));
 
@@ -178,6 +181,18 @@ test('authenticated users can view app scaffold pages for their current team', f
         );
 
     $this->actingAs($user)
+        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('proposals/show')
+            ->where('proposal.id', 21)
+            ->where('proposal.title', 'Website Redesign Proposal')
+            ->where('proposal.number', 'P-2026-004')
+            ->has('proposal.lineItems', 3)
+            ->has('proposal.preparedFor'),
+        );
+
+    $this->actingAs($user)
         ->get(route('reminders.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -288,5 +303,14 @@ test('proposal edit route returns 404 for unknown stub proposal', function () {
 
     $this->actingAs($user)
         ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => 9999]))
+        ->assertNotFound();
+});
+
+test('proposal show route returns 404 for unknown stub proposal', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => 9999]))
         ->assertNotFound();
 });

@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as proposalCreate, edit as proposalEdit, index as proposals } from '@/routes/proposals';
+import { create as proposalCreate, edit as proposalEdit, index as proposals, show as proposalShow } from '@/routes/proposals';
 import type {
     ProposalDocument,
     ProposalLineItem,
@@ -266,6 +266,16 @@ export default function ProposalsPage({
 
         router.visit(
             proposalEdit({ current_team: currentTeam.slug, proposal: documentId }),
+        );
+    };
+
+    const visitProposalDocument = (documentId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(
+            proposalShow({ current_team: currentTeam.slug, proposal: documentId }),
         );
     };
 
@@ -749,6 +759,16 @@ export default function ProposalsPage({
                                     >
                                         <ShellIcon icon="i-edit" small />
                                         Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={BTN_GHOST_SM}
+                                        onClick={() =>
+                                            visitProposalDocument(previewDocument.id)
+                                        }
+                                    >
+                                        <ShellIcon icon="i-file" small />
+                                        Open Document
                                     </button>
                                     <button
                                         type="button"

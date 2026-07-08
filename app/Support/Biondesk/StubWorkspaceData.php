@@ -1721,6 +1721,202 @@ class StubWorkspaceData
     }
 
     /**
+     * Get the stubbed proposal detail (document) page data, or null when the proposal cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function proposalDetail(Team $team, int $proposalId): ?array
+    {
+        $proposal = null;
+
+        foreach ($this->proposals($team)['documents'] as $candidate) {
+            if (($candidate['id'] ?? null) === $proposalId) {
+                $proposal = $candidate;
+                break;
+            }
+        }
+
+        $detail = $this->proposalDetailRecords()[$proposalId] ?? null;
+
+        if ($proposal === null || $detail === null) {
+            return null;
+        }
+
+        return [
+            'proposal' => array_merge($proposal, $detail, [
+                'business' => [
+                    'name' => 'Biondesk Studio',
+                    'address' => "123 Creative Street, Tech District\nJakarta, Indonesia 12345",
+                    'email' => 'hello@biondesk.com',
+                ],
+            ]),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function proposalDetailRecords(): array
+    {
+        return [
+            21 => [
+                'datePrepared' => 'Oct 24, 2023',
+                'datePreparedIso' => '2023-10-24',
+                'validUntil' => 'Nov 24, 2023',
+                'validUntilIso' => '2023-11-24',
+                'preparedFor' => [
+                    'name' => 'Acme Corp',
+                    'attn' => 'John Doe',
+                    'address' => "456 Enterprise Blvd, Suite 200\nSan Francisco, CA 94103",
+                    'email' => 'john.doe@acmecorp.com',
+                ],
+                'summary' => 'Thank you for the opportunity to propose a website redesign for Acme Corp. Based on our discussion, the new website will focus on modernizing your brand presence, improving conversion rates, and ensuring a seamless experience across all devices.',
+                'scopeIntro' => 'We will deliver the following:',
+                'scopeItems' => [
+                    'UI/UX design for 5 core pages (Home, About, Services, Case Studies, Contact)',
+                    'Responsive frontend development using React and Tailwind CSS',
+                    'Integration with your existing headless CMS',
+                    'Basic on-page SEO setup',
+                ],
+                'timeline' => 'The estimated time for completion is 4-6 weeks from the date of project commencement, assuming timely feedback and content delivery from your team.',
+                'lineItems' => [
+                    ['name' => 'Homepage design', 'description' => 'Figma prototypes for desktop and mobile layouts.', 'qty' => 1, 'price' => '$2,000.00', 'total' => '$2,000.00'],
+                    ['name' => 'CMS integration', 'description' => 'Integration with your existing headless CMS.', 'qty' => 1, 'price' => '$1,500.00', 'total' => '$1,500.00'],
+                    ['name' => 'Mobile responsive', 'description' => 'Responsive frontend polish across breakpoints.', 'qty' => 1, 'price' => '$1,500.00', 'total' => '$1,500.00'],
+                ],
+                'subtotal' => '$5,000.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$5,000.00',
+                'notes' => 'This proposal is valid until the date above. Please reach out if you would like to discuss scope or pricing before accepting.',
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            22 => [
+                'datePrepared' => 'Oct 22, 2023',
+                'datePreparedIso' => '2023-10-22',
+                'validUntil' => 'Nov 22, 2023',
+                'validUntilIso' => '2023-11-22',
+                'preparedFor' => [
+                    'name' => 'Kevin Studio',
+                    'attn' => 'Kevin Nguyen',
+                    'address' => "88 Studio Lane\nAustin, TX 78701",
+                    'email' => 'kevin@kevinstudio.com',
+                ],
+                'summary' => 'Thank you for considering us to build the MVP for your mobile app. This proposal outlines the scope, timeline, and investment required to take your product from concept to a working release on iOS and Android.',
+                'scopeIntro' => 'We will deliver the following:',
+                'scopeItems' => [
+                    'Native-quality cross-platform app for iOS and Android',
+                    'Backend API with authentication and data storage',
+                    'App store submission support for both platforms',
+                ],
+                'timeline' => 'The estimated time for completion is 8-10 weeks from the date of project commencement.',
+                'lineItems' => [
+                    ['name' => 'iOS + Android app', 'description' => 'Cross-platform mobile app covering the core MVP flows.', 'qty' => 1, 'price' => '$12,000.00', 'total' => '$12,000.00'],
+                    ['name' => 'Backend API', 'description' => 'API, authentication, and data storage for the app.', 'qty' => 1, 'price' => '$3,000.00', 'total' => '$3,000.00'],
+                ],
+                'subtotal' => '$15,000.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$15,000.00',
+                'notes' => 'This proposal is valid until the date above. Please reach out if you would like to discuss scope or pricing before accepting.',
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            23 => [
+                'datePrepared' => 'Oct 18, 2023',
+                'datePreparedIso' => '2023-10-18',
+                'validUntil' => 'Nov 18, 2023',
+                'validUntilIso' => '2023-11-18',
+                'preparedFor' => [
+                    'name' => 'Nexus Corp',
+                    'attn' => 'Eli Ward',
+                    'address' => "77 Fintech Row, Suite 400\nSan Francisco, CA 94105",
+                    'email' => 'eli.ward@nexuscorp.com',
+                ],
+                'summary' => 'This proposal covers a full brand identity package for Nexus Corp, designed to give your fintech product a distinctive, trustworthy visual language across every customer touchpoint.',
+                'scopeIntro' => 'We will deliver the following:',
+                'scopeItems' => [
+                    'Logo design and full brand system (color, type, iconography)',
+                    'Brand guideline document for internal and partner use',
+                ],
+                'timeline' => 'The estimated time for completion is 3-4 weeks from the date of project commencement.',
+                'lineItems' => [
+                    ['name' => 'Logo & brand system', 'description' => 'Primary logo, color palette, typography, and iconography.', 'qty' => 1, 'price' => '$6,000.00', 'total' => '$6,000.00'],
+                    ['name' => 'Guideline document', 'description' => 'Brand guideline document covering usage across channels.', 'qty' => 1, 'price' => '$2,500.00', 'total' => '$2,500.00'],
+                ],
+                'subtotal' => '$8,500.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$8,500.00',
+                'notes' => 'This proposal is valid until the date above. Please reach out if you would like to discuss scope or pricing before accepting.',
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            24 => [
+                'datePrepared' => 'Oct 12, 2023',
+                'datePreparedIso' => '2023-10-12',
+                'validUntil' => 'Nov 12, 2023',
+                'validUntilIso' => '2023-11-12',
+                'preparedFor' => [
+                    'name' => 'Retail Co',
+                    'attn' => 'Jules Harmon',
+                    'address' => "12 Commerce Plaza\nChicago, IL 60601",
+                    'email' => 'jules.harmon@retailco.com',
+                ],
+                'summary' => 'This proposal outlines the build of a complete e-commerce platform for Retail Co, covering storefront, checkout, and payment processing.',
+                'scopeIntro' => 'We will deliver the following:',
+                'scopeItems' => [
+                    'Storefront build with product catalog and search',
+                    'Checkout flow with payment gateway integration',
+                ],
+                'timeline' => 'The estimated time for completion is 6-8 weeks from the date of project commencement.',
+                'lineItems' => [
+                    ['name' => 'Storefront build', 'description' => 'Product catalog, search, and storefront pages.', 'qty' => 1, 'price' => '$8,000.00', 'total' => '$8,000.00'],
+                    ['name' => 'Payment integration', 'description' => 'Checkout flow with payment gateway integration.', 'qty' => 1, 'price' => '$4,000.00', 'total' => '$4,000.00'],
+                ],
+                'subtotal' => '$12,000.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$12,000.00',
+                'notes' => 'This proposal is valid until the date above. Please reach out if you would like to discuss scope or pricing before accepting.',
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+            25 => [
+                'datePrepared' => 'Oct 08, 2023',
+                'datePreparedIso' => '2023-10-08',
+                'validUntil' => 'Nov 08, 2023',
+                'validUntilIso' => '2023-11-08',
+                'preparedFor' => [
+                    'name' => 'Initech',
+                    'attn' => 'Omar Vega',
+                    'address' => "500 Office Park Drive\nAustin, TX 78759",
+                    'email' => 'omar@initech.com',
+                ],
+                'summary' => 'This proposal covers a legacy system assessment for Initech, evaluating your current infrastructure and outlining a migration plan to a modern stack.',
+                'scopeIntro' => 'We will deliver the following:',
+                'scopeItems' => [
+                    'Full audit of the existing legacy system and dependencies',
+                    'Migration plan with phased milestones and risk assessment',
+                ],
+                'timeline' => 'The estimated time for completion is 2-3 weeks from the date of project commencement.',
+                'lineItems' => [
+                    ['name' => 'System audit', 'description' => 'Audit of the current legacy system and its dependencies.', 'qty' => 1, 'price' => '$4,000.00', 'total' => '$4,000.00'],
+                    ['name' => 'Migration plan', 'description' => 'Phased migration plan with milestones and risk assessment.', 'qty' => 1, 'price' => '$5,000.00', 'total' => '$5,000.00'],
+                ],
+                'subtotal' => '$9,000.00',
+                'taxLabel' => 'Tax (0%)',
+                'taxAmount' => '$0.00',
+                'total' => '$9,000.00',
+                'notes' => 'This proposal is valid until the date above. Please reach out if you would like to discuss scope or pricing before accepting.',
+                'linkedProject' => null,
+                'currency' => 'USD',
+            ],
+        ];
+    }
+
+    /**
      * Get the stubbed reminders page data.
      *
      * @return array<string, mixed>
@@ -1977,6 +2173,172 @@ class StubWorkspaceData
             'services' => ['Brand Identity', 'Web Design', 'App Development', 'Marketing Strategy'],
             'askBudget' => true,
             'allowAttachments' => false,
+        ];
+    }
+
+    /**
+     * Get the stubbed public document (shared invoice/quotation/proposal) page data,
+     * or null when no document matches the given slug for this team.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function publicDocumentContext(Team $team, string $document): ?array
+    {
+        $slug = mb_strtolower($document);
+
+        foreach ($this->invoices($team)['invoices'] as $invoice) {
+            if (mb_strtolower($invoice['number']) === $slug) {
+                $detail = $this->invoiceDetail($team, $invoice['id']);
+
+                return $detail === null ? null : [
+                    'document' => $this->normalizePublicInvoice($detail['invoice']),
+                ];
+            }
+        }
+
+        foreach ($this->quotations($team)['quotations'] as $quotation) {
+            if (mb_strtolower($quotation['number']) === $slug) {
+                $detail = $this->quotationDetail($team, $quotation['id']);
+
+                return $detail === null ? null : [
+                    'document' => $this->normalizePublicQuotation($detail['quotation']),
+                ];
+            }
+        }
+
+        foreach ($this->proposals($team)['documents'] as $proposalDocument) {
+            if (mb_strtolower($proposalDocument['number']) === $slug) {
+                $detail = $this->proposalDetail($team, $proposalDocument['id']);
+
+                return $detail === null ? null : [
+                    'document' => $this->normalizePublicProposal($detail['proposal']),
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $invoice
+     * @return array<string, mixed>
+     */
+    private function normalizePublicInvoice(array $invoice): array
+    {
+        return [
+            'kind' => 'invoice',
+            'kindLabel' => 'Invoice',
+            'number' => $invoice['number'],
+            'context' => $invoice['context'],
+            'statusLabel' => $invoice['statusLabel'],
+            'tone' => $invoice['tone'],
+            'business' => $invoice['business'],
+            'recipient' => [
+                'label' => 'Bill To',
+                'name' => $invoice['billTo']['name'],
+                'attn' => $invoice['billTo']['attn'],
+                'address' => $invoice['billTo']['address'],
+                'email' => $invoice['billTo']['email'],
+            ],
+            'dateFields' => [
+                ['label' => 'Invoice Number', 'value' => $invoice['number'], 'danger' => false],
+                ['label' => 'Date Issued', 'value' => $invoice['issuedAt'], 'danger' => false],
+                ['label' => 'Due Date', 'value' => $invoice['dueAt'], 'danger' => $invoice['status'] === 'overdue'],
+            ],
+            'lineItems' => $invoice['lineItems'],
+            'subtotal' => $invoice['subtotal'],
+            'adjustmentLabel' => $invoice['taxLabel'],
+            'adjustmentAmount' => $invoice['taxAmount'],
+            'totalLabel' => 'Invoice Total',
+            'total' => $invoice['total'],
+            'amountPaid' => $invoice['amountPaid'],
+            'amountDue' => $invoice['amountDue'],
+            'notesLabel' => 'Payment Instructions',
+            'notes' => $invoice['paymentInstructions'],
+            'primaryActionLabel' => 'Pay Now',
+            'currency' => $invoice['currency'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $quotation
+     * @return array<string, mixed>
+     */
+    private function normalizePublicQuotation(array $quotation): array
+    {
+        return [
+            'kind' => 'quotation',
+            'kindLabel' => 'Quotation',
+            'number' => $quotation['number'],
+            'context' => $quotation['context'],
+            'statusLabel' => $quotation['statusLabel'],
+            'tone' => $quotation['tone'],
+            'business' => $quotation['business'],
+            'recipient' => [
+                'label' => 'Prepared For',
+                'name' => $quotation['preparedFor']['name'],
+                'attn' => $quotation['preparedFor']['attn'],
+                'address' => $quotation['preparedFor']['address'],
+                'email' => $quotation['preparedFor']['email'],
+            ],
+            'dateFields' => [
+                ['label' => 'Quotation Number', 'value' => $quotation['number'], 'danger' => false],
+                ['label' => 'Date Issued', 'value' => $quotation['issuedAt'], 'danger' => false],
+                ['label' => 'Valid Until', 'value' => $quotation['expiryAt'], 'danger' => $quotation['status'] === 'declined'],
+            ],
+            'lineItems' => $quotation['lineItems'],
+            'subtotal' => $quotation['subtotal'],
+            'adjustmentLabel' => $quotation['discountLabel'],
+            'adjustmentAmount' => $quotation['discountAmount'],
+            'totalLabel' => 'Quotation Total',
+            'total' => $quotation['total'],
+            'amountPaid' => null,
+            'amountDue' => null,
+            'notesLabel' => 'Terms & Conditions',
+            'notes' => $quotation['terms'],
+            'primaryActionLabel' => 'Accept Quotation',
+            'currency' => $quotation['currency'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $proposal
+     * @return array<string, mixed>
+     */
+    private function normalizePublicProposal(array $proposal): array
+    {
+        return [
+            'kind' => 'proposal',
+            'kindLabel' => 'Proposal',
+            'number' => $proposal['number'],
+            'context' => $proposal['title'],
+            'statusLabel' => $proposal['stageLabel'],
+            'tone' => $proposal['tone'],
+            'business' => $proposal['business'],
+            'recipient' => [
+                'label' => 'Prepared For',
+                'name' => $proposal['preparedFor']['name'],
+                'attn' => $proposal['preparedFor']['attn'],
+                'address' => $proposal['preparedFor']['address'],
+                'email' => $proposal['preparedFor']['email'],
+            ],
+            'dateFields' => [
+                ['label' => 'Proposal Number', 'value' => $proposal['number'], 'danger' => false],
+                ['label' => 'Date Prepared', 'value' => $proposal['datePrepared'], 'danger' => false],
+                ['label' => 'Valid Until', 'value' => $proposal['validUntil'], 'danger' => false],
+            ],
+            'lineItems' => $proposal['lineItems'],
+            'subtotal' => $proposal['subtotal'],
+            'adjustmentLabel' => $proposal['taxLabel'],
+            'adjustmentAmount' => $proposal['taxAmount'],
+            'totalLabel' => 'Proposal Total',
+            'total' => $proposal['total'],
+            'amountPaid' => null,
+            'amountDue' => null,
+            'notesLabel' => 'Notes',
+            'notes' => $proposal['notes'],
+            'primaryActionLabel' => 'Accept Proposal',
+            'currency' => $proposal['currency'],
         ];
     }
 }

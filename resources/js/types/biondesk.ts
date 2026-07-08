@@ -429,6 +429,48 @@ export type ProposalEditPageProps = {
     };
 };
 
+export type ProposalDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type ProposalDetail = ProposalDocument & {
+    datePrepared: string;
+    datePreparedIso: string;
+    validUntil: string;
+    validUntilIso: string;
+    preparedFor: {
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    business: {
+        name: string;
+        address: string;
+        email: string;
+    };
+    summary: string;
+    scopeIntro: string;
+    scopeItems: string[];
+    timeline: string;
+    lineItems: ProposalDetailLineItem[];
+    subtotal: string;
+    taxLabel: string;
+    taxAmount: string;
+    total: string;
+    notes: string;
+    linkedProject: { id: number; title: string } | null;
+    currency: string;
+};
+
+export type ProposalShowPageProps = {
+    proposal: ProposalDetail;
+};
+
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 
 export type InvoiceListItem = {
@@ -683,4 +725,58 @@ export type PublicLeadFormSettings = {
 
 export type SettingsLeadFormPageProps = {
     settings: PublicLeadFormSettings;
+};
+
+export type PublicDocumentKind = 'invoice' | 'quotation' | 'proposal';
+
+export type PublicDocumentLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type PublicDocumentDateField = {
+    label: string;
+    value: string;
+    danger: boolean;
+};
+
+export type PublicDocument = {
+    kind: PublicDocumentKind;
+    kindLabel: string;
+    number: string;
+    context: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    business: {
+        name: string;
+        address: string;
+        email: string;
+    };
+    recipient: {
+        label: string;
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    dateFields: PublicDocumentDateField[];
+    lineItems: PublicDocumentLineItem[];
+    subtotal: string;
+    adjustmentLabel: string;
+    adjustmentAmount: string;
+    totalLabel: string;
+    total: string;
+    amountPaid: string | null;
+    amountDue: string | null;
+    notesLabel: string;
+    notes: string;
+    primaryActionLabel: string;
+    currency: string;
+};
+
+export type PublicDocumentPageProps = {
+    document: PublicDocument;
 };

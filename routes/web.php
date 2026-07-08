@@ -17,6 +17,8 @@ use App\Http\Controllers\ProjectShowController;
 use App\Http\Controllers\ProposalCreateController;
 use App\Http\Controllers\ProposalEditController;
 use App\Http\Controllers\ProposalsController;
+use App\Http\Controllers\ProposalShowController;
+use App\Http\Controllers\PublicDocumentController;
 use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\QuotationCreateController;
 use App\Http\Controllers\QuotationsController;
@@ -28,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingPageController::class)->name('home');
 Route::get('/p/{team:slug}', PublicLeadFormController::class)->name('public-lead-form');
+Route::get('/d/{team:slug}/{document}', PublicDocumentController::class)->name('public-document');
 
 Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
@@ -61,6 +64,9 @@ Route::prefix('app/{current_team}')
         Route::get('proposals/{proposal}/edit', ProposalEditController::class)
             ->whereNumber('proposal')
             ->name('proposals.edit');
+        Route::get('proposals/{proposal}', ProposalShowController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.show');
         Route::get('invoices', InvoicesController::class)->name('invoices.index');
         Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
         Route::get('invoices/{invoice}', InvoiceShowController::class)
