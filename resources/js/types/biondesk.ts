@@ -564,3 +564,20 @@ export type PublicLeadFormPageProps = {
     };
     highlights: string[];
 };
+
+export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand';
+
+export type PublicLeadFormSettings = {
+    formUrl: string;
+    enabled: boolean;
+    formTitle: string;
+    welcomeMessage: string;
+    backgroundTheme: PublicLeadFormBackgroundTheme;
+    services: string[];
+    askBudget: boolean;
+    allowAttachments: boolean;
+};
+
+export type SettingsLeadFormPageProps = {
+    settings: PublicLeadFormSettings;
+};

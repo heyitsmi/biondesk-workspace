@@ -1733,4 +1733,23 @@ class StubWorkspaceData
             ],
         ];
     }
+
+    /**
+     * Get the stubbed public lead form settings data.
+     *
+     * @return array<string, mixed>
+     */
+    public function publicLeadFormSettings(Team $team): array
+    {
+        return [
+            'formUrl' => "https://biondesk.com/f/{$team->slug}",
+            'enabled' => true,
+            'formTitle' => "Work with {$team->name}",
+            'welcomeMessage' => "Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.",
+            'backgroundTheme' => 'dark',
+            'services' => ['Brand Identity', 'Web Design', 'App Development', 'Marketing Strategy'],
+            'askBudget' => true,
+            'allowAttachments' => false,
+        ];
+    }
 }

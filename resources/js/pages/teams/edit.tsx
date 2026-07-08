@@ -16,8 +16,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Tooltip,
     TooltipContent,
@@ -95,52 +93,52 @@ export default function TeamEdit({
             <h1 className="sr-only">{pageTitle}</h1>
 
             <div className="flex flex-col space-y-10">
-                <div className="space-y-6">
-                    {permissions.canUpdateTeam ? (
-                        <>
-                            <Heading
-                                variant="small"
-                                title="Team settings"
-                                description="Update your team name and settings"
-                            />
+                <div>
+                    <div className="mb-[20px]">
+                        <h2 className="mb-[6px] text-[18px] font-semibold text-bion-text">Workspace info</h2>
+                        <p className="text-[13.5px] text-bion-text-muted">
+                            Manage your team&apos;s workspace details and branding.
+                        </p>
+                    </div>
 
-                            <Form
-                                {...update.form(team.slug)}
-                                className="space-y-6"
-                            >
-                                {({ errors, processing }) => (
-                                    <>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="name">
-                                                Team name
-                                            </Label>
-                                            <Input
+                    {permissions.canUpdateTeam ? (
+                        <Form {...update.form(team.slug)}>
+                            {({ errors, processing }) => (
+                                <div className="overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface shadow-bion-raised">
+                                    <div className="flex flex-col gap-[24px] p-[24px]">
+                                        <div className="flex flex-col gap-[8px]">
+                                            <label
+                                                htmlFor="name"
+                                                className="flex items-center justify-between text-[13px] font-semibold text-bion-text"
+                                            >
+                                                Workspace Name
+                                            </label>
+                                            <input
                                                 id="name"
                                                 name="name"
                                                 data-test="team-name-input"
                                                 defaultValue={team.name}
                                                 required
+                                                className="w-full rounded-[8px] border border-bion-border bg-bion-bg px-[14px] py-[10px] text-[14px] text-bion-text outline-none [transition:border-color_0.15s_ease] focus:border-bion-accent"
                                             />
                                             <InputError message={errors.name} />
                                         </div>
-
-                                        <div className="flex items-center gap-4">
-                                            <Button
-                                                type="submit"
-                                                data-test="team-save-button"
-                                                disabled={processing}
-                                            >
-                                                Save
-                                            </Button>
-                                        </div>
-                                    </>
-                                )}
-                            </Form>
-                        </>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-[12px] border-t border-bion-border bg-bion-surface-raised px-[24px] py-[16px]">
+                                        <button
+                                            type="submit"
+                                            data-test="team-save-button"
+                                            disabled={processing}
+                                            className="inline-flex items-center gap-[7px] rounded-[8px] bg-bion-accent px-[16px] py-[9px] text-[13.5px] font-semibold text-bion-accent-text [transition:opacity_0.12s_ease,transform_0.1s_ease] hover:opacity-[0.88] active:scale-[0.97]"
+                                        >
+                                            Save changes
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </Form>
                     ) : (
-                        <>
-                            <Heading variant="small" title={team.name} />
-                        </>
+                        <p className="text-[15px] font-medium text-bion-text">{team.name}</p>
                     )}
                 </div>
 
@@ -321,27 +319,28 @@ export default function TeamEdit({
                 ) : null}
 
                 {permissions.canDeleteTeam && !team.isPersonal ? (
-                    <div className="space-y-6">
-                        <Heading
-                            variant="small"
-                            title="Delete team"
-                            description="Permanently delete your team"
-                        />
-                        <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                            <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                                <p className="font-medium">Warning</p>
-                                <p className="text-sm">
-                                    Please proceed with caution, this cannot be
-                                    undone.
-                                </p>
+                    <div>
+                        <h3 className="mb-[12px] text-[15px] font-semibold text-bion-danger">Danger Zone</h3>
+                        <div className="overflow-hidden rounded-[12px] border border-bion-danger-soft bg-bion-surface shadow-bion-raised">
+                            <div className="flex items-center justify-between gap-[16px] p-[24px]">
+                                <div className="flex flex-col gap-[4px]">
+                                    <span className="text-[13.5px] font-medium text-bion-danger">
+                                        Delete Workspace
+                                    </span>
+                                    <span className="text-[12.5px] text-bion-text-muted">
+                                        Permanently delete this workspace and all its data. This action
+                                        cannot be undone.
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    data-test="delete-team-button"
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                    className="inline-flex shrink-0 items-center gap-[7px] rounded-[8px] bg-bion-danger-soft px-[16px] py-[9px] text-[13.5px] font-semibold text-bion-danger [transition:opacity_0.12s_ease,transform_0.1s_ease] hover:bg-bion-danger hover:text-white active:scale-[0.97]"
+                                >
+                                    Delete workspace
+                                </button>
                             </div>
-                            <Button
-                                variant="destructive"
-                                data-test="delete-team-button"
-                                onClick={() => setDeleteDialogOpen(true)}
-                            >
-                                Delete team
-                            </Button>
                         </div>
                     </div>
                 ) : null}

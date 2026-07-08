@@ -1,82 +1,67 @@
-import { Link } from '@inertiajs/react';
-import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Link, usePage } from '@inertiajs/react';
+import { Briefcase, Link2, Shield, Sun, User } from 'lucide-react';
+import type { ComponentType, PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { cn, toUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editLeadForm } from '@/routes/lead-form';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import { index as teams } from '@/routes/teams';
-import type { NavItem } from '@/types';
+import { edit as editTeam } from '@/routes/teams';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-        icon: null,
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-        icon: null,
-    },
-    {
-        title: 'Teams',
-        href: teams(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
-    },
-];
+type SettingsNavItem = {
+    title: string;
+    href: string;
+    icon: ComponentType<{ className?: string }>;
+};
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { currentTeam } = usePage().props;
+
+    const navItems: SettingsNavItem[] = [
+        { title: 'Profile details', href: edit().url, icon: User },
+        { title: 'Security & Password', href: editSecurity().url, icon: Shield },
+        {
+            title: 'Workspace info',
+            href: currentTeam ? editTeam(currentTeam.slug).url : '#',
+            icon: Briefcase,
+        },
+        { title: 'Public Lead Form', href: editLeadForm().url, icon: Link2 },
+        { title: 'Appearance', href: editAppearance().url, icon: Sun },
+    ];
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+        <div className="flex flex-1 flex-col px-[32px] py-[24px] max-[1024px]:px-[16px]">
+            <h1 className="mb-[32px] text-[24px] font-bold text-bion-text">Settings</h1>
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
-                    <nav
-                        className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
-                    >
-                        {sidebarNavItems.map((item, index) => (
-                            <Button
-                                key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
+            <div className="flex gap-[32px] max-[1024px]:flex-col">
+                <nav
+                    className="sticky top-[24px] flex w-[240px] shrink-0 flex-col gap-[4px] max-[1024px]:static max-[1024px]:w-full max-[1024px]:flex-row max-[1024px]:overflow-x-auto max-[1024px]:border-b max-[1024px]:border-bion-border max-[1024px]:pb-[8px]"
+                    aria-label="Settings"
+                >
+                    {navItems.map((item) => {
+                        const active = isCurrentOrParentUrl(item.href);
+                        const Icon = item.icon;
+
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    'flex cursor-pointer items-center gap-[10px] rounded-[8px] px-[14px] py-[10px] text-[13.5px] font-medium whitespace-nowrap text-bion-text-muted [transition:all_0.12s_ease] hover:bg-bion-surface-raised hover:text-bion-text max-[1024px]:whitespace-nowrap',
+                                    active && 'bg-bion-accent-soft! text-bion-accent!',
+                                )}
                             >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            </Button>
-                        ))}
-                    </nav>
-                </aside>
+                                <Icon className="h-[15px] w-[15px] shrink-0" />
+                                {item.title}
+                            </Link>
+                        );
+                    })}
+                </nav>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
-                        {children}
-                    </section>
+                <div className="flex min-w-0 max-w-[800px] flex-1 flex-col gap-[32px] pb-[60px]">
+                    {children}
                 </div>
             </div>
         </div>
