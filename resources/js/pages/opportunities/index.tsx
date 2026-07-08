@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as opportunityCreate, edit as opportunityEdit, index as opportunities } from '@/routes/opportunities';
+import { create as opportunityCreate, edit as opportunityEdit, index as opportunities, moveStage } from '@/routes/opportunities';
 import type {
     BiondeskTone,
     OpportunitiesPageProps,
@@ -139,6 +139,14 @@ export default function OpportunitiesPage({
 
         if (movedOpportunity && movedOpportunity.stage !== 'won' && stageKey === 'won') {
             setShowConfirmProjectModal(movedOpportunity.title);
+        }
+
+        if (currentTeam) {
+            router.patch(
+                moveStage({ current_team: currentTeam.slug, opportunity: opportunityId }).url,
+                { stage: stageKey },
+                { preserveState: true, preserveScroll: true },
+            );
         }
     };
 

@@ -1,9 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { edit as opportunityEdit, index as opportunities } from '@/routes/opportunities';
-import type { OpportunityEditPageProps } from '@/types';
+import { destroy as destroyOpportunity, edit as opportunityEdit, index as opportunities, update as updateOpportunity } from '@/routes/opportunities';
+import type { OpportunityEditPageProps, OpportunityFormValues } from '@/types';
 
 const ICON_SM_CLS =
     'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
@@ -20,13 +19,15 @@ const FIELD_INPUT =
 
 export default function OpportunityEditPage({ stages, contacts, opportunity }: OpportunityEditPageProps) {
     const { currentTeam } = usePage().props;
-    const [title, setTitle] = useState(opportunity.title);
-    const [contactId, setContactId] = useState<number | ''>(opportunity.contactId);
-    const [amountValue, setAmountValue] = useState(opportunity.amountValue);
-    const [stage, setStage] = useState(opportunity.stage);
-    const [closeDate, setCloseDate] = useState(opportunity.closeDate);
-    const [priority, setPriority] = useState(opportunity.priority);
-    const [description, setDescription] = useState(opportunity.description);
+    const { data, setData, put, processing, errors } = useForm<OpportunityFormValues>({
+        title: opportunity.title,
+        contactId: opportunity.contactId,
+        amountValue: opportunity.amountValue,
+        stage: opportunity.stage,
+        closeDate: opportunity.closeDate,
+        priority: opportunity.priority,
+        description: opportunity.description,
+    });
 
     const backToOpportunities = (): void => {
         if (!currentTeam) {
@@ -36,9 +37,29 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
         router.visit(opportunities(currentTeam.slug));
     };
 
+    const submit = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        put(updateOpportunity({ current_team: currentTeam.slug, opportunity: opportunity.id }).url);
+    };
+
+    const deleteOpportunity = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        if (!window.confirm(`Delete "${opportunity.title}"? This cannot be undone.`)) {
+            return;
+        }
+
+        router.delete(destroyOpportunity({ current_team: currentTeam.slug, opportunity: opportunity.id }).url);
+    };
+
     return (
         <>
-            <Head title={`Edit ${title}`} />
+            <Head title={`Edit ${opportunity.title}`} />
 
             <div className="flex flex-1 justify-center overflow-y-auto">
                 <div className="w-full max-w-[680px] pb-[80px]">
@@ -50,7 +71,7 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            backToOpportunities();
+                            submit();
                         }}
                     >
                         <div className="mb-[24px] overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
@@ -69,10 +90,13 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         <input
                                             type="text"
                                             className={FIELD_INPUT}
-                                            value={title}
-                                            onChange={(event) => setTitle(event.target.value)}
+                                            value={data.title}
+                                            onChange={(event) => setData('title', event.target.value)}
                                             required
                                         />
+                                        {errors.title ? (
+                                            <span className="text-[12px] text-bion-danger">{errors.title}</span>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
@@ -81,9 +105,9 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         </label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={contactId}
+                                            value={data.contactId}
                                             onChange={(event) =>
-                                                setContactId(event.target.value === '' ? '' : Number(event.target.value))
+                                                setData('contactId', event.target.value === '' ? '' : Number(event.target.value))
                                             }
                                             required
                                         >
@@ -96,6 +120,9 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                                 </option>
                                             ))}
                                         </select>
+                                        {errors.contactId ? (
+                                            <span className="text-[12px] text-bion-danger">{errors.contactId}</span>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
@@ -107,8 +134,8 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                                 className={cn(FIELD_INPUT, 'pr-[14px] pl-[32px]')}
                                                 min={0}
                                                 step="0.01"
-                                                value={amountValue}
-                                                onChange={(event) => setAmountValue(event.target.value)}
+                                                value={data.amountValue}
+                                                onChange={(event) => setData('amountValue', event.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -119,8 +146,8 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         </label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={stage}
-                                            onChange={(event) => setStage(event.target.value)}
+                                            value={data.stage}
+                                            onChange={(event) => setData('stage', event.target.value)}
                                             required
                                         >
                                             {stages.map((stageOption) => (
@@ -136,8 +163,8 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         <input
                                             type="date"
                                             className={FIELD_INPUT}
-                                            value={closeDate}
-                                            onChange={(event) => setCloseDate(event.target.value)}
+                                            value={data.closeDate}
+                                            onChange={(event) => setData('closeDate', event.target.value)}
                                         />
                                     </div>
 
@@ -145,9 +172,9 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         <label className={FIELD_LABEL}>Priority</label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={priority}
+                                            value={data.priority}
                                             onChange={(event) =>
-                                                setPriority(event.target.value as 'low' | 'medium' | 'high')
+                                                setData('priority', event.target.value as 'low' | 'medium' | 'high')
                                             }
                                         >
                                             <option value="low">Low</option>
@@ -160,8 +187,8 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                         <label className={FIELD_LABEL}>Description &amp; Notes</label>
                                         <textarea
                                             className={cn(FIELD_INPUT, 'min-h-[80px] resize-y')}
-                                            value={description}
-                                            onChange={(event) => setDescription(event.target.value)}
+                                            value={data.description}
+                                            onChange={(event) => setData('description', event.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -169,7 +196,7 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                         </div>
 
                         <div className="mt-[32px] flex items-center justify-between gap-[12px] border-t border-bion-border pt-[24px]">
-                            <button type="button" className={BTN_DANGER} onClick={backToOpportunities}>
+                            <button type="button" className={BTN_DANGER} onClick={deleteOpportunity}>
                                 <svg className={ICON_SM_CLS}>
                                     <use href="#i-trash" />
                                 </svg>
@@ -179,8 +206,8 @@ export default function OpportunityEditPage({ stages, contacts, opportunity }: O
                                 <button type="button" className={BTN_GHOST} onClick={backToOpportunities}>
                                     Cancel
                                 </button>
-                                <button type="submit" className={BTN_PRIMARY}>
-                                    Save Changes
+                                <button type="submit" className={BTN_PRIMARY} disabled={processing}>
+                                    {processing ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </div>

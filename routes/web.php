@@ -8,7 +8,11 @@ use App\Http\Controllers\InvoiceShowController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OpportunitiesController;
 use App\Http\Controllers\OpportunityCreateController;
+use App\Http\Controllers\OpportunityDestroyController;
 use App\Http\Controllers\OpportunityEditController;
+use App\Http\Controllers\OpportunityMoveStageController;
+use App\Http\Controllers\OpportunityStoreController;
+use App\Http\Controllers\OpportunityUpdateController;
 use App\Http\Controllers\ProfileLibraryController;
 use App\Http\Controllers\ProjectCreateController;
 use App\Http\Controllers\ProjectEditController;
@@ -38,9 +42,19 @@ Route::prefix('app/{current_team}')
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('opportunities', OpportunitiesController::class)->name('opportunities.index');
         Route::get('opportunities/create', OpportunityCreateController::class)->name('opportunities.create');
+        Route::post('opportunities', OpportunityStoreController::class)->name('opportunities.store');
         Route::get('opportunities/{opportunity}/edit', OpportunityEditController::class)
             ->whereNumber('opportunity')
             ->name('opportunities.edit');
+        Route::put('opportunities/{opportunity}', OpportunityUpdateController::class)
+            ->whereNumber('opportunity')
+            ->name('opportunities.update');
+        Route::patch('opportunities/{opportunity}/stage', OpportunityMoveStageController::class)
+            ->whereNumber('opportunity')
+            ->name('opportunities.move-stage');
+        Route::delete('opportunities/{opportunity}', OpportunityDestroyController::class)
+            ->whereNumber('opportunity')
+            ->name('opportunities.destroy');
         Route::get('projects', ProjectsController::class)->name('projects.index');
         Route::get('projects/create', ProjectCreateController::class)->name('projects.create');
         Route::get('projects/{project}', ProjectShowController::class)
@@ -52,12 +66,19 @@ Route::prefix('app/{current_team}')
         Route::controller(ContactController::class)->group(function () {
             Route::get('contacts', 'index')->name('contacts.index');
             Route::get('contacts/create', 'create')->name('contacts.create');
+            Route::post('contacts', 'store')->name('contacts.store');
             Route::get('contacts/{contact}', 'show')
                 ->whereNumber('contact')
                 ->name('contacts.show');
             Route::get('contacts/{contact}/edit', 'edit')
                 ->whereNumber('contact')
                 ->name('contacts.edit');
+            Route::put('contacts/{contact}', 'update')
+                ->whereNumber('contact')
+                ->name('contacts.update');
+            Route::delete('contacts/{contact}', 'destroy')
+                ->whereNumber('contact')
+                ->name('contacts.destroy');
         });
         Route::get('proposals', ProposalsController::class)->name('proposals.index');
         Route::get('proposals/create', ProposalCreateController::class)->name('proposals.create');

@@ -1,9 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as opportunityCreate, index as opportunities } from '@/routes/opportunities';
-import type { OpportunityCreatePageProps } from '@/types';
+import { create as opportunityCreate, index as opportunities, store as storeOpportunity } from '@/routes/opportunities';
+import type { OpportunityCreatePageProps, OpportunityFormValues } from '@/types';
 
 const ICON_SM_CLS =
     'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
@@ -19,13 +18,7 @@ const FIELD_INPUT =
 
 export default function OpportunityCreatePage({ stages, contacts, defaults }: OpportunityCreatePageProps) {
     const { currentTeam } = usePage().props;
-    const [title, setTitle] = useState(defaults.title);
-    const [contactId, setContactId] = useState<number | ''>(defaults.contactId);
-    const [amountValue, setAmountValue] = useState(defaults.amountValue);
-    const [stage, setStage] = useState(defaults.stage);
-    const [closeDate, setCloseDate] = useState(defaults.closeDate);
-    const [priority, setPriority] = useState(defaults.priority);
-    const [description, setDescription] = useState(defaults.description);
+    const { data, setData, post, processing, errors } = useForm<OpportunityFormValues>(defaults);
 
     const backToOpportunities = (): void => {
         if (!currentTeam) {
@@ -33,6 +26,14 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
         }
 
         router.visit(opportunities(currentTeam.slug));
+    };
+
+    const submit = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        post(storeOpportunity(currentTeam.slug).url);
     };
 
     return (
@@ -51,7 +52,7 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            backToOpportunities();
+                            submit();
                         }}
                     >
                         <div className="mb-[24px] overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
@@ -71,10 +72,13 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                             type="text"
                                             className={FIELD_INPUT}
                                             placeholder="e.g. Website Redesign Q3"
-                                            value={title}
-                                            onChange={(event) => setTitle(event.target.value)}
+                                            value={data.title}
+                                            onChange={(event) => setData('title', event.target.value)}
                                             required
                                         />
+                                        {errors.title ? (
+                                            <span className="text-[12px] text-bion-danger">{errors.title}</span>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
@@ -83,9 +87,9 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                         </label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={contactId}
+                                            value={data.contactId}
                                             onChange={(event) =>
-                                                setContactId(event.target.value === '' ? '' : Number(event.target.value))
+                                                setData('contactId', event.target.value === '' ? '' : Number(event.target.value))
                                             }
                                             required
                                         >
@@ -98,6 +102,9 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                                 </option>
                                             ))}
                                         </select>
+                                        {errors.contactId ? (
+                                            <span className="text-[12px] text-bion-danger">{errors.contactId}</span>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
@@ -110,8 +117,8 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                                 placeholder="0.00"
                                                 min={0}
                                                 step="0.01"
-                                                value={amountValue}
-                                                onChange={(event) => setAmountValue(event.target.value)}
+                                                value={data.amountValue}
+                                                onChange={(event) => setData('amountValue', event.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -122,8 +129,8 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                         </label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={stage}
-                                            onChange={(event) => setStage(event.target.value)}
+                                            value={data.stage}
+                                            onChange={(event) => setData('stage', event.target.value)}
                                             required
                                         >
                                             {stages.map((stageOption) => (
@@ -139,8 +146,8 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                         <input
                                             type="date"
                                             className={FIELD_INPUT}
-                                            value={closeDate}
-                                            onChange={(event) => setCloseDate(event.target.value)}
+                                            value={data.closeDate}
+                                            onChange={(event) => setData('closeDate', event.target.value)}
                                         />
                                     </div>
 
@@ -148,9 +155,9 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                         <label className={FIELD_LABEL}>Priority</label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={priority}
+                                            value={data.priority}
                                             onChange={(event) =>
-                                                setPriority(event.target.value as 'low' | 'medium' | 'high')
+                                                setData('priority', event.target.value as 'low' | 'medium' | 'high')
                                             }
                                         >
                                             <option value="low">Low</option>
@@ -164,8 +171,8 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                                         <textarea
                                             className={cn(FIELD_INPUT, 'min-h-[80px] resize-y')}
                                             placeholder="Add context, client requirements, or specific notes regarding this opportunity..."
-                                            value={description}
-                                            onChange={(event) => setDescription(event.target.value)}
+                                            value={data.description}
+                                            onChange={(event) => setData('description', event.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -176,8 +183,8 @@ export default function OpportunityCreatePage({ stages, contacts, defaults }: Op
                             <button type="button" className={BTN_GHOST} onClick={backToOpportunities}>
                                 Cancel
                             </button>
-                            <button type="submit" className={BTN_PRIMARY}>
-                                Create Opportunity
+                            <button type="submit" className={BTN_PRIMARY} disabled={processing}>
+                                {processing ? 'Creating...' : 'Create Opportunity'}
                             </button>
                         </div>
                     </form>

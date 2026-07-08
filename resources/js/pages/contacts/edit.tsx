@@ -1,9 +1,15 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useMemo, useState  } from 'react';
-import type {ReactNode} from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { edit as contactEdit, index as contacts, show as contactShow } from '@/routes/contacts';
+import {
+    destroy as destroyContact,
+    edit as contactEdit,
+    index as contacts,
+    show as contactShow,
+    update as updateContact,
+} from '@/routes/contacts';
 import type { ContactDetail, ContactEditPageProps, ContactFormValues } from '@/types';
 
 const BTN =
@@ -17,7 +23,7 @@ const FIELD_LABEL = 'text-[13px] font-medium text-bion-text-muted';
 
 export default function ContactEditPage({ contact }: ContactEditPageProps) {
     const { currentTeam } = usePage().props;
-    const [form, setForm] = useState<ContactFormValues>({
+    const { data, setData, put, processing, errors } = useForm<ContactFormValues>({
         type: contact.type,
         company: contact.company,
         firstName: contact.firstName,
@@ -29,22 +35,10 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
         website: contact.website,
         notes: contact.notes,
     });
-    const [savedState, setSavedState] = useState<'idle' | 'saved' | 'deleted'>('idle');
 
     const fullNamePreview = useMemo(() => {
-        return [form.firstName, form.lastName].filter(Boolean).join(' ').trim();
-    }, [form.firstName, form.lastName]);
-
-    const setField = <TKey extends keyof ContactFormValues>(
-        key: TKey,
-        value: ContactFormValues[TKey],
-    ): void => {
-        setForm((current) => ({
-            ...current,
-            [key]: value,
-        }));
-        setSavedState('idle');
-    };
+        return [data.firstName, data.lastName].filter(Boolean).join(' ').trim();
+    }, [data.firstName, data.lastName]);
 
     const backToContact = (): void => {
         if (!currentTeam) {
@@ -54,12 +48,26 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
         router.visit(contactShow({ current_team: currentTeam.slug, contact: contact.id }));
     };
 
-    const saveChanges = (): void => {
-        setSavedState('saved');
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+
+        if (!currentTeam) {
+            return;
+        }
+
+        put(updateContact({ current_team: currentTeam.slug, contact: contact.id }).url);
     };
 
     const deleteContact = (): void => {
-        setSavedState('deleted');
+        if (!currentTeam) {
+            return;
+        }
+
+        if (!window.confirm(`Delete ${contact.fullName}? This cannot be undone.`)) {
+            return;
+        }
+
+        router.delete(destroyContact({ current_team: currentTeam.slug, contact: contact.id }).url);
     };
 
     return (
@@ -67,7 +75,7 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
             <Head title={`Edit ${contact.fullName}`} />
 
             <div className="flex flex-1 justify-center overflow-y-auto">
-                <div className="w-full max-w-[680px] pb-[80px]">
+                <form className="w-full max-w-[680px] pb-[80px]" onSubmit={submit}>
                     <div className="mb-[24px] flex items-end justify-between gap-[12px] max-[760px]:flex-col max-[760px]:items-start">
                         <div>
                             <h1 className="mb-[6px] text-[24px] font-semibold">Edit Contact</h1>
@@ -79,18 +87,6 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                             Contact ID: #{contact.code}
                         </span>
                     </div>
-
-                    {savedState === 'saved' ? (
-                        <Banner tone="success">
-                            Contact changes were saved locally in the scaffold UI.
-                        </Banner>
-                    ) : null}
-
-                    {savedState === 'deleted' ? (
-                        <Banner tone="danger">
-                            Delete is still scaffold-only in this phase, so no real record was removed.
-                        </Banner>
-                    ) : null}
 
                     <div className="mb-[24px] rounded-[12px] border border-bion-border bg-bion-surface p-[24px]">
                         <div className="mb-[16px] flex items-center gap-[8px] text-[15px] font-semibold">
@@ -123,8 +119,8 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                             <Field label="Contact Type">
                                 <select
                                     className={FIELD_INPUT}
-                                    value={form.type}
-                                    onChange={(event) => setField('type', event.target.value as ContactFormValues['type'])}
+                                    value={data.type}
+                                    onChange={(event) => setData('type', event.target.value as ContactFormValues['type'])}
                                 >
                                     <option value="client">Client</option>
                                     <option value="lead">Lead</option>
@@ -135,24 +131,27 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.company}
-                                    onChange={(event) => setField('company', event.target.value)}
+                                    value={data.company}
+                                    onChange={(event) => setData('company', event.target.value)}
                                 />
                             </Field>
                             <Field label="First Name *">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.firstName}
-                                    onChange={(event) => setField('firstName', event.target.value)}
+                                    value={data.firstName}
+                                    onChange={(event) => setData('firstName', event.target.value)}
                                 />
+                                {errors.firstName ? (
+                                    <span className="text-[12px] text-bion-danger">{errors.firstName}</span>
+                                ) : null}
                             </Field>
                             <Field label="Last Name">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.lastName}
-                                    onChange={(event) => setField('lastName', event.target.value)}
+                                    value={data.lastName}
+                                    onChange={(event) => setData('lastName', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -171,32 +170,32 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                                 <input
                                     type="email"
                                     className={FIELD_INPUT}
-                                    value={form.email}
-                                    onChange={(event) => setField('email', event.target.value)}
+                                    value={data.email}
+                                    onChange={(event) => setData('email', event.target.value)}
                                 />
                             </Field>
                             <Field label="Phone Number">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.phone}
-                                    onChange={(event) => setField('phone', event.target.value)}
+                                    value={data.phone}
+                                    onChange={(event) => setData('phone', event.target.value)}
                                 />
                             </Field>
                             <Field label="Role / Title">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.role}
-                                    onChange={(event) => setField('role', event.target.value)}
+                                    value={data.role}
+                                    onChange={(event) => setData('role', event.target.value)}
                                 />
                             </Field>
                             <Field label="Location">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.location}
-                                    onChange={(event) => setField('location', event.target.value)}
+                                    value={data.location}
+                                    onChange={(event) => setData('location', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -215,15 +214,15 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
-                                    value={form.website}
-                                    onChange={(event) => setField('website', event.target.value)}
+                                    value={data.website}
+                                    onChange={(event) => setData('website', event.target.value)}
                                 />
                             </Field>
                             <Field label="Notes">
                                 <textarea
                                     className={cn(FIELD_INPUT, 'min-h-[120px] resize-y')}
-                                    value={form.notes}
-                                    onChange={(event) => setField('notes', event.target.value)}
+                                    value={data.notes}
+                                    onChange={(event) => setData('notes', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -241,34 +240,14 @@ export default function ContactEditPage({ contact }: ContactEditPageProps) {
                             <button type="button" className={BTN_GHOST} onClick={backToContact}>
                                 Cancel
                             </button>
-                            <button type="button" className={BTN_PRIMARY} onClick={saveChanges}>
-                                Save Changes
+                            <button type="submit" className={BTN_PRIMARY} disabled={processing}>
+                                {processing ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
         </>
-    );
-}
-
-type BannerProps = {
-    tone: 'success' | 'danger';
-    children: ReactNode;
-};
-
-function Banner({ tone, children }: BannerProps) {
-    return (
-        <div
-            className={cn(
-                'mb-[16px] rounded-[10px] border px-[14px] py-[12px] text-[13px]',
-                tone === 'success'
-                    ? 'border-bion-border bg-bion-success-soft text-bion-success'
-                    : 'border-bion-border bg-bion-danger-soft text-bion-danger',
-            )}
-        >
-            {children}
-        </div>
     );
 }
 

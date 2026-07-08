@@ -96,6 +96,26 @@ class Team extends Model
     }
 
     /**
+     * Get all contacts for this team.
+     *
+     * @return HasMany<Contact, $this>
+     */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    /**
+     * Get all opportunities for this team.
+     *
+     * @return HasMany<Opportunity, $this>
+     */
+    public function opportunities(): HasMany
+    {
+        return $this->hasMany(Opportunity::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\Biondesk\StubWorkspaceData;
+use App\Enums\OpportunityStage;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,13 +16,30 @@ class OpportunityEditController extends Controller
     public function __invoke(
         Request $request,
         string $current_team,
-        StubWorkspaceData $stubWorkspaceData,
         int $opportunity,
     ): Response {
-        $page = $stubWorkspaceData->opportunityEditContext($request->user()->currentTeam, $opportunity);
+        $team = $request->user()->currentTeam;
+        $model = $team->opportunities()->findOrFail($opportunity);
 
-        abort_if($page === null, 404);
-
-        return Inertia::render('opportunities/edit', $page);
+        return Inertia::render('opportunities/edit', [
+            'stages' => collect(OpportunityStage::cases())
+                ->map(fn (OpportunityStage $stage) => [
+                    'key' => $stage->value,
+                    'label' => $stage->label(),
+                    'tone' => $stage->tone(),
+                ])
+                ->all(),
+            'contacts' => Contact::optionsFor($team),
+            'opportunity' => [
+                'id' => $model->id,
+                'title' => $model->title,
+                'contactId' => $model->contact_id,
+                'amountValue' => (string) $model->amount_value,
+                'stage' => $model->stage->value,
+                'closeDate' => $model->close_date?->toDateString() ?? '',
+                'priority' => $model->priority->value,
+                'description' => $model->description ?? '',
+            ],
+        ]);
     }
 }

@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\Biondesk\StubWorkspaceData;
+use App\Enums\ContactType;
+use App\Http\Requests\StoreContactRequest;
+use App\Http\Requests\UpdateContactRequest;
+use App\Models\Contact;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -10,50 +14,109 @@ use Inertia\Response;
 class ContactController extends Controller
 {
     /**
-     * Show the scaffolded contacts index page.
+     * Show the contacts index page.
      */
-    public function index(Request $request, StubWorkspaceData $stubWorkspaceData): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('contacts/index', $stubWorkspaceData->contacts($request->user()->currentTeam));
+        $team = $request->user()->currentTeam;
+        $contacts = $team->contacts()->latest()->get();
+
+        return Inertia::render('contacts/index', [
+            'contacts' => $contacts->map->toListItem()->all(),
+            'contactsCount' => (string) $contacts->count(),
+            'defaultFilters' => [
+                'search' => '',
+                'type' => '',
+            ],
+        ]);
     }
 
     /**
-     * Show the scaffolded new-contact page.
+     * Show the new-contact page.
      */
-    public function create(Request $request, StubWorkspaceData $stubWorkspaceData): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('contacts/create', $stubWorkspaceData->contactCreateContext($request->user()->currentTeam));
+        $team = $request->user()->currentTeam;
+
+        return Inertia::render('contacts/create', [
+            'contactsCount' => (string) $team->contacts()->count(),
+            'defaults' => [
+                'type' => ContactType::Client->value,
+                'company' => '',
+                'firstName' => '',
+                'lastName' => '',
+                'email' => '',
+                'phone' => '',
+                'role' => '',
+                'location' => '',
+                'website' => '',
+                'notes' => '',
+            ],
+        ]);
     }
 
     /**
-     * Show the scaffolded contact detail page.
+     * Store a newly created contact.
      */
-    public function show(
-        Request $request,
-        string $current_team,
-        StubWorkspaceData $stubWorkspaceData,
-        int $contact,
-    ): Response {
-        $page = $stubWorkspaceData->contactDetail($request->user()->currentTeam, $contact);
+    public function store(StoreContactRequest $request): RedirectResponse
+    {
+        $team = $request->user()->currentTeam;
 
-        abort_if($page === null, 404);
+        $contact = $team->contacts()->create($request->validated());
 
-        return Inertia::render('contacts/show', $page);
+        return to_route('contacts.show', ['current_team' => $team->slug, 'contact' => $contact->id]);
     }
 
     /**
-     * Show the scaffolded edit-contact page.
+     * Show the contact detail page.
      */
-    public function edit(
-        Request $request,
-        string $current_team,
-        StubWorkspaceData $stubWorkspaceData,
-        int $contact,
-    ): Response {
-        $page = $stubWorkspaceData->contactEditContext($request->user()->currentTeam, $contact);
+    public function show(Request $request, string $current_team, int $contact): Response
+    {
+        $team = $request->user()->currentTeam;
+        $model = $team->contacts()->findOrFail($contact);
 
-        abort_if($page === null, 404);
+        return Inertia::render('contacts/show', [
+            'contactsCount' => (string) $team->contacts()->count(),
+            'contact' => $model->toDetailArray(),
+        ]);
+    }
 
-        return Inertia::render('contacts/edit', $page);
+    /**
+     * Show the edit-contact page.
+     */
+    public function edit(Request $request, string $current_team, int $contact): Response
+    {
+        $team = $request->user()->currentTeam;
+        $model = $team->contacts()->findOrFail($contact);
+
+        return Inertia::render('contacts/edit', [
+            'contactsCount' => (string) $team->contacts()->count(),
+            'contact' => $model->toDetailArray(),
+        ]);
+    }
+
+    /**
+     * Update the given contact.
+     */
+    public function update(UpdateContactRequest $request, string $current_team, int $contact): RedirectResponse
+    {
+        $team = $request->user()->currentTeam;
+        $model = $team->contacts()->findOrFail($contact);
+
+        $model->update($request->validated());
+
+        return to_route('contacts.show', ['current_team' => $team->slug, 'contact' => $model->id]);
+    }
+
+    /**
+     * Delete the given contact.
+     */
+    public function destroy(Request $request, string $current_team, int $contact): RedirectResponse
+    {
+        $team = $request->user()->currentTeam;
+        $model = $team->contacts()->findOrFail($contact);
+        $model->delete();
+
+        return to_route('contacts.index', ['current_team' => $team->slug]);
     }
 }

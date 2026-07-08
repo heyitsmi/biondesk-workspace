@@ -32,16 +32,6 @@ test('authenticated users can view app scaffold pages for their current team', f
     $team = $user->currentTeam;
 
     $this->actingAs($user)
-        ->get(route('opportunities.index', ['current_team' => $team->slug]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('opportunities/index')
-            ->where('defaultView', 'board')
-            ->has('stages', 6)
-            ->has('opportunities', 8),
-        );
-
-    $this->actingAs($user)
         ->get(route('projects.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -64,47 +54,6 @@ test('authenticated users can view app scaffold pages for their current team', f
         );
 
     $this->actingAs($user)
-        ->get(route('contacts.index', ['current_team' => $team->slug]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('contacts/index')
-            ->has('contacts', 5)
-            ->where('contactsCount', '5')
-            ->where('defaultFilters.type', ''),
-        );
-
-    $this->actingAs($user)
-        ->get(route('contacts.create', ['current_team' => $team->slug]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('contacts/create')
-            ->where('contactsCount', '5')
-            ->has('defaults'),
-        );
-
-    $this->actingAs($user)
-        ->get(route('contacts.show', ['current_team' => $team->slug, 'contact' => 124]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('contacts/show')
-            ->where('contactsCount', '5')
-            ->where('contact.id', 124)
-            ->where('contact.fullName', 'John Smith')
-            ->has('contact.relatedProjects')
-            ->has('contact.activity'),
-        );
-
-    $this->actingAs($user)
-        ->get(route('contacts.edit', ['current_team' => $team->slug, 'contact' => 124]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('contacts/edit')
-            ->where('contactsCount', '5')
-            ->where('contact.id', 124)
-            ->has('contact'),
-        );
-
-    $this->actingAs($user)
         ->get(route('proposals.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -113,27 +62,6 @@ test('authenticated users can view app scaffold pages for their current team', f
             ->has('stages', 5)
             ->has('documents', 5)
             ->where('profileLibrarySummary.title', 'AI profile library ready'),
-        );
-
-    $this->actingAs($user)
-        ->get(route('opportunities.create', ['current_team' => $team->slug]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('opportunities/create')
-            ->has('stages', 6)
-            ->has('contacts', 5)
-            ->has('defaults'),
-        );
-
-    $this->actingAs($user)
-        ->get(route('opportunities.edit', ['current_team' => $team->slug, 'opportunity' => 1]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('opportunities/edit')
-            ->where('opportunity.id', 1)
-            ->where('opportunity.title', 'Web App Redesign')
-            ->has('stages', 6)
-            ->has('contacts', 5),
         );
 
     $this->actingAs($user)

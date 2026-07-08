@@ -1,9 +1,9 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useMemo, useState  } from 'react';
-import type {ReactNode} from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as contactCreate, index as contacts } from '@/routes/contacts';
+import { create as contactCreate, index as contacts, store as storeContact } from '@/routes/contacts';
 import type { ContactCreatePageProps, ContactFormValues } from '@/types';
 
 const BTN =
@@ -16,23 +16,11 @@ const FIELD_LABEL = 'text-[13px] font-medium text-bion-text-muted';
 
 export default function ContactCreatePage({ defaults }: ContactCreatePageProps) {
     const { currentTeam } = usePage().props;
-    const [form, setForm] = useState<ContactFormValues>(defaults);
-    const [savedDraft, setSavedDraft] = useState(false);
+    const { data, setData, post, processing, errors } = useForm<ContactFormValues>(defaults);
 
     const fullNamePreview = useMemo(() => {
-        return [form.firstName, form.lastName].filter(Boolean).join(' ').trim();
-    }, [form.firstName, form.lastName]);
-
-    const setField = <TKey extends keyof ContactFormValues>(
-        key: TKey,
-        value: ContactFormValues[TKey],
-    ): void => {
-        setForm((current) => ({
-            ...current,
-            [key]: value,
-        }));
-        setSavedDraft(false);
-    };
+        return [data.firstName, data.lastName].filter(Boolean).join(' ').trim();
+    }, [data.firstName, data.lastName]);
 
     const cancel = (): void => {
         if (!currentTeam) {
@@ -42,8 +30,14 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
         router.visit(contacts(currentTeam.slug));
     };
 
-    const saveDraft = (): void => {
-        setSavedDraft(true);
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+
+        if (!currentTeam) {
+            return;
+        }
+
+        post(storeContact(currentTeam.slug).url);
     };
 
     return (
@@ -51,19 +45,13 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
             <Head title="New Contact" />
 
             <div className="flex flex-1 justify-center overflow-y-auto">
-                <div className="w-full max-w-[680px] pb-[80px]">
+                <form className="w-full max-w-[680px] pb-[80px]" onSubmit={submit}>
                     <div className="mb-[24px]">
                         <h1 className="mb-[6px] text-[24px] font-semibold">Add New Contact</h1>
                         <p className="text-[14px] text-bion-text-muted">
                             Create a new client, lead, or vendor record.
                         </p>
                     </div>
-
-                    {savedDraft ? (
-                        <div className="mb-[16px] rounded-[10px] border border-bion-border bg-bion-success-soft px-[14px] py-[12px] text-[13px] text-bion-success">
-                            Draft contact for {fullNamePreview || 'this entry'} has been saved locally in the scaffold UI.
-                        </div>
-                    ) : null}
 
                     <div className="mb-[24px] rounded-[12px] border border-bion-border bg-bion-surface p-[24px]">
                         <div className="mb-[16px] flex items-center gap-[8px] text-[15px] font-semibold">
@@ -98,8 +86,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                             <Field label="Contact Type">
                                 <select
                                     className={FIELD_INPUT}
-                                    value={form.type}
-                                    onChange={(event) => setField('type', event.target.value as ContactFormValues['type'])}
+                                    value={data.type}
+                                    onChange={(event) => setData('type', event.target.value as ContactFormValues['type'])}
                                 >
                                     <option value="client">Client</option>
                                     <option value="lead">Lead</option>
@@ -111,8 +99,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="e.g. Acme Corp"
-                                    value={form.company}
-                                    onChange={(event) => setField('company', event.target.value)}
+                                    value={data.company}
+                                    onChange={(event) => setData('company', event.target.value)}
                                 />
                             </Field>
                             <Field label="First Name *">
@@ -120,17 +108,20 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="John"
-                                    value={form.firstName}
-                                    onChange={(event) => setField('firstName', event.target.value)}
+                                    value={data.firstName}
+                                    onChange={(event) => setData('firstName', event.target.value)}
                                 />
+                                {errors.firstName ? (
+                                    <span className="text-[12px] text-bion-danger">{errors.firstName}</span>
+                                ) : null}
                             </Field>
                             <Field label="Last Name">
                                 <input
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="Smith"
-                                    value={form.lastName}
-                                    onChange={(event) => setField('lastName', event.target.value)}
+                                    value={data.lastName}
+                                    onChange={(event) => setData('lastName', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -150,8 +141,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="email"
                                     className={FIELD_INPUT}
                                     placeholder="john@example.com"
-                                    value={form.email}
-                                    onChange={(event) => setField('email', event.target.value)}
+                                    value={data.email}
+                                    onChange={(event) => setData('email', event.target.value)}
                                 />
                             </Field>
                             <Field label="Phone Number">
@@ -159,8 +150,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="+1 (555) 123-4567"
-                                    value={form.phone}
-                                    onChange={(event) => setField('phone', event.target.value)}
+                                    value={data.phone}
+                                    onChange={(event) => setData('phone', event.target.value)}
                                 />
                             </Field>
                             <Field label="Role / Title">
@@ -168,8 +159,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="Marketing Director"
-                                    value={form.role}
-                                    onChange={(event) => setField('role', event.target.value)}
+                                    value={data.role}
+                                    onChange={(event) => setData('role', event.target.value)}
                                 />
                             </Field>
                             <Field label="Location">
@@ -177,8 +168,8 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="New York, United States"
-                                    value={form.location}
-                                    onChange={(event) => setField('location', event.target.value)}
+                                    value={data.location}
+                                    onChange={(event) => setData('location', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -198,16 +189,16 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                                     type="text"
                                     className={FIELD_INPUT}
                                     placeholder="https://example.com"
-                                    value={form.website}
-                                    onChange={(event) => setField('website', event.target.value)}
+                                    value={data.website}
+                                    onChange={(event) => setData('website', event.target.value)}
                                 />
                             </Field>
                             <Field label="Notes">
                                 <textarea
                                     className={cn(FIELD_INPUT, 'min-h-[120px] resize-y')}
                                     placeholder="Internal notes, billing preferences, or relationship context."
-                                    value={form.notes}
-                                    onChange={(event) => setField('notes', event.target.value)}
+                                    value={data.notes}
+                                    onChange={(event) => setData('notes', event.target.value)}
                                 />
                             </Field>
                         </div>
@@ -217,11 +208,11 @@ export default function ContactCreatePage({ defaults }: ContactCreatePageProps) 
                         <button type="button" className={BTN_GHOST} onClick={cancel}>
                             Cancel
                         </button>
-                        <button type="button" className={BTN_PRIMARY} onClick={saveDraft}>
-                            Create Contact
+                        <button type="submit" className={BTN_PRIMARY} disabled={processing}>
+                            {processing ? 'Creating...' : 'Create Contact'}
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
         </>
     );
