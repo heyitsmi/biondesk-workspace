@@ -113,6 +113,71 @@ test('authenticated users can view app scaffold pages for their current team', f
         );
 
     $this->actingAs($user)
+        ->get(route('opportunities.create', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('opportunities/create')
+            ->has('stages', 6)
+            ->has('contacts', 5)
+            ->has('defaults'),
+        );
+
+    $this->actingAs($user)
+        ->get(route('opportunities.edit', ['current_team' => $team->slug, 'opportunity' => 1]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('opportunities/edit')
+            ->where('opportunity.id', 1)
+            ->where('opportunity.title', 'Web App Redesign')
+            ->has('stages', 6)
+            ->has('contacts', 5),
+        );
+
+    $this->actingAs($user)
+        ->get(route('projects.create', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('projects/create')
+            ->has('stages', 6)
+            ->has('clients', 5)
+            ->has('leads', 2)
+            ->has('defaults'),
+        );
+
+    $this->actingAs($user)
+        ->get(route('projects.edit', ['current_team' => $team->slug, 'project' => 11]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('projects/edit')
+            ->where('project.id', 11)
+            ->where('project.title', 'Portfolio Redesign')
+            ->has('stages', 6)
+            ->has('clients', 5)
+            ->has('leads', 2),
+        );
+
+    $this->actingAs($user)
+        ->get(route('proposals.create', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('proposals/create')
+            ->has('nextNumber')
+            ->has('clients', 5)
+            ->has('projects'),
+        );
+
+    $this->actingAs($user)
+        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('proposals/edit')
+            ->where('proposal.id', 21)
+            ->where('proposal.title', 'Website Redesign Proposal')
+            ->has('clients', 5)
+            ->has('projects'),
+        );
+
+    $this->actingAs($user)
         ->get(route('reminders.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -196,5 +261,32 @@ test('profile edit route returns 404 for unknown stub profile', function () {
 
     $this->actingAs($user)
         ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => 9999]))
+        ->assertNotFound();
+});
+
+test('opportunity edit route returns 404 for unknown stub opportunity', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->get(route('opportunities.edit', ['current_team' => $team->slug, 'opportunity' => 9999]))
+        ->assertNotFound();
+});
+
+test('project edit route returns 404 for unknown stub project', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->get(route('projects.edit', ['current_team' => $team->slug, 'project' => 9999]))
+        ->assertNotFound();
+});
+
+test('proposal edit route returns 404 for unknown stub proposal', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => 9999]))
         ->assertNotFound();
 });

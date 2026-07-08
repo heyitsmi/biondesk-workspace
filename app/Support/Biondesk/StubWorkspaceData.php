@@ -237,6 +237,78 @@ class StubWorkspaceData
     }
 
     /**
+     * Get the stubbed context needed to render the new-opportunity page.
+     *
+     * @return array<string, mixed>
+     */
+    public function opportunityCreateContext(Team $team): array
+    {
+        return [
+            'stages' => $this->opportunities($team)['stages'],
+            'contacts' => $this->contactOptions(),
+            'defaults' => [
+                'title' => '',
+                'contactId' => '',
+                'amountValue' => '',
+                'stage' => 'inbox',
+                'closeDate' => '',
+                'priority' => 'medium',
+                'description' => '',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed opportunity edit page data, or null when the opportunity cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function opportunityEditContext(Team $team, int $opportunityId): ?array
+    {
+        $opportunity = null;
+
+        foreach ($this->opportunities($team)['opportunities'] as $candidate) {
+            if (($candidate['id'] ?? null) === $opportunityId) {
+                $opportunity = $candidate;
+                break;
+            }
+        }
+
+        if ($opportunity === null) {
+            return null;
+        }
+
+        $matchedContact = collect($this->contactOptions())
+            ->first(fn ($contact) => $contact['name'] === $opportunity['company']);
+
+        return [
+            'stages' => $this->opportunities($team)['stages'],
+            'contacts' => $this->contactOptions(),
+            'opportunity' => [
+                'id' => $opportunity['id'],
+                'title' => $opportunity['title'],
+                'contactId' => $matchedContact['id'] ?? '',
+                'amountValue' => (string) $opportunity['amountValue'],
+                'stage' => $opportunity['stage'],
+                'closeDate' => '',
+                'priority' => 'medium',
+                'description' => $opportunity['summary'],
+            ],
+        ];
+    }
+
+    /**
+     * @return list<array{id: int, name: string}>
+     */
+    private function contactOptions(): array
+    {
+        return array_map(
+            fn (array $contact) => ['id' => $contact['id'], 'name' => $contact['company']],
+            $this->contactRecords(),
+        );
+    }
+
+    /**
      * Get the stubbed projects page data.
      *
      * @return array<string, mixed>
@@ -631,6 +703,83 @@ class StubWorkspaceData
                 ['text' => 'Project created', 'time' => 'Recently', 'tone' => 'muted'],
                 ['text' => "Status set to {$project['stageLabel']}", 'time' => 'Recently', 'tone' => $project['tone']],
             ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-project page.
+     *
+     * @return array<string, mixed>
+     */
+    public function projectCreateContext(Team $team): array
+    {
+        return [
+            'stages' => $this->projects($team)['stages'],
+            'clients' => $this->contactOptions(),
+            'leads' => $this->projectLeadOptions(),
+            'defaults' => [
+                'title' => '',
+                'clientId' => '',
+                'stage' => 'not_started',
+                'startDate' => '',
+                'dueDate' => '',
+                'description' => '',
+                'leadId' => 1,
+                'budget' => '',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed project edit page data, or null when the project cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function projectEditContext(Team $team, int $projectId): ?array
+    {
+        $project = null;
+
+        foreach ($this->projects($team)['projects'] as $candidate) {
+            if (($candidate['id'] ?? null) === $projectId) {
+                $project = $candidate;
+                break;
+            }
+        }
+
+        if ($project === null) {
+            return null;
+        }
+
+        $detail = $this->projectDetailRecords($team)[$projectId] ?? null;
+        $matchedClient = collect($this->contactOptions())
+            ->first(fn ($contact) => $contact['name'] === $project['client']);
+
+        return [
+            'stages' => $this->projects($team)['stages'],
+            'clients' => $this->contactOptions(),
+            'leads' => $this->projectLeadOptions(),
+            'project' => [
+                'id' => $project['id'],
+                'title' => $project['title'],
+                'clientId' => $matchedClient['id'] ?? '',
+                'stage' => $project['stage'],
+                'startDate' => '',
+                'dueDate' => '',
+                'description' => $detail['description'] ?? '',
+                'leadId' => 1,
+                'budget' => (string) preg_replace('/[^0-9.]/', '', $project['budget']),
+            ],
+        ];
+    }
+
+    /**
+     * @return list<array{id: int, name: string}>
+     */
+    private function projectLeadOptions(): array
+    {
+        return [
+            ['id' => 1, 'name' => 'You'],
+            ['id' => 2, 'name' => 'Jamie Chen'],
         ];
     }
 
@@ -1489,6 +1638,84 @@ class StubWorkspaceData
                 'activity' => [
                     ['id' => 7, 'title' => 'Lead marked inactive.', 'description' => 'Pipeline closed after budget freeze update.', 'when' => '8 days ago', 'tone' => 'danger'],
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-proposal page.
+     *
+     * @return array<string, mixed>
+     */
+    public function proposalCreateContext(Team $team): array
+    {
+        return [
+            'nextNumber' => 'P-2026-006',
+            'defaultDatePrepared' => now()->toDateString(),
+            'defaultValidUntil' => now()->addDays(14)->toDateString(),
+            'clients' => $this->contactOptions(),
+            'projects' => [
+                ['id' => 11, 'title' => 'Portfolio Redesign'],
+                ['id' => 12, 'title' => 'Fintech Brand Identity'],
+                ['id' => 13, 'title' => 'E-commerce Backend'],
+                ['id' => 14, 'title' => 'API Integration Layer'],
+                ['id' => 15, 'title' => 'Marketing Site'],
+                ['id' => 16, 'title' => 'Legacy System Migration'],
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed proposal edit page data, or null when the proposal cannot be found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function proposalEditContext(Team $team, int $proposalId): ?array
+    {
+        $proposal = null;
+
+        foreach ($this->proposals($team)['documents'] as $candidate) {
+            if (($candidate['id'] ?? null) === $proposalId) {
+                $proposal = $candidate;
+                break;
+            }
+        }
+
+        if ($proposal === null) {
+            return null;
+        }
+
+        $matchedClient = collect($this->contactOptions())
+            ->first(fn ($contact) => $contact['name'] === $proposal['client']);
+
+        return [
+            'clients' => $this->contactOptions(),
+            'projects' => [
+                ['id' => 11, 'title' => 'Portfolio Redesign'],
+                ['id' => 12, 'title' => 'Fintech Brand Identity'],
+                ['id' => 13, 'title' => 'E-commerce Backend'],
+                ['id' => 14, 'title' => 'API Integration Layer'],
+                ['id' => 15, 'title' => 'Marketing Site'],
+                ['id' => 16, 'title' => 'Legacy System Migration'],
+            ],
+            'proposal' => [
+                'id' => $proposal['id'],
+                'title' => $proposal['title'],
+                'number' => $proposal['number'],
+                'clientId' => $matchedClient['id'] ?? '',
+                'datePrepared' => now()->toDateString(),
+                'validUntil' => now()->addDays(14)->toDateString(),
+                'content' => '',
+                'lineItems' => array_map(
+                    fn (array $item) => [
+                        'name' => $item['label'],
+                        'description' => '',
+                        'qty' => 1,
+                        'price' => ltrim($item['amount'], '$'),
+                    ],
+                    $proposal['items'],
+                ),
+                'notes' => '',
             ],
         ];
     }

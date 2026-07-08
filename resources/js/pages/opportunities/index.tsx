@@ -1,16 +1,13 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as opportunities } from '@/routes/opportunities';
+import { create as opportunityCreate, edit as opportunityEdit, index as opportunities } from '@/routes/opportunities';
 import type {
     BiondeskTone,
     OpportunitiesPageProps,
-    OpportunityItem,
 } from '@/types';
 
-const ICON_CLS =
-    'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
 const ICON_SM_CLS =
     'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
 
@@ -21,10 +18,6 @@ const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-t
 
 const PILL_BASE =
     'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
-
-const FIELD_LABEL = 'mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
-const FIELD_INPUT =
-    'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
 
 const toneClassMap: Record<BiondeskTone, string> = {
     accent: cn(PILL_BASE, 'bg-bion-accent-soft text-bion-accent'),
@@ -47,8 +40,6 @@ const toneColorMap: Record<BiondeskTone, string> = {
     muted: 'var(--bion-text-muted)',
 };
 
-const sourceOptions = ['Upwork', 'Referral', 'LinkedIn', 'Direct', 'Other'];
-
 type SortKey = 'value' | 'activity';
 
 export default function OpportunitiesPage({
@@ -56,6 +47,7 @@ export default function OpportunitiesPage({
     stages,
     opportunities: initialOpportunities,
 }: OpportunitiesPageProps) {
+    const { currentTeam } = usePage().props;
     const [view, setView] = useState<'board' | 'list'>(defaultView);
     const [items, setItems] = useState(initialOpportunities);
     const [search, setSearch] = useState('');
@@ -63,21 +55,11 @@ export default function OpportunitiesPage({
         key: 'value',
         asc: true,
     });
-    const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
-    const [detailStage, setDetailStage] = useState('');
-    const [detailNotes, setDetailNotes] = useState('');
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
     const [draggedOpportunityId, setDraggedOpportunityId] =
         useState<number | null>(null);
     const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-    const [showNewOpportunityModal, setShowNewOpportunityModal] = useState(false);
     const [showConfirmProjectModal, setShowConfirmProjectModal] = useState<string | null>(null);
-    const [newOpportunityForm, setNewOpportunityForm] = useState({
-        title: '',
-        client: '',
-        value: '',
-        source: sourceOptions[0],
-    });
 
     const stageMeta = useMemo(() => {
         return Object.fromEntries(
@@ -125,23 +107,6 @@ export default function OpportunitiesPage({
         return sortedItems;
     }, [filteredItems, sort]);
 
-    const selectedOpportunity = useMemo(() => {
-        if (selectedOpportunityId === null) {
-            return null;
-        }
-
-        return items.find((item) => item.id === selectedOpportunityId) ?? null;
-    }, [items, selectedOpportunityId]);
-
-    useEffect(() => {
-        if (!selectedOpportunity) {
-            return;
-        }
-
-        setDetailStage(selectedOpportunity.stage);
-        setDetailNotes(selectedOpportunity.summary);
-    }, [selectedOpportunity]);
-
     useEffect(() => {
         const handleDocumentClick = (): void => {
             setMenuOpenId(null);
@@ -177,9 +142,20 @@ export default function OpportunitiesPage({
         }
     };
 
-    const openOpportunityDetail = (opportunityId: number): void => {
-        setSelectedOpportunityId(opportunityId);
-        setMenuOpenId(null);
+    const visitEditOpportunity = (opportunityId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(opportunityEdit({ current_team: currentTeam.slug, opportunity: opportunityId }));
+    };
+
+    const visitCreateOpportunity = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(opportunityCreate(currentTeam.slug));
     };
 
     const handleDropToStage = (stageKey: string): void => {
@@ -189,74 +165,6 @@ export default function OpportunitiesPage({
 
         setDraggedOpportunityId(null);
         setDragOverStage(null);
-    };
-
-    const saveOpportunityDetail = (): void => {
-        if (!selectedOpportunity) {
-            return;
-        }
-
-        const originalStage = selectedOpportunity.stage;
-
-        setItems((current) =>
-            current.map((item) => {
-                if (item.id !== selectedOpportunity.id) {
-                    return item;
-                }
-
-                return {
-                    ...item,
-                    stage: detailStage,
-                    stageLabel: stageMeta[detailStage]?.label ?? item.stageLabel,
-                    tone: stageMeta[detailStage]?.tone ?? item.tone,
-                    summary: detailNotes,
-                };
-            }),
-        );
-
-        if (originalStage !== 'won' && detailStage === 'won') {
-            setShowConfirmProjectModal(selectedOpportunity.title);
-        }
-
-        setSelectedOpportunityId(null);
-    };
-
-    const createOpportunity = (): void => {
-        if (
-            newOpportunityForm.title.trim() === '' ||
-            newOpportunityForm.client.trim() === ''
-        ) {
-            return;
-        }
-
-        const valueText =
-            newOpportunityForm.value.trim() === '' ? '$0' : newOpportunityForm.value.trim();
-        const numericValue = Number(valueText.replace(/[^0-9.]/g, '')) || 0;
-
-        const newOpportunity: OpportunityItem = {
-            id: Math.max(...items.map((item) => item.id)) + 1,
-            title: newOpportunityForm.title.trim(),
-            company: newOpportunityForm.client.trim(),
-            contact: newOpportunityForm.client.trim(),
-            source: newOpportunityForm.source,
-            amount: valueText.startsWith('$') ? valueText : `$${valueText}`,
-            amountValue: numericValue,
-            stage: 'inbox',
-            stageLabel: stageMeta.inbox?.label ?? 'Inbox',
-            tone: stageMeta.inbox?.tone ?? 'muted',
-            lastActivity: 'Just now',
-            activityOrder: 0,
-            summary: 'New opportunity created from the scaffold modal.',
-        };
-
-        setItems((current) => [newOpportunity, ...current]);
-        setShowNewOpportunityModal(false);
-        setNewOpportunityForm({
-            title: '',
-            client: '',
-            value: '',
-            source: sourceOptions[0],
-        });
     };
 
     const toggleSort = (key: SortKey): void => {
@@ -324,7 +232,7 @@ export default function OpportunitiesPage({
                     <button
                         type="button"
                         className={BTN_PRIMARY}
-                        onClick={() => setShowNewOpportunityModal(true)}
+                        onClick={() => visitCreateOpportunity()}
                     >
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-plus" />
@@ -390,14 +298,14 @@ export default function OpportunitiesPage({
                                                             ],
                                                     }}
                                                     onClick={() =>
-                                                        openOpportunityDetail(
+                                                        visitEditOpportunity(
                                                             item.id,
                                                         )
                                                     }
                                                     onKeyDown={(event) => {
                                                         if (event.key === 'Enter' || event.key === ' ') {
                                                             event.preventDefault();
-                                                            openOpportunityDetail(item.id);
+                                                            visitEditOpportunity(item.id);
                                                         }
                                                     }}
                                                     onDragStart={() =>
@@ -560,7 +468,7 @@ export default function OpportunitiesPage({
                                                 key={item.id}
                                                 className="cursor-pointer [transition:background_0.1s_ease] hover:[&>td]:bg-bion-bg"
                                                 onClick={() =>
-                                                    openOpportunityDetail(
+                                                    visitEditOpportunity(
                                                         item.id,
                                                     )
                                                 }
@@ -606,250 +514,6 @@ export default function OpportunitiesPage({
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div
-                    className={cn(
-                        'group/slide fixed inset-0 z-[90] bg-black/40 opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!',
-                        selectedOpportunity && 'open',
-                    )}
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setSelectedOpportunityId(null);
-                        }
-                    }}
-                >
-                    <aside className="fixed top-0 right-0 flex h-screen w-[400px] max-w-[90vw] -translate-x-0 flex-col border-l border-bion-border bg-bion-surface shadow-[-8px_0_40px_rgba(0,0,0,0.3)] [transform:translateX(100%)] [transition:transform_0.2s_cubic-bezier(0.16,1,0.3,1)] group-[.open]/slide:[transform:translateX(0)]">
-                        {selectedOpportunity ? (
-                            <>
-                                <div className="flex items-start justify-between gap-[12px] border-b border-bion-border p-[20px]">
-                                    <div>
-                                        <h2 className="mb-[4px] text-[17px] font-bold">{selectedOpportunity.title}</h2>
-                                        <p className="text-[12.5px] text-bion-text-muted">{selectedOpportunity.company}</p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text"
-                                        onClick={() =>
-                                            setSelectedOpportunityId(null)
-                                        }
-                                    >
-                                        <svg className={ICON_CLS}>
-                                            <use href="#i-x" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <div className="flex-1 overflow-y-auto p-[20px]">
-                                    <div className="mb-[18px]">
-                                        <span className={FIELD_LABEL}>
-                                            Stage
-                                        </span>
-                                        <select
-                                            className={FIELD_INPUT}
-                                            value={detailStage}
-                                            onChange={(event) =>
-                                                setDetailStage(
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            {stages.map((stage) => (
-                                                <option
-                                                    key={stage.key}
-                                                    value={stage.key}
-                                                >
-                                                    {stage.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="mb-[18px]">
-                                        <span className={FIELD_LABEL}>
-                                            Value
-                                        </span>
-                                        <span className="font-mono text-[14px]">
-                                            {selectedOpportunity.amount}
-                                        </span>
-                                    </div>
-
-                                    <div className="mb-[18px]">
-                                        <span className={FIELD_LABEL}>
-                                            Source
-                                        </span>
-                                        <span className="text-[14px]">
-                                            {selectedOpportunity.source}
-                                        </span>
-                                    </div>
-
-                                    <div className="mb-[18px]">
-                                        <span className={FIELD_LABEL}>
-                                            Last activity
-                                        </span>
-                                        <span className="text-[14px]">
-                                            {selectedOpportunity.lastActivity}
-                                        </span>
-                                    </div>
-
-                                    <div className="mb-[18px]">
-                                        <span className={FIELD_LABEL}>
-                                            Notes
-                                        </span>
-                                        <textarea
-                                            className={cn(FIELD_INPUT, 'min-h-[110px] resize-y')}
-                                            value={detailNotes}
-                                            onChange={(event) =>
-                                                setDetailNotes(
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-[10px] border-t border-bion-border p-[16px_20px]">
-                                    <button
-                                        type="button"
-                                        className={cn(BTN_GHOST, 'flex-1 justify-center')}
-                                        onClick={() =>
-                                            setSelectedOpportunityId(null)
-                                        }
-                                    >
-                                        Close
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={cn(BTN_PRIMARY, 'flex-1 justify-center')}
-                                        onClick={saveOpportunityDetail}
-                                    >
-                                        Save changes
-                                    </button>
-                                </div>
-                            </>
-                        ) : null}
-                    </aside>
-                </div>
-
-                <div
-                    className={cn(
-                        'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!',
-                        showNewOpportunityModal && 'open',
-                    )}
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setShowNewOpportunityModal(false);
-                        }
-                    }}
-                >
-                    <div className="w-full max-w-[440px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
-                        <div className="flex items-center justify-between border-b border-bion-border p-[18px_20px]">
-                            <h3 className="text-[15.5px] font-bold">New Opportunity</h3>
-                            <button
-                                type="button"
-                                className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text"
-                                onClick={() =>
-                                    setShowNewOpportunityModal(false)
-                                }
-                            >
-                                <svg className={ICON_CLS}>
-                                    <use href="#i-x" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="max-h-[65vh] overflow-y-auto p-[20px]">
-                            <div className="mb-[16px]">
-                                <span className={FIELD_LABEL}>Title</span>
-                                <input
-                                    className={FIELD_INPUT}
-                                    placeholder="e.g. Website Redesign"
-                                    value={newOpportunityForm.title}
-                                    onChange={(event) =>
-                                        setNewOpportunityForm((current) => ({
-                                            ...current,
-                                            title: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="flex gap-[10px]">
-                                <div className="mb-[16px] flex-1">
-                                    <span className={FIELD_LABEL}>Client</span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        placeholder="Client name"
-                                        value={newOpportunityForm.client}
-                                        onChange={(event) =>
-                                            setNewOpportunityForm(
-                                                (current) => ({
-                                                    ...current,
-                                                    client: event.target.value,
-                                                }),
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="mb-[16px] flex-1">
-                                    <span className={FIELD_LABEL}>Value</span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        placeholder="$0"
-                                        value={newOpportunityForm.value}
-                                        onChange={(event) =>
-                                            setNewOpportunityForm(
-                                                (current) => ({
-                                                    ...current,
-                                                    value: event.target.value,
-                                                }),
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mb-[16px]">
-                                <span className={FIELD_LABEL}>Source</span>
-                                <select
-                                    className={FIELD_INPUT}
-                                    value={newOpportunityForm.source}
-                                    onChange={(event) =>
-                                        setNewOpportunityForm((current) => ({
-                                            ...current,
-                                            source: event.target.value,
-                                        }))
-                                    }
-                                >
-                                    {sourceOptions.map((source) => (
-                                        <option key={source} value={source}>
-                                            {source}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-[10px] border-t border-bion-border p-[16px_20px]">
-                            <button
-                                type="button"
-                                className={BTN_GHOST}
-                                onClick={() =>
-                                    setShowNewOpportunityModal(false)
-                                }
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className={BTN_PRIMARY}
-                                onClick={createOpportunity}
-                            >
-                                Create Opportunity
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <div

@@ -7,9 +7,15 @@ use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OpportunitiesController;
+use App\Http\Controllers\OpportunityCreateController;
+use App\Http\Controllers\OpportunityEditController;
 use App\Http\Controllers\ProfileLibraryController;
+use App\Http\Controllers\ProjectCreateController;
+use App\Http\Controllers\ProjectEditController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectShowController;
+use App\Http\Controllers\ProposalCreateController;
+use App\Http\Controllers\ProposalEditController;
 use App\Http\Controllers\ProposalsController;
 use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\QuotationCreateController;
@@ -28,10 +34,18 @@ Route::prefix('app/{current_team}')
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('opportunities', OpportunitiesController::class)->name('opportunities.index');
+        Route::get('opportunities/create', OpportunityCreateController::class)->name('opportunities.create');
+        Route::get('opportunities/{opportunity}/edit', OpportunityEditController::class)
+            ->whereNumber('opportunity')
+            ->name('opportunities.edit');
         Route::get('projects', ProjectsController::class)->name('projects.index');
+        Route::get('projects/create', ProjectCreateController::class)->name('projects.create');
         Route::get('projects/{project}', ProjectShowController::class)
             ->whereNumber('project')
             ->name('projects.show');
+        Route::get('projects/{project}/edit', ProjectEditController::class)
+            ->whereNumber('project')
+            ->name('projects.edit');
         Route::controller(ContactController::class)->group(function () {
             Route::get('contacts', 'index')->name('contacts.index');
             Route::get('contacts/create', 'create')->name('contacts.create');
@@ -43,6 +57,10 @@ Route::prefix('app/{current_team}')
                 ->name('contacts.edit');
         });
         Route::get('proposals', ProposalsController::class)->name('proposals.index');
+        Route::get('proposals/create', ProposalCreateController::class)->name('proposals.create');
+        Route::get('proposals/{proposal}/edit', ProposalEditController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.edit');
         Route::get('invoices', InvoicesController::class)->name('invoices.index');
         Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
         Route::get('invoices/{invoice}', InvoiceShowController::class)

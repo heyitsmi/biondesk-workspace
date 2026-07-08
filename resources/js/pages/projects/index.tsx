@@ -2,29 +2,22 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as projects, show as projectShow } from '@/routes/projects';
+import { create as projectCreate, edit as projectEdit, index as projects, show as projectShow } from '@/routes/projects';
 import type {
     BiondeskTone,
     ProjectItem,
     ProjectsPageProps,
 } from '@/types';
 
-const ICON_CLS =
-    'h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
 const ICON_SM_CLS =
     'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
 
 const BTN =
     'inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97]';
 const BTN_PRIMARY = cn(BTN, 'bg-bion-accent text-bion-accent-text hover:opacity-[0.88]');
-const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised');
 
 const PILL_BASE =
     'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
-
-const FIELD_LABEL = 'mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
-const FIELD_INPUT =
-    'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
 
 const toneClassMap: Record<BiondeskTone, string> = {
     accent: cn(PILL_BASE, 'bg-bion-accent-soft text-bion-accent'),
@@ -62,12 +55,6 @@ export default function ProjectsPage({
         null,
     );
     const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-    const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-    const [newProjectForm, setNewProjectForm] = useState({
-        title: '',
-        client: '',
-        dueAt: '',
-    });
 
     const stageMeta = useMemo(() => {
         return Object.fromEntries(
@@ -132,6 +119,22 @@ export default function ProjectsPage({
         router.visit(projectShow({ current_team: currentTeam.slug, project: projectId }));
     };
 
+    const visitEditProject = (projectId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(projectEdit({ current_team: currentTeam.slug, project: projectId }));
+    };
+
+    const visitCreateProject = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(projectCreate(currentTeam.slug));
+    };
+
     const projectProgress = (project: ProjectItem): { done: number; total: number; percent: number } => {
         const done = project.tasks.filter((task) => task.done).length;
         const total = project.tasks.length;
@@ -164,52 +167,6 @@ export default function ProjectsPage({
 
         setDraggedProjectId(null);
         setDragOverStage(null);
-    };
-
-    const createProject = (): void => {
-        const title =
-            newProjectForm.title.trim() === ''
-                ? 'Untitled Project'
-                : newProjectForm.title.trim();
-        const client =
-            newProjectForm.client.trim() === ''
-                ? 'Unknown Client'
-                : newProjectForm.client.trim();
-        const dueAt =
-            newProjectForm.dueAt.trim() === ''
-                ? 'No due date'
-                : newProjectForm.dueAt.trim();
-
-        const dueOrder =
-            Number(dueAt.match(/\d+/)?.[0] ?? '99') || 99;
-
-        const nextId = Math.max(...items.map((item) => item.id)) + 1;
-
-        setItems((current) => [
-            ...current,
-            {
-                id: nextId,
-                title,
-                client,
-                stage: 'not_started',
-                stageLabel: stageMeta.not_started?.label ?? 'Not Started',
-                tone: stageMeta.not_started?.tone ?? 'muted',
-                progress: 0,
-                dueAt,
-                dueOrder,
-                budget: '$0',
-                requestLogCount: 0,
-                tasks: [],
-                requestLogs: [],
-            },
-        ]);
-
-        setNewProjectForm({
-            title: '',
-            client: '',
-            dueAt: '',
-        });
-        setShowNewProjectModal(false);
     };
 
     return (
@@ -270,7 +227,7 @@ export default function ProjectsPage({
                     <button
                         type="button"
                         className={BTN_PRIMARY}
-                        onClick={() => setShowNewProjectModal(true)}
+                        onClick={visitCreateProject}
                     >
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-plus" />
@@ -410,6 +367,19 @@ export default function ProjectsPage({
                                                                     }}
                                                                 >
                                                                     View detail
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
+                                                                    onClick={(
+                                                                        event,
+                                                                    ) => {
+                                                                        event.stopPropagation();
+                                                                        setMenuOpenId(null);
+                                                                        visitEditProject(item.id);
+                                                                    }}
+                                                                >
+                                                                    Edit
                                                                 </button>
                                                                 <div className="px-[8px] pt-[6px] pb-[4px] text-[11px] text-bion-text-muted uppercase">
                                                                     Move to
@@ -590,99 +560,6 @@ export default function ProjectsPage({
                     )}
                 </div>
 
-                <div
-                    className={cn(
-                        'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!',
-                        showNewProjectModal && 'open',
-                    )}
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setShowNewProjectModal(false);
-                        }
-                    }}
-                >
-                    <div className="w-full max-w-[440px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-10px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
-                        <div className="flex items-center justify-between border-b border-bion-border p-[18px_20px]">
-                            <h3 className="text-[15.5px] font-bold">New Project</h3>
-                            <button
-                                type="button"
-                                className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px] text-bion-text-muted hover:bg-bion-bg hover:text-bion-text"
-                                onClick={() => setShowNewProjectModal(false)}
-                            >
-                                <svg className={ICON_CLS}>
-                                    <use href="#i-x" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="max-h-[65vh] overflow-y-auto p-[20px]">
-                            <div className="mb-[16px]">
-                                <span className={FIELD_LABEL}>Title</span>
-                                <input
-                                    className={FIELD_INPUT}
-                                    placeholder="e.g. Website Redesign"
-                                    value={newProjectForm.title}
-                                    onChange={(event) =>
-                                        setNewProjectForm((current) => ({
-                                            ...current,
-                                            title: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="flex gap-[10px]">
-                                <div className="mb-[16px] flex-1">
-                                    <span className={FIELD_LABEL}>Client</span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        placeholder="Client name"
-                                        value={newProjectForm.client}
-                                        onChange={(event) =>
-                                            setNewProjectForm((current) => ({
-                                                ...current,
-                                                client: event.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                                <div className="mb-[16px] flex-1">
-                                    <span className={FIELD_LABEL}>
-                                        Due date
-                                    </span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        placeholder="e.g. Aug 15"
-                                        value={newProjectForm.dueAt}
-                                        onChange={(event) =>
-                                            setNewProjectForm((current) => ({
-                                                ...current,
-                                                dueAt: event.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-[10px] border-t border-bion-border p-[16px_20px]">
-                            <button
-                                type="button"
-                                className={BTN_GHOST}
-                                onClick={() => setShowNewProjectModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className={BTN_PRIMARY}
-                                onClick={createProject}
-                            >
-                                Create Project
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </>
     );

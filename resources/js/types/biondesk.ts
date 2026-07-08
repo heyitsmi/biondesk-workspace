@@ -74,6 +74,33 @@ export type OpportunitiesPageProps = {
     opportunities: OpportunityItem[];
 };
 
+export type OpportunityContactOption = {
+    id: number;
+    name: string;
+};
+
+export type OpportunityFormValues = {
+    title: string;
+    contactId: number | '';
+    amountValue: string;
+    stage: string;
+    closeDate: string;
+    priority: 'low' | 'medium' | 'high';
+    description: string;
+};
+
+export type OpportunityCreatePageProps = {
+    stages: PipelineStage[];
+    contacts: OpportunityContactOption[];
+    defaults: OpportunityFormValues;
+};
+
+export type OpportunityEditPageProps = {
+    stages: PipelineStage[];
+    contacts: OpportunityContactOption[];
+    opportunity: OpportunityFormValues & { id: number };
+};
+
 export type ProjectTask = {
     id: number;
     title: string;
@@ -160,6 +187,41 @@ export type ProjectsPageProps = {
     };
     stages: PipelineStage[];
     projects: ProjectItem[];
+};
+
+export type ProjectClientOption = {
+    id: number;
+    name: string;
+};
+
+export type ProjectLeadOption = {
+    id: number;
+    name: string;
+};
+
+export type ProjectFormValues = {
+    title: string;
+    clientId: number | '';
+    stage: string;
+    startDate: string;
+    dueDate: string;
+    description: string;
+    leadId: number;
+    budget: string;
+};
+
+export type ProjectCreatePageProps = {
+    stages: PipelineStage[];
+    clients: ProjectClientOption[];
+    leads: ProjectLeadOption[];
+    defaults: ProjectFormValues;
+};
+
+export type ProjectEditPageProps = {
+    stages: PipelineStage[];
+    clients: ProjectClientOption[];
+    leads: ProjectLeadOption[];
+    project: ProjectFormValues & { id: number };
 };
 
 export type ProjectDetail = {
@@ -323,6 +385,47 @@ export type ProposalsPageProps = {
     profileLibrarySummary: {
         title: string;
         description: string;
+    };
+};
+
+export type ProposalClientOption = {
+    id: number;
+    name: string;
+};
+
+export type ProposalProjectOption = {
+    id: number;
+    title: string;
+};
+
+export type ProposalCreatePageProps = {
+    nextNumber: string;
+    defaultDatePrepared: string;
+    defaultValidUntil: string;
+    clients: ProposalClientOption[];
+    projects: ProposalProjectOption[];
+};
+
+export type ProposalDraftLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+};
+
+export type ProposalEditPageProps = {
+    clients: ProposalClientOption[];
+    projects: ProposalProjectOption[];
+    proposal: {
+        id: number;
+        title: string;
+        number: string;
+        clientId: number | '';
+        datePrepared: string;
+        validUntil: string;
+        content: string;
+        lineItems: ProposalDraftLineItem[];
+        notes: string;
     };
 };
 
