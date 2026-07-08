@@ -16,6 +16,12 @@ test('app scaffold pages require authentication and verification', function () {
 
     $this->get(route('contacts.index', ['current_team' => $team->slug]))
         ->assertRedirect(route('login'));
+
+    $this->get(route('reminders.index', ['current_team' => $team->slug]))
+        ->assertRedirect(route('login'));
+
+    $this->get(route('profiles.index', ['current_team' => $team->slug]))
+        ->assertRedirect(route('login'));
 });
 
 test('authenticated users can view app scaffold pages for their current team', function () {
@@ -105,6 +111,41 @@ test('authenticated users can view app scaffold pages for their current team', f
             ->has('documents', 5)
             ->where('profileLibrarySummary.title', 'AI profile library ready'),
         );
+
+    $this->actingAs($user)
+        ->get(route('reminders.index', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('reminders/index')
+            ->has('reminders', 8)
+            ->where('summary.allCount', 8)
+            ->where('summary.overdueCount', 2),
+        );
+
+    $this->actingAs($user)
+        ->get(route('profiles.index', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('profiles/index')
+            ->has('profiles', 5),
+        );
+
+    $this->actingAs($user)
+        ->get(route('profiles.create', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('profiles/create')
+            ->has('defaults'),
+        );
+
+    $this->actingAs($user)
+        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => 1]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('profiles/edit')
+            ->where('profile.id', 1)
+            ->where('profile.title', 'Default Company Profile'),
+        );
 });
 
 test('visiting an app team route syncs the current team context', function () {
@@ -146,5 +187,14 @@ test('contact detail routes return 404 for unknown stub contact', function () {
 
     $this->actingAs($user)
         ->get(route('contacts.edit', ['current_team' => $team->slug, 'contact' => 9999]))
+        ->assertNotFound();
+});
+
+test('profile edit route returns 404 for unknown stub profile', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => 9999]))
         ->assertNotFound();
 });

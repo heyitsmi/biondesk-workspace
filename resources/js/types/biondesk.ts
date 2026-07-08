@@ -486,6 +486,72 @@ export type QuotationCreatePageProps = {
     projects: QuotationCreateProjectOption[];
 };
 
+export type ReminderBucket = 'overdue' | 'today' | 'upcoming';
+
+export type ReminderLinkKind = 'proposal' | 'project' | 'contact' | 'invoice';
+
+export type ReminderLink = {
+    kind: ReminderLinkKind;
+    label: string;
+    id: number | null;
+};
+
+export type ReminderItem = {
+    id: number;
+    title: string;
+    bucket: ReminderBucket;
+    dueLabel: string;
+    dueSort: number;
+    completed: boolean;
+    link: ReminderLink | null;
+};
+
+export type ReminderSummary = {
+    allCount: number;
+    todayCount: number;
+    upcomingCount: number;
+    overdueCount: number;
+};
+
+export type RemindersPageProps = {
+    summary: ReminderSummary;
+    reminders: ReminderItem[];
+};
+
+export type ProfileCategory = 'company' | 'team' | 'case' | 'asset';
+
+export type ProfileItem = {
+    id: number;
+    title: string;
+    description: string;
+    category: ProfileCategory;
+    categoryLabel: string;
+    icon: string;
+    updatedAt: string;
+    shortDescription: string;
+    body: string;
+    hasImage: boolean;
+};
+
+export type ProfilesPageProps = {
+    profiles: ProfileItem[];
+};
+
+export type ProfileFormValues = {
+    title: string;
+    category: '' | ProfileCategory;
+    shortDescription: string;
+    body: string;
+};
+
+export type ProfileCreatePageProps = {
+    defaults: ProfileFormValues;
+};
+
+export type ProfileEditPageProps = {
+    profile: ProfileItem;
+};
+
 export type PublicLeadFormPageProps = {
     team: {
         name: string;

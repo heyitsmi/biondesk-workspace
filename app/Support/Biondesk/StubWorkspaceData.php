@@ -1494,6 +1494,222 @@ class StubWorkspaceData
     }
 
     /**
+     * Get the stubbed reminders page data.
+     *
+     * @return array<string, mixed>
+     */
+    public function reminders(Team $team): array
+    {
+        $reminders = [
+            [
+                'id' => 1,
+                'title' => 'Follow up with John Smith regarding the web redesign proposal',
+                'bucket' => 'overdue',
+                'dueLabel' => 'Oct 18, 2023',
+                'dueSort' => 1,
+                'completed' => false,
+                'link' => ['kind' => 'proposal', 'label' => 'PRP-2023-010', 'id' => null],
+            ],
+            [
+                'id' => 2,
+                'title' => 'Send updated logo files to client',
+                'bucket' => 'overdue',
+                'dueLabel' => 'Yesterday',
+                'dueSort' => 2,
+                'completed' => false,
+                'link' => ['kind' => 'project', 'label' => 'API Integration Layer', 'id' => 14],
+            ],
+            [
+                'id' => 3,
+                'title' => 'Call Alice for weekly sync meeting',
+                'bucket' => 'today',
+                'dueLabel' => '2:00 PM',
+                'dueSort' => 3,
+                'completed' => false,
+                'link' => ['kind' => 'contact', 'label' => 'Alice Doe', 'id' => 125],
+            ],
+            [
+                'id' => 4,
+                'title' => 'Check bank for payment of Invoice INV-2023-040',
+                'bucket' => 'today',
+                'dueLabel' => 'Today',
+                'dueSort' => 4,
+                'completed' => true,
+                'link' => ['kind' => 'invoice', 'label' => 'INV-2023-040', 'id' => 40],
+            ],
+            [
+                'id' => 5,
+                'title' => 'Renew domain and hosting for client project',
+                'bucket' => 'upcoming',
+                'dueLabel' => 'Nov 5, 2023',
+                'dueSort' => 5,
+                'completed' => false,
+                'link' => null,
+            ],
+            [
+                'id' => 6,
+                'title' => 'Send monthly analytics report',
+                'bucket' => 'upcoming',
+                'dueLabel' => 'Nov 10, 2023',
+                'dueSort' => 6,
+                'completed' => false,
+                'link' => ['kind' => 'contact', 'label' => 'Marcus Tan', 'id' => 126],
+            ],
+            [
+                'id' => 7,
+                'title' => 'Prepare Q4 proposal draft for Nexus Corp',
+                'bucket' => 'upcoming',
+                'dueLabel' => 'Nov 12, 2023',
+                'dueSort' => 7,
+                'completed' => false,
+                'link' => ['kind' => 'proposal', 'label' => 'Brand Identity Package', 'id' => 23],
+            ],
+            [
+                'id' => 8,
+                'title' => 'Schedule kickoff call for Portfolio Redesign',
+                'bucket' => 'upcoming',
+                'dueLabel' => 'Nov 18, 2023',
+                'dueSort' => 8,
+                'completed' => false,
+                'link' => ['kind' => 'project', 'label' => 'Portfolio Redesign', 'id' => 11],
+            ],
+        ];
+
+        return [
+            'summary' => [
+                'allCount' => count($reminders),
+                'todayCount' => count(array_filter($reminders, fn ($reminder) => $reminder['bucket'] === 'today')),
+                'upcomingCount' => count(array_filter($reminders, fn ($reminder) => $reminder['bucket'] === 'upcoming')),
+                'overdueCount' => count(array_filter($reminders, fn ($reminder) => $reminder['bucket'] === 'overdue')),
+            ],
+            'reminders' => $reminders,
+        ];
+    }
+
+    /**
+     * Get the stubbed profile library page data.
+     *
+     * @return array<string, mixed>
+     */
+    public function profiles(Team $team): array
+    {
+        return [
+            'profiles' => $this->profileRecords(),
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the new-profile page.
+     *
+     * @return array<string, mixed>
+     */
+    public function profileCreateContext(Team $team): array
+    {
+        return [
+            'defaults' => [
+                'title' => '',
+                'category' => '',
+                'shortDescription' => '',
+                'body' => '',
+            ],
+        ];
+    }
+
+    /**
+     * Get the stubbed context needed to render the edit-profile page, or null when not found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function profileEditContext(Team $team, int $profileId): ?array
+    {
+        $profile = null;
+
+        foreach ($this->profileRecords() as $candidate) {
+            if (($candidate['id'] ?? null) === $profileId) {
+                $profile = $candidate;
+                break;
+            }
+        }
+
+        if ($profile === null) {
+            return null;
+        }
+
+        return [
+            'profile' => $profile,
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function profileRecords(): array
+    {
+        return [
+            [
+                'id' => 1,
+                'title' => 'Default Company Profile',
+                'description' => 'Standard agency profile containing our history, mission, core values, and standard services offered.',
+                'category' => 'company',
+                'categoryLabel' => 'Company Info',
+                'icon' => 'i-briefcase',
+                'updatedAt' => 'Updated 2d ago',
+                'shortDescription' => 'Standard agency profile containing our history, mission, core values, and standard services offered.',
+                'body' => "Biondesk Creative Agency was founded in 2018 with a single mission: to build interfaces that feel alive.\n\nOur core services include:\n- Product Strategy & Research\n- UX/UI Design for Web & Mobile\n- Design Systems",
+                'hasImage' => true,
+            ],
+            [
+                'id' => 2,
+                'title' => 'John - Lead Designer Bio',
+                'description' => 'Professional biography for John, highlighting 10+ years of UX/UI experience and award-winning projects.',
+                'category' => 'team',
+                'categoryLabel' => 'Team Bio',
+                'icon' => 'i-user',
+                'updatedAt' => 'Updated 1w ago',
+                'shortDescription' => 'Professional biography for John, highlighting 10+ years of UX/UI experience and award-winning projects.',
+                'body' => 'John has spent over a decade crafting interfaces for startups and enterprise teams alike, with a focus on accessibility and motion design.',
+                'hasImage' => false,
+            ],
+            [
+                'id' => 3,
+                'title' => 'Case Study: FinTech App',
+                'description' => 'Detailed case study outlining our process, challenges, and results for the recent mobile banking app redesign.',
+                'category' => 'case',
+                'categoryLabel' => 'Case Study',
+                'icon' => 'i-layers',
+                'updatedAt' => 'Updated 3w ago',
+                'shortDescription' => 'Detailed case study outlining our process, challenges, and results for the recent mobile banking app redesign.',
+                'body' => 'The client came to us with a legacy banking app suffering from poor retention. Over 12 weeks we redesigned the onboarding flow, reducing drop-off by 34%.',
+                'hasImage' => false,
+            ],
+            [
+                'id' => 4,
+                'title' => 'Brand Assets & Logos',
+                'description' => 'Collection of our agency logos, typography rules, color palettes, and usage guidelines.',
+                'category' => 'asset',
+                'categoryLabel' => 'Assets',
+                'icon' => 'i-image',
+                'updatedAt' => 'Updated 1mo ago',
+                'shortDescription' => 'Collection of our agency logos, typography rules, color palettes, and usage guidelines.',
+                'body' => 'This asset pack includes primary and secondary logo marks, the full typography scale, and the approved color palette for co-branded materials.',
+                'hasImage' => false,
+            ],
+            [
+                'id' => 5,
+                'title' => 'Sarah - Project Manager',
+                'description' => 'Bio for Sarah, focusing on agile methodologies, communication skills, and delivering projects on time.',
+                'category' => 'team',
+                'categoryLabel' => 'Team Bio',
+                'icon' => 'i-user',
+                'updatedAt' => 'Updated 1mo ago',
+                'shortDescription' => 'Bio for Sarah, focusing on agile methodologies, communication skills, and delivering projects on time.',
+                'body' => 'Sarah keeps every engagement on track with a light-touch agile process, weekly client demos, and a zero-surprises delivery philosophy.',
+                'hasImage' => false,
+            ],
+        ];
+    }
+
+    /**
      * Get the stubbed public lead form data.
      *
      * @return array<string, mixed>

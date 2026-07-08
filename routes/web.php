@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OpportunitiesController;
+use App\Http\Controllers\ProfileLibraryController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectShowController;
 use App\Http\Controllers\ProposalsController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\QuotationCreateController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
+use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +53,14 @@ Route::prefix('app/{current_team}')
         Route::get('quotations/{quotation}', QuotationShowController::class)
             ->whereNumber('quotation')
             ->name('quotations.show');
+        Route::get('reminders', RemindersController::class)->name('reminders.index');
+        Route::controller(ProfileLibraryController::class)->group(function () {
+            Route::get('profiles', 'index')->name('profiles.index');
+            Route::get('profiles/create', 'create')->name('profiles.create');
+            Route::get('profiles/{profile}/edit', 'edit')
+                ->whereNumber('profile')
+                ->name('profiles.edit');
+        });
     });
 
 Route::middleware(['auth'])->group(function () {

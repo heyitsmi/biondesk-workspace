@@ -12,9 +12,11 @@ import { index as contacts } from '@/routes/contacts';
 import { index as invoices } from '@/routes/invoices';
 import { index as opportunities } from '@/routes/opportunities';
 import { edit as profile } from '@/routes/profile';
+import { index as profileLibrary } from '@/routes/profiles';
 import { index as projects } from '@/routes/projects';
 import { index as proposals } from '@/routes/proposals';
 import { index as quotations } from '@/routes/quotations';
+import { index as reminders } from '@/routes/reminders';
 import {
     useEffect,
     useMemo,
@@ -123,6 +125,10 @@ const iconSprite = `
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
       <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
       <symbol id="i-check-square" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+      <symbol id="i-bold" viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 010 8H6zM6 12h9a4 4 0 010 8H6z"/></symbol>
+      <symbol id="i-italic" viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></symbol>
       <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
       <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M21 12a8 8 0 11-3.5-6.6L21 4l-1 4.5A7.9 7.9 0 0121 12z"/></symbol>
       <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
@@ -182,6 +188,14 @@ export default function BiondeskAppShell({
             : Array.isArray(propsBag.contacts)
               ? String(propsBag.contacts.length)
               : '5';
+    const remindersSummary = propsBag.summary as { allCount?: number } | undefined;
+    const remindersCount =
+        typeof remindersSummary?.allCount === 'number'
+            ? String(remindersSummary.allCount)
+            : '8';
+    const profilesCount = Array.isArray(propsBag.profiles)
+        ? String(propsBag.profiles.length)
+        : '5';
 
     const navSections = useMemo<NavSection[]>(() => {
         if (!currentTeam) {
@@ -208,12 +222,12 @@ export default function BiondeskAppShell({
             {
                 label: 'Workspace',
                 items: [
-                    { title: 'Reminders', icon: 'i-bell' },
-                    { title: 'Profile Library', icon: 'i-layers' },
+                    { title: 'Reminders', icon: 'i-bell', href: reminders(currentTeam.slug), badge: remindersCount },
+                    { title: 'Profile Library', icon: 'i-layers', href: profileLibrary(currentTeam.slug), badge: profilesCount },
                 ],
             },
         ];
-    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount, quotationCount, contactsCount]);
+    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount, quotationCount, contactsCount, remindersCount, profilesCount]);
 
     useEffect(() => {
         const previousHtmlOverflow = document.documentElement.style.overflow;
