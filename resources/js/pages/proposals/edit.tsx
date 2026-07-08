@@ -91,7 +91,7 @@ export default function ProposalEditPage({ clients, projects, proposal }: Propos
             <div className="flex flex-1 min-h-0 gap-[24px] max-[1024px]:flex-col">
                 <div className="flex flex-1 justify-center overflow-y-auto">
                     <form
-                        className="flex w-full justify-center"
+                        className="flex w-full items-start justify-center"
                         onSubmit={(event) => {
                             event.preventDefault();
                             backToProposals();
