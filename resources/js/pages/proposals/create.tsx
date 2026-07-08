@@ -18,10 +18,10 @@ const BTN_GHOST_SM =
 const FIELD_LABEL_SM =
     'mb-[4px] text-[12px] font-semibold text-bion-text-muted uppercase [letter-spacing:0.05em]';
 const DOC_FIELD_INPUT =
-    'w-full rounded-[6px] border border-transparent bg-transparent px-[8px] py-[6px] -ml-[8px] text-[14px] text-bion-text [transition:all_0.15s_ease] hover:bg-bion-bg hover:border-bion-border focus:outline-none focus:bg-bion-bg focus:border-bion-accent';
+    'w-full rounded-[6px] border border-bion-border bg-bion-bg px-[10px] py-[7px] text-[14px] text-bion-text outline-none [transition:border-color_0.15s_ease] focus:border-bion-accent';
 
 const LINE_INPUT =
-    'mb-[4px] w-full rounded-[6px] border border-transparent bg-transparent px-[8px] py-[6px] -ml-[8px] text-[14px] text-bion-text [transition:all_0.15s_ease] hover:bg-bion-bg hover:border-bion-border focus:outline-none focus:bg-bion-bg focus:border-bion-accent';
+    'mb-[4px] w-full rounded-[6px] border border-bion-border bg-bion-bg px-[10px] py-[7px] text-[14px] text-bion-text outline-none [transition:border-color_0.15s_ease] focus:border-bion-accent';
 
 const SIDEBAR_LABEL = 'mb-[6px] block text-[12px] font-medium text-bion-text-muted';
 const SIDEBAR_INPUT =
