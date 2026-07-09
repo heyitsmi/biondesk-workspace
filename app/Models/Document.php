@@ -126,6 +126,16 @@ class Document extends Model implements HasMedia
     }
 
     /**
+     * Get the reminder jobs generated for this document.
+     *
+     * @return HasMany<ReminderJob, $this>
+     */
+    public function reminderJobs(): HasMany
+    {
+        return $this->hasMany(ReminderJob::class);
+    }
+
+    /**
      * Get the sum of all payments recorded against this invoice.
      */
     public function amountPaidValue(): int

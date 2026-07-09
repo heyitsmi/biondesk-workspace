@@ -144,11 +144,13 @@ Bergantung ke Fase 4 (Document) dan keputusan 0.9 (skema URL).
 
 Bergantung ke Fase 4/5 (butuh Document dan status Payment).
 
-- [ ] 7.1 Migration + model `ReminderJob` (belongsTo Document)
-- [ ] 7.2 Scheduled command: cek invoice mendekati/lewat jatuh tempo, quote belum direspon → buat/jadwalkan reminder job
-- [ ] 7.3 Kirim email reminder lewat Brevo
-- [ ] 7.4 Halaman `reminders/index.tsx` disambungkan ke data asli (bukan stub)
-- [ ] 7.5 Pest test: reminder ter-generate sesuai kondisi tanggal, tidak dobel kirim
+- [x] 7.1 Migration + model `ReminderJob` (belongsTo Document; kolom `type`, `scheduled_at`, `sent_at`, `dismissed_at`; unique `[document_id, type]`)
+- [x] 7.2 Scheduled command `reminders:generate` (daily): invoice sent/viewed dengan `due_at` dalam 3 hari → `invoice_due_soon`; invoice sent/viewed dengan `due_at` sudah lewat → `invoice_overdue`; quote sent/viewed dengan `valid_until` sudah lewat → `quote_unresponded`. Dedup lewat `firstOrCreate` + unique constraint DB
+- [x] 7.3 Kirim email reminder lewat Brevo (`DocumentReminderMail`, markdown mailable, dikirim ke `document->contact->email`; skip diam-diam kalau document tidak punya contact); `sent_at` dicatat supaya tidak pernah dikirim dua kali
+- [x] 7.4 Halaman `reminders/index.tsx` disambungkan ke data asli (`RemindersController` + `ReminderJob::toReminderArray()`)
+- [x] 7.5 Pest test: kondisi tanggal (due soon/overdue/quote expired vs belum), tidak dobel generate/kirim saat command dijalankan dua kali, document tanpa contact tidak crash, dismiss toggle + team scoping (`ReminderGenerationTest`, 9 test)
+
+**Fase 7 selesai**: `ReminderJob` murni terhubung ke Document (bukan freeform to-do) — sesuai data model yang sudah didokumentasikan di CLAUDE.md, tidak ada entity "reminder manual" terpisah. Fitur "Add Reminder" bebas teks + edit judul yang ada di UI stub **dihapus** karena tidak ada entity yang mendukungnya; diganti checkbox dismiss/undismiss yang tersambung ke `dismissed_at` sungguhan. `ReminderLinkKind` disederhanakan jadi `invoice | quotation` saja (sebelumnya juga ada `proposal`/`project`/`contact` yang tidak pernah dipakai reminder asli). Threshold "due soon" di-hardcode 3 hari (belum ada setting per-team untuk ini, sesuai PRD yang tidak menyebutkan angka spesifik).
 
 ## Fase 8 — Profile Library
 

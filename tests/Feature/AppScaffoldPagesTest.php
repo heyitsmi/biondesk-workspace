@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentItem;
 use App\Models\Opportunity;
 use App\Models\Project;
+use App\Models\ReminderJob;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -136,13 +137,19 @@ test('authenticated users can view app scaffold pages for their current team', f
             ->has('proposal.preparedFor'),
         );
 
+    $reminderInvoice = Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Invoice])->create();
+    ReminderJob::factory()->for($reminderInvoice)->count(2)->sequence(
+        ['type' => 'invoice_overdue', 'scheduled_at' => now()->subDays(5)],
+        ['type' => 'invoice_due_soon', 'scheduled_at' => now()->subDays(3)],
+    )->create();
+
     $this->actingAs($user)
         ->get(route('reminders.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('reminders/index')
-            ->has('reminders', 8)
-            ->where('summary.allCount', 8)
+            ->has('reminders', 2)
+            ->where('summary.allCount', 2)
             ->where('summary.overdueCount', 2),
         );
 

@@ -48,6 +48,7 @@ use App\Http\Controllers\QuotationMoveController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
 use App\Http\Controllers\QuotationStoreController;
+use App\Http\Controllers\ReminderDismissController;
 use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
 use App\Http\Controllers\RequestLogDestroyController;
@@ -195,6 +196,9 @@ Route::prefix('app/{current_team}')
             ->whereNumber('quotation')
             ->name('quotations.show');
         Route::get('reminders', RemindersController::class)->name('reminders.index');
+        Route::patch('reminders/{reminder}/dismiss', ReminderDismissController::class)
+            ->whereNumber('reminder')
+            ->name('reminders.dismiss');
         Route::controller(ProfileLibraryController::class)->group(function () {
             Route::get('profiles', 'index')->name('profiles.index');
             Route::get('profiles/create', 'create')->name('profiles.create');

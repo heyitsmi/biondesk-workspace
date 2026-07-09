@@ -643,12 +643,12 @@ export type QuotationCreatePageProps = {
 
 export type ReminderBucket = 'overdue' | 'today' | 'upcoming';
 
-export type ReminderLinkKind = 'proposal' | 'project' | 'contact' | 'invoice';
+export type ReminderLinkKind = 'invoice' | 'quotation';
 
 export type ReminderLink = {
     kind: ReminderLinkKind;
     label: string;
-    id: number | null;
+    id: number;
 };
 
 export type ReminderItem = {
@@ -658,7 +658,7 @@ export type ReminderItem = {
     dueLabel: string;
     dueSort: number;
     completed: boolean;
-    link: ReminderLink | null;
+    link: ReminderLink;
 };
 
 export type ReminderSummary = {
