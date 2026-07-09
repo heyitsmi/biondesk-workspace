@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -140,6 +141,12 @@ class Opportunity extends Model
         return LogOptions::defaults()
             ->logFillable()
             ->logOnlyDirty()
-            ->dontLogEmptyChanges();
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(fn (string $eventName) => match ($eventName) {
+                ActivityEvent::Created->value => "New opportunity: {$this->title}",
+                ActivityEvent::Updated->value => "Opportunity updated: {$this->title}",
+                ActivityEvent::Deleted->value => "Opportunity removed: {$this->title}",
+                default => $eventName,
+            });
     }
 }

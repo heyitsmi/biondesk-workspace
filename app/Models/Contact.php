@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -184,6 +185,12 @@ class Contact extends Model
         return LogOptions::defaults()
             ->logFillable()
             ->logOnlyDirty()
-            ->dontLogEmptyChanges();
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(fn (string $eventName) => match ($eventName) {
+                ActivityEvent::Created->value => "New contact added: {$this->fullName()}",
+                ActivityEvent::Updated->value => "Contact updated: {$this->fullName()}",
+                ActivityEvent::Deleted->value => "Contact removed: {$this->fullName()}",
+                default => $eventName,
+            });
     }
 }

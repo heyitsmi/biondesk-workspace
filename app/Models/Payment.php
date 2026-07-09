@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Enums\ActivityEvent;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property int $id
@@ -22,6 +25,8 @@ class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
     use HasFactory;
+
+    use LogsActivity;
 
     /**
      * Get the document (invoice) this payment belongs to.
@@ -58,5 +63,20 @@ class Payment extends Model
         return [
             'paid_at' => 'date',
         ];
+    }
+
+    /**
+     * Get the options for logging activity on this model.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(fn (string $eventName) => match ($eventName) {
+                ActivityEvent::Created->value => "Payment received for {$this->document->number} (".Document::money($this->amount_value).')',
+                default => $eventName,
+            });
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\MediaLibrary\HasMedia;
@@ -122,6 +123,12 @@ class ProfileAsset extends Model implements HasMedia
         return LogOptions::defaults()
             ->logFillable()
             ->logOnlyDirty()
-            ->dontLogEmptyChanges();
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(fn (string $eventName) => match ($eventName) {
+                ActivityEvent::Created->value => "New profile added: {$this->title}",
+                ActivityEvent::Updated->value => "Profile updated: {$this->title}",
+                ActivityEvent::Deleted->value => "Profile removed: {$this->title}",
+                default => $eventName,
+            });
     }
 }
