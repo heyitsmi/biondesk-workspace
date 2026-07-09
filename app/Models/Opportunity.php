@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -54,11 +55,42 @@ class Opportunity extends Model
     }
 
     /**
+     * Get the project created from this opportunity, if any.
+     *
+     * @return HasOne<Project, $this>
+     */
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
+    }
+
+    /**
      * Get the formatted amount, e.g. "$5,000".
      */
     public function formattedAmount(): string
     {
         return '$'.number_format($this->amount_value);
+    }
+
+    /**
+     * Get {id, title, company} options for the team's opportunities that don't have a
+     * project yet, used in the project create form's opportunity picker.
+     *
+     * @return array<int, array{id: int, title: string, company: string}>
+     */
+    public static function availableForProject(Team $team): array
+    {
+        return $team->opportunities()
+            ->whereDoesntHave('project')
+            ->with('contact')
+            ->get()
+            ->map(fn (self $opportunity) => [
+                'id' => $opportunity->id,
+                'title' => $opportunity->title,
+                'company' => $opportunity->contact->company ?: $opportunity->contact->fullName(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -82,6 +114,7 @@ class Opportunity extends Model
             'lastActivity' => $this->updated_at?->diffForHumans() ?? '',
             'activityOrder' => $this->updated_at->timestamp,
             'summary' => $this->description ?? '',
+            'projectId' => $this->project?->id,
         ];
     }
 

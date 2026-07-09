@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 
     Route::get('settings/lead-form', [PublicLeadFormSettingsController::class, 'edit'])->name('lead-form.edit');
+    Route::put('settings/lead-form', [PublicLeadFormSettingsController::class, 'update'])->name('lead-form.update');
 
     Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
     Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');

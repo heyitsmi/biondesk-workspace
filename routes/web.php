@@ -15,25 +15,39 @@ use App\Http\Controllers\OpportunityStoreController;
 use App\Http\Controllers\OpportunityUpdateController;
 use App\Http\Controllers\ProfileLibraryController;
 use App\Http\Controllers\ProjectCreateController;
+use App\Http\Controllers\ProjectDestroyController;
 use App\Http\Controllers\ProjectEditController;
+use App\Http\Controllers\ProjectMoveController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectShowController;
+use App\Http\Controllers\ProjectStoreController;
+use App\Http\Controllers\ProjectUpdateController;
 use App\Http\Controllers\ProposalCreateController;
 use App\Http\Controllers\ProposalEditController;
 use App\Http\Controllers\ProposalsController;
 use App\Http\Controllers\ProposalShowController;
 use App\Http\Controllers\PublicDocumentController;
 use App\Http\Controllers\PublicLeadFormController;
+use App\Http\Controllers\PublicLeadFormSubmitController;
 use App\Http\Controllers\QuotationCreateController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
 use App\Http\Controllers\RemindersController;
+use App\Http\Controllers\RequestLogConvertToTaskController;
+use App\Http\Controllers\RequestLogDestroyController;
+use App\Http\Controllers\RequestLogStoreController;
+use App\Http\Controllers\RequestLogUpdateController;
+use App\Http\Controllers\TaskDestroyController;
+use App\Http\Controllers\TaskMoveController;
+use App\Http\Controllers\TaskStoreController;
+use App\Http\Controllers\TaskUpdateController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingPageController::class)->name('home');
 Route::get('/p/{team:slug}', PublicLeadFormController::class)->name('public-lead-form');
+Route::post('/p/{team:slug}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
 Route::get('/d/{team:slug}/{document}', PublicDocumentController::class)->name('public-document');
 
 Route::prefix('app/{current_team}')
@@ -57,12 +71,46 @@ Route::prefix('app/{current_team}')
             ->name('opportunities.destroy');
         Route::get('projects', ProjectsController::class)->name('projects.index');
         Route::get('projects/create', ProjectCreateController::class)->name('projects.create');
+        Route::post('projects', ProjectStoreController::class)->name('projects.store');
         Route::get('projects/{project}', ProjectShowController::class)
             ->whereNumber('project')
             ->name('projects.show');
         Route::get('projects/{project}/edit', ProjectEditController::class)
             ->whereNumber('project')
             ->name('projects.edit');
+        Route::put('projects/{project}', ProjectUpdateController::class)
+            ->whereNumber('project')
+            ->name('projects.update');
+        Route::patch('projects/{project}/move', ProjectMoveController::class)
+            ->whereNumber('project')
+            ->name('projects.move');
+        Route::delete('projects/{project}', ProjectDestroyController::class)
+            ->whereNumber('project')
+            ->name('projects.destroy');
+        Route::post('projects/{project}/tasks', TaskStoreController::class)
+            ->whereNumber('project')
+            ->name('projects.tasks.store');
+        Route::put('projects/{project}/tasks/{task}', TaskUpdateController::class)
+            ->whereNumber(['project', 'task'])
+            ->name('projects.tasks.update');
+        Route::patch('projects/{project}/tasks/{task}/move', TaskMoveController::class)
+            ->whereNumber(['project', 'task'])
+            ->name('projects.tasks.move');
+        Route::delete('projects/{project}/tasks/{task}', TaskDestroyController::class)
+            ->whereNumber(['project', 'task'])
+            ->name('projects.tasks.destroy');
+        Route::post('projects/{project}/request-logs', RequestLogStoreController::class)
+            ->whereNumber('project')
+            ->name('projects.request-logs.store');
+        Route::put('projects/{project}/request-logs/{requestLog}', RequestLogUpdateController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.update');
+        Route::delete('projects/{project}/request-logs/{requestLog}', RequestLogDestroyController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.destroy');
+        Route::post('projects/{project}/request-logs/{requestLog}/convert-to-task', RequestLogConvertToTaskController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.convert-to-task');
         Route::controller(ContactController::class)->group(function () {
             Route::get('contacts', 'index')->name('contacts.index');
             Route::get('contacts/create', 'create')->name('contacts.create');

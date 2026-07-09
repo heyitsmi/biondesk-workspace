@@ -1,6 +1,9 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Models\Contact;
+use App\Models\Opportunity;
+use App\Models\Project;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -31,6 +34,11 @@ test('authenticated users can view app scaffold pages for their current team', f
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
+    $contact = Contact::factory()->for($team)->create();
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    Opportunity::factory()->for($team)->for($contact)->create();
+
     $this->actingAs($user)
         ->get(route('projects.index', ['current_team' => $team->slug]))
         ->assertOk()
@@ -38,16 +46,16 @@ test('authenticated users can view app scaffold pages for their current team', f
             ->component('projects/index')
             ->where('defaultView', 'board')
             ->has('stages', 6)
-            ->has('projects', 6),
+            ->has('projects', 1),
         );
 
     $this->actingAs($user)
-        ->get(route('projects.show', ['current_team' => $team->slug, 'project' => 12]))
+        ->get(route('projects.show', ['current_team' => $team->slug, 'project' => $project->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('projects/show')
-            ->where('project.id', 12)
-            ->where('project.title', 'Fintech Brand Identity')
+            ->where('project.id', $project->id)
+            ->where('project.title', $project->title)
             ->has('taskStages', 5)
             ->has('project.tasks')
             ->has('project.requestLogs'),
@@ -70,21 +78,18 @@ test('authenticated users can view app scaffold pages for their current team', f
         ->assertInertia(fn (Assert $page) => $page
             ->component('projects/create')
             ->has('stages', 6)
-            ->has('clients', 5)
-            ->has('leads', 2)
+            ->has('opportunities')
             ->has('defaults'),
         );
 
     $this->actingAs($user)
-        ->get(route('projects.edit', ['current_team' => $team->slug, 'project' => 11]))
+        ->get(route('projects.edit', ['current_team' => $team->slug, 'project' => $project->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('projects/edit')
-            ->where('project.id', 11)
-            ->where('project.title', 'Portfolio Redesign')
-            ->has('stages', 6)
-            ->has('clients', 5)
-            ->has('leads', 2),
+            ->where('project.id', $project->id)
+            ->where('project.title', $project->title)
+            ->has('stages', 6),
         );
 
     $this->actingAs($user)

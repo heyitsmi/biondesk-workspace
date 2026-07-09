@@ -59,26 +59,44 @@ Modul paling dasar karena semua entity lain (Project, Document) menggantung ke s
 
 Bergantung ke Fase 1 (submission bikin Contact + Opportunity).
 
-- [ ] 2.1 Migrasi kolom Team dari Fase 0.1 dipakai di halaman Settings (upload banner lewat media library, live preview sudah ada di UI)
-- [ ] 2.2 Integrasi Turnstile di form publik (`public/lead-form.tsx`), fail closed kalau secret key tidak ada
-- [ ] 2.3 Handler submit: dedupe Contact by email dalam team yang sama, buat Opportunity baru stage `inbox` source `"Public form"`
-- [ ] 2.4 Notifikasi email ke owner team saat lead baru masuk (lewat Brevo)
-- [ ] 2.5 Fallback tampilan form kalau team belum kustomisasi (nama team + deskripsi generic) — sudah ada di UI, tinggal pastikan konsisten dengan data asli
-- [ ] 2.6 Pest test: submission valid → Contact+Opportunity tercipta; submission tanpa Turnstile token → ditolak; dedupe by email teruji
+- [x] 2.1 Migrasi kolom Team dari Fase 0.1 dipakai di halaman Settings (upload banner lewat media library, live preview sudah ada di UI)
+- [x] 2.2 Integrasi Turnstile di form publik (`public/lead-form.tsx`), fail closed kalau secret key tidak ada
+- [x] 2.3 Handler submit: dedupe Contact by email dalam team yang sama, buat Opportunity baru stage `inbox` source `"Public form"`
+- [x] 2.4 Notifikasi email ke owner team saat lead baru masuk (lewat Brevo)
+- [x] 2.5 Fallback tampilan form kalau team belum kustomisasi (nama team + deskripsi generic) — sudah ada di UI, tinggal pastikan konsisten dengan data asli
+- [x] 2.6 Pest test: submission valid → Contact+Opportunity tercipta; submission tanpa Turnstile token → ditolak; dedupe by email teruji
+
+**Fase 2 selesai.** Backend: `PublicLeadFormSubmitController` (dedupe Contact + create Opportunity di stage Inbox + email owner), `ValidTurnstileToken` rule (fail closed), `PublicLeadFormController`/`PublicLeadFormSettingsController` pakai data Team asli (`Team::leadFormSettings()`), upload banner lewat Spatie Media Library. Frontend: `public/lead-form.tsx` pakai `useForm` + Turnstile widget kondisional (disembunyikan/nonaktif kalau site key belum diisi) + tema latar per-team; `settings/lead-form.tsx` submit ke endpoint asli (toggle enabled auto-save, form appearance & fields terpisah, upload banner). 13 Pest test baru (`PublicLeadFormSubmitTest`, `PublicLeadFormSettingsTest`) plus 2 test lama di-update.
+
+Catatan/gap yang diketahui:
+- Turnstile site key & secret key, serta kredensial SMTP Brevo, sengaja dikosongkan di `.env`/`.env.example` — user mengisi sendiri. Tanpa site key, widget Turnstile disembunyikan dan tombol submit dinonaktifkan (submission akan selalu ditolak server, sesuai kebijakan fail-closed).
+- Upload file attachment dari form publik (toggle `lead_form_allow_attachments`) belum diimplementasikan — kolomnya sudah ada di database tapi tidak ada input file di UI publik. Tidak ada di PRD sebagai requirement P0.
+- Tema "Brand Color Auto-Match" untuk `backgroundTheme` saat ini fallback ke tema dark (belum ada data warna brand tersimpan per-team).
 
 ## Fase 3 — Project & Task
 
 Bergantung ke Fase 1 (Project terhubung ke Opportunity yang won).
 
-- [ ] 3.1 Migration + model `Project` (belongsTo Opportunity, status enum, `sort_order` double)
-- [ ] 3.2 Migration + model `Task` (belongsTo Project, status: todo/in_progress/done)
-- [ ] 3.3 Migration + model `RequestLog` (belongsTo Project, catatan revisi/permintaan ad-hoc dari klien)
-- [ ] 3.4 `ProjectsController`, `ProjectCreateController`, `ProjectEditController`, `ProjectShowController` pakai Eloquent
-- [ ] 3.5 Endpoint reorder drag Kanban pakai fractional indexing (`sort_order` = rata-rata dua tetangga), tanpa update semua row lain
-- [ ] 3.6 Task CRUD dari halaman Project show (tabel/board yang sudah ada di UI)
-- [ ] 3.7 Request Log CRUD dari halaman Project show
-- [ ] 3.8 Pest test: CRUD Project/Task/RequestLog, reorder Kanban, scoping per-team
-- [ ] 3.9 Hapus method stub Project/Task dari `StubWorkspaceData`
+- [x] 3.1 Migration + model `Project` (belongsTo Opportunity, status enum, `sort_order` double)
+- [x] 3.2 Migration + model `Task` (belongsTo Project, status: backlog/todo/in_progress/in_review/done)
+- [x] 3.3 Migration + model `RequestLog` (belongsTo Project, catatan revisi/permintaan ad-hoc dari klien)
+- [x] 3.4 `ProjectsController`, `ProjectCreateController`, `ProjectEditController`, `ProjectShowController` pakai Eloquent
+- [x] 3.5 Endpoint reorder drag Kanban pakai fractional indexing (`sort_order` = max item lain di kolom tujuan + 1000), tanpa update semua row lain
+- [x] 3.6 Task CRUD dari halaman Project show (tabel/board yang sudah ada di UI)
+- [x] 3.7 Request Log CRUD dari halaman Project show
+- [x] 3.8 Pest test: CRUD Project/Task/RequestLog, reorder Kanban, scoping per-team
+- [x] 3.9 Hapus method stub Project/Task dari `StubWorkspaceData`
+
+**Fase 3 selesai.** Backend: `Project`/`Task`/`RequestLog` model + migration baru, `ProjectStoreController`/`UpdateController`/`DestroyController`/`MoveController`, `TaskStoreController`/`UpdateController`/`MoveController`/`DestroyController`, `RequestLogStoreController`/`UpdateController`/`DestroyController`/`ConvertToTaskController`. Aktivitas manual (`Project::logActivity()`) dicatat lewat `spatie/laravel-activitylog` untuk setiap perubahan task/request log, ditampilkan real di tab Activity Log. Attachment task & request log pakai Spatie Media Library asli (bukan lagi nama file saja). Frontend: `projects/index.tsx` drag-and-drop kolom kanban sekarang benar-benar memanggil endpoint move (status + sort_order); `projects/create.tsx` & `projects/edit.tsx` pakai `useForm` dengan opportunity picker asli (opportunity yang sudah ada project-nya otomatis disembunyikan dari pilihan); `projects/show.tsx` (4 tab: Details/Tasks/Request Log/Activity Log) sepenuhnya disambungkan ke backend asli, termasuk fitur "Extract with AI" (saran task tetap fake/lokal sesuai PRD P2, tapi task yang dikonfirmasi user beneran tersimpan). Tombol "Create Project" di modal "deal won" opportunities/index.tsx sekarang navigasi ke halaman create dengan opportunity ter-pre-fill. 24 Pest test baru (`ProjectManagementTest`, `TaskManagementTest`, `RequestLogManagementTest`), plus `AppScaffoldPagesTest` diperbarui dari stub ke data asli.
+
+Keputusan yang diambil untuk konflik stub vs PRD (lihat sesi klarifikasi):
+- **Task status**: tetap 5 status (backlog/todo/in_progress/in_review/done) sesuai UI yang sudah dibangun, bukan 3 status versi PRD.
+- **RequestLog fields**: semua field stub (source/classification/notes/attachments) disimpan; "Extract with AI" tetap fitur lokal/fake (bukan real AI call), sesuai catatan PRD bahwa versi AI adalah upgrade P2.
+- **Project fields**: ikut PRD — `opportunity_id` sebagai relasi utama (client ditampilkan lewat opportunity→contact), field `leadId`/`leads` (project lead/assignee) dihapus karena tidak ada infrastruktur assignee di aplikasi ini.
+
+Catatan/gap yang diketahui:
+- Halaman "Details" di project show hanya bisa edit title/status/description inline; ubah opportunity, tanggal, atau budget harus lewat halaman "Edit Project" khusus (karena opportunity terkait sebuah project tidak dirancang untuk berubah setelah dibuat).
+- Deletion attachment task/request log yang sudah ter-upload belum didukung (hanya bisa menambah, belum ada tombol hapus attachment lama) — gap yang sama seperti banner lead form di Fase 2.
 
 ## Fase 4 — Document (Proposal, Quote, Invoice)
 
@@ -149,9 +167,9 @@ Bisa dikerjakan paralel kapan saja setelah Fase 0, karena tidak bergantung ke mo
 - **Skema URL dokumen publik (0.9)**: ikut PRD, token-based (`/d/{public_token}`).
 - **Validasi Document (0.8)**: boleh berdiri sendiri, `opportunity_id`/`project_id` nullable.
 - **Role & permission**: ditunda sampai P1. Fase 1-9 cukup pakai akses single-owner per team lewat `EnsureTeamMembership` yang sudah ada, `spatie/laravel-permission` belum dipakai policy-nya dulu.
+- **Cloudflare Turnstile (poin 0.7, Fase 2)**: user sudah punya key sendiri, diisi manual di `.env` lokal (slot `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` sudah disiapkan kosong di `.env.example`). Tanpa key terisi, form publik fail closed (submit ditolak).
+- **Brevo (poin 0.6, Fase 2)**: user sudah punya API key Brevo, dipakai lewat SMTP relay bawaan Laravel (`MAIL_MAILER=smtp` ke `smtp-relay.brevo.com:587`), bukan paket API terpisah. `MAIL_USERNAME`/`MAIL_PASSWORD` diisi manual di `.env` lokal.
 
-## Masih perlu klarifikasi (belum menghalangi Fase 1, baru relevan waktu masuk fase terkait)
+## Masih perlu klarifikasi (belum menghalangi Fase 1-2, baru relevan waktu masuk fase terkait)
 
 1. **Provider AI untuk proposal generation (poin 0.5, relevan di Fase 4)** — mau mulai dengan provider apa (OpenAI/Anthropic/DeepSeek/lainnya), dan apakah API key-nya sudah ada atau perlu disiapkan dulu?
-2. **Cloudflare Turnstile (poin 0.7, relevan di Fase 2)** — perlu site key + secret key dari akun Cloudflare kamu. Sudah ada, atau perlu dibuat dulu?
-3. **Brevo (poin 0.6, relevan di Fase 2/7)** — perlu API key Brevo untuk transactional email (reminder, notifikasi lead baru, notifikasi dokumen terkirim). Sudah ada akunnya?

@@ -15,7 +15,7 @@ class OpportunitiesController extends Controller
     public function __invoke(Request $request): Response
     {
         $team = $request->user()->currentTeam;
-        $opportunities = $team->opportunities()->with('contact')->latest()->get();
+        $opportunities = $team->opportunities()->with(['contact', 'project'])->latest()->get();
 
         $openCount = $opportunities->whereNotIn('stage', [OpportunityStage::Won, OpportunityStage::Lost])->count();
         $wonCount = $opportunities->where('stage', OpportunityStage::Won)->count();

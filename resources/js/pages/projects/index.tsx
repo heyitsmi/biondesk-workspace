@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as projectCreate, edit as projectEdit, index as projects, show as projectShow } from '@/routes/projects';
+import { create as projectCreate, edit as projectEdit, index as projects, move as projectMove, show as projectShow } from '@/routes/projects';
 import type {
     BiondeskTone,
     ProjectItem,
@@ -83,7 +83,9 @@ export default function ProjectsPage({
     const groupedItems = useMemo(() => {
         return stages.map((stage) => ({
             ...stage,
-            items: filteredItems.filter((item) => item.stage === stage.key),
+            items: filteredItems
+                .filter((item) => item.stage === stage.key)
+                .sort((left, right) => left.sortOrder - right.sortOrder),
         }));
     }, [filteredItems, stages]);
 
@@ -144,6 +146,15 @@ export default function ProjectsPage({
     };
 
     const setProjectStage = (projectId: number, stageKey: string): void => {
+        const itemsInTargetStage = items.filter(
+            (item) => item.stage === stageKey && item.id !== projectId,
+        );
+        const maxSortOrder = itemsInTargetStage.reduce(
+            (max, item) => Math.max(max, item.sortOrder),
+            0,
+        );
+        const nextSortOrder = maxSortOrder + 1000;
+
         setItems((current) =>
             current.map((item) => {
                 if (item.id !== projectId) {
@@ -155,9 +166,18 @@ export default function ProjectsPage({
                     stage: stageKey,
                     stageLabel: stageMeta[stageKey]?.label ?? item.stageLabel,
                     tone: stageMeta[stageKey]?.tone ?? item.tone,
+                    sortOrder: nextSortOrder,
                 };
             }),
         );
+
+        if (currentTeam) {
+            router.patch(
+                projectMove({ current_team: currentTeam.slug, project: projectId }).url,
+                { status: stageKey, sort_order: nextSortOrder },
+                { preserveState: true, preserveScroll: true },
+            );
+        }
     };
 
     const handleDropToStage = (stageKey: string): void => {

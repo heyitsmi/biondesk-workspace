@@ -1,9 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { edit as projectEdit, index as projects } from '@/routes/projects';
-import type { ProjectEditPageProps } from '@/types';
+import { destroy as destroyProject, edit as projectEdit, index as projects, update as updateProject } from '@/routes/projects';
+import type { ProjectEditPageProps, ProjectFormValues } from '@/types';
 
 const ICON_SM_CLS =
     'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
@@ -17,20 +16,26 @@ const BTN_DANGER = cn(BTN, 'border border-bion-danger-soft bg-transparent text-b
 const FIELD_LABEL = 'text-[13px] font-medium text-bion-text-muted';
 const FIELD_INPUT =
     'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[14px] py-[10px] text-[14px] text-bion-text outline-none [transition:border-color_0.15s_ease] focus:border-bion-accent';
+const FIELD_INPUT_READONLY = cn(FIELD_INPUT, 'text-bion-text-muted');
 
 const TOOLBAR_BTN =
     'flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted [transition:background_0.12s_ease] hover:bg-bion-surface-raised hover:text-bion-text';
 
-export default function ProjectEditPage({ stages, clients, leads, project }: ProjectEditPageProps) {
+type ProjectFieldErrors = Partial<
+    Record<'title' | 'status' | 'start_date' | 'due_date' | 'description' | 'budget_value', string>
+>;
+
+export default function ProjectEditPage({ stages, project }: ProjectEditPageProps) {
     const { currentTeam } = usePage().props;
-    const [title, setTitle] = useState(project.title);
-    const [clientId, setClientId] = useState<number | ''>(project.clientId);
-    const [stage, setStage] = useState(project.stage);
-    const [startDate, setStartDate] = useState(project.startDate);
-    const [dueDate, setDueDate] = useState(project.dueDate);
-    const [description, setDescription] = useState(project.description);
-    const [leadId, setLeadId] = useState(project.leadId);
-    const [budget, setBudget] = useState(project.budget);
+    const { data, setData, put, processing, errors } = useForm<Omit<ProjectFormValues, 'opportunityId'>>({
+        title: project.title,
+        status: project.status,
+        startDate: project.startDate,
+        dueDate: project.dueDate,
+        description: project.description,
+        budgetValue: project.budgetValue,
+    });
+    const fieldErrors = errors as ProjectFieldErrors;
 
     const backToProjects = (): void => {
         if (!currentTeam) {
@@ -40,9 +45,29 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
         router.visit(projects(currentTeam.slug));
     };
 
+    const submit = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        put(updateProject({ current_team: currentTeam.slug, project: project.id }).url);
+    };
+
+    const destroy = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        if (!window.confirm(`Delete "${project.title}"? This cannot be undone.`)) {
+            return;
+        }
+
+        router.delete(destroyProject({ current_team: currentTeam.slug, project: project.id }).url);
+    };
+
     return (
         <>
-            <Head title={`Edit ${title}`} />
+            <Head title={`Edit ${data.title}`} />
 
             <div className="flex flex-1 flex-col items-center overflow-y-auto">
                 <div className="w-full max-w-[680px] pb-[80px]">
@@ -54,7 +79,7 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            backToProjects();
+                            submit();
                         }}
                     >
                         <div className="mb-[24px] overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
@@ -67,42 +92,37 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                             <div className="p-[20px]">
                                 <div className="mb-[20px] grid grid-cols-2 gap-[20px] max-[760px]:grid-cols-1">
                                     <div className="col-span-full flex flex-col gap-[8px]">
+                                        <label className={FIELD_LABEL}>Opportunity</label>
+                                        <input type="text" readOnly className={FIELD_INPUT_READONLY} value={project.opportunityTitle} />
+                                    </div>
+
+                                    <div className="col-span-full flex flex-col gap-[8px]">
                                         <label className={FIELD_LABEL}>
                                             Project Name <span className="text-bion-danger">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             className={FIELD_INPUT}
-                                            value={title}
-                                            onChange={(event) => setTitle(event.target.value)}
+                                            value={data.title}
+                                            onChange={(event) => setData('title', event.target.value)}
                                             required
                                         />
+                                        {fieldErrors.title ? (
+                                            <span className="text-[12px] text-bion-danger">{fieldErrors.title}</span>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
                                         <label className={FIELD_LABEL}>Client</label>
-                                        <select
-                                            className={FIELD_INPUT}
-                                            value={clientId}
-                                            onChange={(event) =>
-                                                setClientId(event.target.value === '' ? '' : Number(event.target.value))
-                                            }
-                                        >
-                                            <option value="">Select a client...</option>
-                                            {clients.map((client) => (
-                                                <option key={client.id} value={client.id}>
-                                                    {client.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <input type="text" readOnly className={FIELD_INPUT_READONLY} value={project.client} />
                                     </div>
 
                                     <div className="flex flex-col gap-[8px]">
                                         <label className={FIELD_LABEL}>Status</label>
                                         <select
                                             className={FIELD_INPUT}
-                                            value={stage}
-                                            onChange={(event) => setStage(event.target.value)}
+                                            value={data.status}
+                                            onChange={(event) => setData('status', event.target.value)}
                                         >
                                             {stages.map((stageOption) => (
                                                 <option key={stageOption.key} value={stageOption.key}>
@@ -117,8 +137,8 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                                         <input
                                             type="date"
                                             className={FIELD_INPUT}
-                                            value={startDate}
-                                            onChange={(event) => setStartDate(event.target.value)}
+                                            value={data.startDate}
+                                            onChange={(event) => setData('startDate', event.target.value)}
                                         />
                                     </div>
 
@@ -127,9 +147,22 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                                         <input
                                             type="date"
                                             className={FIELD_INPUT}
-                                            value={dueDate}
-                                            onChange={(event) => setDueDate(event.target.value)}
+                                            value={data.dueDate}
+                                            onChange={(event) => setData('dueDate', event.target.value)}
                                         />
+                                    </div>
+
+                                    <div className="flex flex-col gap-[8px]">
+                                        <label className={FIELD_LABEL}>Estimated Budget</label>
+                                        <div className="relative flex items-center">
+                                            <span className="absolute left-[14px] text-bion-text-muted">$</span>
+                                            <input
+                                                type="number"
+                                                className={cn(FIELD_INPUT, 'pr-[14px] pl-[32px]')}
+                                                value={data.budgetValue}
+                                                onChange={(event) => setData('budgetValue', event.target.value)}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="col-span-full flex flex-col gap-[8px]">
@@ -160,48 +193,8 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                                             </div>
                                             <textarea
                                                 className="min-h-[120px] w-full resize-y p-[14px] text-[14px] text-bion-text outline-none placeholder:text-bion-text-muted"
-                                                value={description}
-                                                onChange={(event) => setDescription(event.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mb-[24px] overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
-                            <div className="flex items-center gap-[10px] border-b border-bion-border px-[20px] py-[16px]">
-                                <svg className={cn(ICON_SM_CLS, 'text-bion-text-muted')}>
-                                    <use href="#i-users" />
-                                </svg>
-                                <h2 className="text-[15px] font-semibold text-bion-text">Team &amp; Budget</h2>
-                            </div>
-                            <div className="p-[20px]">
-                                <div className="grid grid-cols-2 gap-[20px] max-[760px]:grid-cols-1">
-                                    <div className="flex flex-col gap-[8px]">
-                                        <label className={FIELD_LABEL}>Project Lead</label>
-                                        <select
-                                            className={FIELD_INPUT}
-                                            value={leadId}
-                                            onChange={(event) => setLeadId(Number(event.target.value))}
-                                        >
-                                            {leads.map((lead) => (
-                                                <option key={lead.id} value={lead.id}>
-                                                    {lead.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="flex flex-col gap-[8px]">
-                                        <label className={FIELD_LABEL}>Estimated Budget</label>
-                                        <div className="relative flex items-center">
-                                            <span className="absolute left-[14px] text-bion-text-muted">$</span>
-                                            <input
-                                                type="number"
-                                                className={cn(FIELD_INPUT, 'pr-[14px] pl-[32px]')}
-                                                value={budget}
-                                                onChange={(event) => setBudget(event.target.value)}
+                                                value={data.description}
+                                                onChange={(event) => setData('description', event.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -210,7 +203,7 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                         </div>
 
                         <div className="mt-[32px] flex justify-between gap-[12px] border-t border-bion-border pt-[24px]">
-                            <button type="button" className={BTN_DANGER} onClick={backToProjects}>
+                            <button type="button" className={BTN_DANGER} onClick={destroy}>
                                 <svg className={ICON_SM_CLS}>
                                     <use href="#i-trash" />
                                 </svg>
@@ -220,8 +213,8 @@ export default function ProjectEditPage({ stages, clients, leads, project }: Pro
                                 <button type="button" className={BTN_GHOST} onClick={backToProjects}>
                                     Cancel
                                 </button>
-                                <button type="submit" className={BTN_PRIMARY}>
-                                    Save Changes
+                                <button type="submit" className={BTN_PRIMARY} disabled={processing}>
+                                    {processing ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </div>

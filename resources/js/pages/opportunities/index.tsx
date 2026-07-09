@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create as opportunityCreate, edit as opportunityEdit, index as opportunities, moveStage } from '@/routes/opportunities';
+import { create as projectCreate } from '@/routes/projects';
 import type {
     BiondeskTone,
     OpportunitiesPageProps,
@@ -59,7 +60,7 @@ export default function OpportunitiesPage({
     const [draggedOpportunityId, setDraggedOpportunityId] =
         useState<number | null>(null);
     const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-    const [showConfirmProjectModal, setShowConfirmProjectModal] = useState<string | null>(null);
+    const [confirmProjectOpportunity, setConfirmProjectOpportunity] = useState<{ id: number; title: string } | null>(null);
 
     const stageMeta = useMemo(() => {
         return Object.fromEntries(
@@ -137,8 +138,13 @@ export default function OpportunitiesPage({
 
         const movedOpportunity = items.find((item) => item.id === opportunityId);
 
-        if (movedOpportunity && movedOpportunity.stage !== 'won' && stageKey === 'won') {
-            setShowConfirmProjectModal(movedOpportunity.title);
+        if (
+            movedOpportunity &&
+            movedOpportunity.stage !== 'won' &&
+            stageKey === 'won' &&
+            movedOpportunity.projectId === null
+        ) {
+            setConfirmProjectOpportunity({ id: movedOpportunity.id, title: movedOpportunity.title });
         }
 
         if (currentTeam) {
@@ -164,6 +170,15 @@ export default function OpportunitiesPage({
         }
 
         router.visit(opportunityCreate(currentTeam.slug));
+    };
+
+    const visitCreateProject = (opportunityId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        setConfirmProjectOpportunity(null);
+        router.visit(projectCreate(currentTeam.slug, { query: { opportunity_id: opportunityId } }).url);
     };
 
     const handleDropToStage = (stageKey: string): void => {
@@ -527,11 +542,11 @@ export default function OpportunitiesPage({
                 <div
                     className={cn(
                         'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!',
-                        showConfirmProjectModal && 'open',
+                        confirmProjectOpportunity && 'open',
                     )}
                     onClick={(event) => {
                         if (event.target === event.currentTarget) {
-                            setShowConfirmProjectModal(null);
+                            setConfirmProjectOpportunity(null);
                         }
                     }}
                 >
@@ -542,7 +557,7 @@ export default function OpportunitiesPage({
                         <div className="p-[20px]">
                             <p className="text-[13.5px] leading-[1.6] text-bion-text-muted">
                                 Want to create a Project for{' '}
-                                <strong>{showConfirmProjectModal}</strong> now,
+                                <strong>{confirmProjectOpportunity?.title}</strong> now,
                                 so you can start tracking tasks right away?
                             </p>
                         </div>
@@ -551,7 +566,7 @@ export default function OpportunitiesPage({
                                 type="button"
                                 className={BTN_GHOST}
                                 onClick={() =>
-                                    setShowConfirmProjectModal(null)
+                                    setConfirmProjectOpportunity(null)
                                 }
                             >
                                 Not now
@@ -560,7 +575,8 @@ export default function OpportunitiesPage({
                                 type="button"
                                 className={BTN_PRIMARY}
                                 onClick={() =>
-                                    setShowConfirmProjectModal(null)
+                                    confirmProjectOpportunity &&
+                                    visitCreateProject(confirmProjectOpportunity.id)
                                 }
                             >
                                 Create Project

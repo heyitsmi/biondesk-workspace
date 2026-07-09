@@ -65,6 +65,7 @@ export type OpportunityItem = {
     lastActivity: string;
     activityOrder: number;
     summary: string;
+    projectId: number | null;
 };
 
 export type OpportunitiesPageProps = {
@@ -116,6 +117,7 @@ export type ProjectTaskStatus =
 
 export type ProjectAttachment = {
     name: string;
+    url: string;
 };
 
 export type ProjectDetailTask = {
@@ -172,6 +174,7 @@ export type ProjectItem = {
     progress: number;
     dueAt: string;
     dueOrder: number;
+    sortOrder: number;
     budget: string;
     requestLogCount: number;
     tasks: ProjectTask[];
@@ -189,39 +192,35 @@ export type ProjectsPageProps = {
     projects: ProjectItem[];
 };
 
-export type ProjectClientOption = {
+export type ProjectOpportunityOption = {
     id: number;
-    name: string;
-};
-
-export type ProjectLeadOption = {
-    id: number;
-    name: string;
+    title: string;
+    company: string;
 };
 
 export type ProjectFormValues = {
+    opportunityId: number | '';
     title: string;
-    clientId: number | '';
-    stage: string;
+    status: string;
     startDate: string;
     dueDate: string;
     description: string;
-    leadId: number;
-    budget: string;
+    budgetValue: string;
 };
 
 export type ProjectCreatePageProps = {
     stages: PipelineStage[];
-    clients: ProjectClientOption[];
-    leads: ProjectLeadOption[];
+    opportunities: ProjectOpportunityOption[];
     defaults: ProjectFormValues;
 };
 
 export type ProjectEditPageProps = {
     stages: PipelineStage[];
-    clients: ProjectClientOption[];
-    leads: ProjectLeadOption[];
-    project: ProjectFormValues & { id: number };
+    project: Omit<ProjectFormValues, 'opportunityId'> & {
+        id: number;
+        opportunityTitle: string;
+        client: string;
+    };
 };
 
 export type ProjectDetail = {
@@ -697,33 +696,30 @@ export type ProfileEditPageProps = {
     profile: ProfileItem;
 };
 
-export type PublicLeadFormPageProps = {
-    team: {
-        name: string;
-        slug: string;
-    };
-    hero: {
-        title: string;
-        description: string;
-        bannerLabel: string;
-    };
-    highlights: string[];
-};
-
 export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand';
 
 export type PublicLeadFormSettings = {
-    formUrl: string;
     enabled: boolean;
-    formTitle: string;
+    title: string;
     welcomeMessage: string;
     backgroundTheme: PublicLeadFormBackgroundTheme;
     services: string[];
     askBudget: boolean;
     allowAttachments: boolean;
+    bannerUrl: string | null;
+};
+
+export type PublicLeadFormPageProps = {
+    team: {
+        name: string;
+        slug: string;
+    };
+    settings: PublicLeadFormSettings;
+    turnstileSiteKey: string | null;
 };
 
 export type SettingsLeadFormPageProps = {
+    formUrl: string;
     settings: PublicLeadFormSettings;
 };
 

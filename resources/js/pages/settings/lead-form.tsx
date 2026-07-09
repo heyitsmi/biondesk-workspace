@@ -1,7 +1,9 @@
-import { Head, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { publicLeadForm } from '@/routes';
+import { update } from '@/routes/lead-form';
 import type { PublicLeadFormBackgroundTheme, SettingsLeadFormPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -15,6 +17,7 @@ const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-t
 const FIELD_LABEL = 'flex items-center justify-between text-[13px] font-semibold text-bion-text';
 const FIELD_INPUT =
     'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[14px] py-[10px] text-[14px] text-bion-text outline-none [transition:border-color_0.15s_ease] focus:border-bion-accent';
+const FIELD_ERROR = 'text-[12px] text-bion-danger';
 
 const CARD = 'overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface shadow-bion-raised';
 const CARD_BODY = 'flex flex-col gap-[24px] p-[24px]';
@@ -47,22 +50,42 @@ function ToggleSwitch({
     );
 }
 
-export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps) {
+type AppearanceFormValues = {
+    title: string;
+    welcomeMessage: string;
+    backgroundTheme: PublicLeadFormBackgroundTheme;
+    banner: File | null;
+};
+
+type FieldsFormValues = {
+    services: string[];
+    askBudget: boolean;
+    allowAttachments: boolean;
+};
+
+type AppearanceFieldErrors = Partial<Record<'title' | 'welcome_message' | 'background_theme' | 'banner', string>>;
+
+export default function SettingsLeadForm({ formUrl, settings }: SettingsLeadFormPageProps) {
     const { currentTeam } = usePage().props;
     const [enabled, setEnabled] = useState(settings.enabled);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(settings.bannerUrl);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
 
-    const [formTitle, setFormTitle] = useState(settings.formTitle);
-    const [welcomeMessage, setWelcomeMessage] = useState(settings.welcomeMessage);
-    const [backgroundTheme, setBackgroundTheme] = useState<PublicLeadFormBackgroundTheme>(
-        settings.backgroundTheme,
-    );
-    const [appearanceSaved, setAppearanceSaved] = useState(false);
+    const appearanceForm = useForm<AppearanceFormValues>({
+        title: settings.title,
+        welcomeMessage: settings.welcomeMessage,
+        backgroundTheme: settings.backgroundTheme,
+        banner: null,
+    });
 
-    const [services, setServices] = useState(settings.services);
-    const [askBudget, setAskBudget] = useState(settings.askBudget);
-    const [allowAttachments, setAllowAttachments] = useState(settings.allowAttachments);
-    const [fieldsSaved, setFieldsSaved] = useState(false);
+    const fieldsForm = useForm<FieldsFormValues>({
+        services: settings.services,
+        askBudget: settings.askBudget,
+        allowAttachments: settings.allowAttachments,
+    });
+
+    const appearanceErrors = appearanceForm.errors as AppearanceFieldErrors;
 
     const copyFormLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
@@ -70,7 +93,7 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
         }
 
         try {
-            await navigator.clipboard.writeText(settings.formUrl);
+            await navigator.clipboard.writeText(formUrl);
             setLinkCopied(true);
             window.setTimeout(() => setLinkCopied(false), 2000);
         } catch {
@@ -78,26 +101,48 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
         }
     };
 
+    const toggleEnabled = (next: boolean): void => {
+        setEnabled(next);
+        router.put(update.url(), { enabled: next }, { preserveScroll: true });
+    };
+
     const updateService = (index: number, value: string): void => {
-        setServices((current) => current.map((service, i) => (i === index ? value : service)));
+        fieldsForm.setData(
+            'services',
+            fieldsForm.data.services.map((service, i) => (i === index ? value : service)),
+        );
     };
 
     const removeService = (index: number): void => {
-        setServices((current) => current.filter((_, i) => i !== index));
+        fieldsForm.setData(
+            'services',
+            fieldsForm.data.services.filter((_, i) => i !== index),
+        );
     };
 
     const addService = (): void => {
-        setServices((current) => [...current, '']);
+        fieldsForm.setData('services', [...fieldsForm.data.services, '']);
+    };
+
+    const pickBanner = (): void => {
+        bannerInputRef.current?.click();
+    };
+
+    const onBannerSelected = (event: ChangeEvent<HTMLInputElement>): void => {
+        const file = event.target.files?.[0] ?? null;
+        appearanceForm.setData('banner', file);
+
+        if (file) {
+            setBannerPreview(URL.createObjectURL(file));
+        }
     };
 
     const saveAppearance = (): void => {
-        setAppearanceSaved(true);
-        window.setTimeout(() => setAppearanceSaved(false), 2000);
+        appearanceForm.put(update.url(), { preserveScroll: true });
     };
 
     const saveFields = (): void => {
-        setFieldsSaved(true);
-        window.setTimeout(() => setFieldsSaved(false), 2000);
+        fieldsForm.put(update.url(), { preserveScroll: true });
     };
 
     return (
@@ -120,7 +165,7 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                                 type="text"
                                 readOnly
                                 className={cn(FIELD_INPUT, 'text-bion-text-muted')}
-                                value={settings.formUrl}
+                                value={formUrl}
                             />
                             <button type="button" className={BTN_GHOST} onClick={copyFormLink}>
                                 <svg className={ICON_SM_CLS}>
@@ -153,7 +198,7 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                                 message.
                             </span>
                         </div>
-                        <ToggleSwitch checked={enabled} onChange={setEnabled} />
+                        <ToggleSwitch checked={enabled} onChange={toggleEnabled} />
                     </div>
                 </div>
             </div>
@@ -163,17 +208,39 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                 <div className={CARD_BODY}>
                     <div className="flex flex-col gap-[8px]">
                         <label className={FIELD_LABEL}>Brand Logo</label>
-                        <div className="flex cursor-pointer flex-col items-center gap-[12px] rounded-[8px] border-2 border-dashed border-bion-border bg-bion-bg p-[24px] text-center [transition:border-color_0.15s_ease] hover:border-bion-accent">
-                            <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-bion-surface-raised text-bion-text-muted">
-                                <svg className="h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
-                                    <use href="#i-image" />
-                                </svg>
-                            </div>
+                        <input
+                            ref={bannerInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp,image/bmp,image/gif"
+                            className="hidden"
+                            onChange={onBannerSelected}
+                        />
+                        <button
+                            type="button"
+                            onClick={pickBanner}
+                            className="flex cursor-pointer flex-col items-center gap-[12px] rounded-[8px] border-2 border-dashed border-bion-border bg-bion-bg p-[24px] text-center [transition:border-color_0.15s_ease] hover:border-bion-accent"
+                        >
+                            {bannerPreview ? (
+                                <img
+                                    src={bannerPreview}
+                                    alt="Brand logo preview"
+                                    className="h-[40px] w-[40px] rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-bion-surface-raised text-bion-text-muted">
+                                    <svg className="h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
+                                        <use href="#i-image" />
+                                    </svg>
+                                </div>
+                            )}
                             <div className="text-[13.5px] font-medium text-bion-text">
-                                Click to upload or drag and drop
+                                Click to upload
                             </div>
                             <div className="text-[12px] text-bion-text-muted">SVG, PNG, JPG (max 2MB)</div>
-                        </div>
+                        </button>
+                        {appearanceForm.errors.banner ? (
+                            <span className={FIELD_ERROR}>{appearanceForm.errors.banner}</span>
+                        ) : null}
                     </div>
 
                     <div className="flex flex-col gap-[8px]">
@@ -181,27 +248,36 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                         <input
                             type="text"
                             className={FIELD_INPUT}
-                            value={formTitle}
-                            onChange={(event) => setFormTitle(event.target.value)}
+                            value={appearanceForm.data.title}
+                            onChange={(event) => appearanceForm.setData('title', event.target.value)}
                         />
+                        {appearanceForm.errors.title ? (
+                            <span className={FIELD_ERROR}>{appearanceForm.errors.title}</span>
+                        ) : null}
                     </div>
 
                     <div className="flex flex-col gap-[8px]">
                         <label className={FIELD_LABEL}>Welcome Message</label>
                         <textarea
                             className={cn(FIELD_INPUT, 'min-h-[80px] resize-y')}
-                            value={welcomeMessage}
-                            onChange={(event) => setWelcomeMessage(event.target.value)}
+                            value={appearanceForm.data.welcomeMessage}
+                            onChange={(event) => appearanceForm.setData('welcomeMessage', event.target.value)}
                         />
+                        {appearanceErrors.welcome_message ? (
+                            <span className={FIELD_ERROR}>{appearanceErrors.welcome_message}</span>
+                        ) : null}
                     </div>
 
                     <div className="flex flex-col gap-[8px]">
                         <label className={FIELD_LABEL}>Background Theme</label>
                         <select
                             className={FIELD_INPUT}
-                            value={backgroundTheme}
+                            value={appearanceForm.data.backgroundTheme}
                             onChange={(event) =>
-                                setBackgroundTheme(event.target.value as PublicLeadFormBackgroundTheme)
+                                appearanceForm.setData(
+                                    'backgroundTheme',
+                                    event.target.value as PublicLeadFormBackgroundTheme,
+                                )
                             }
                         >
                             <option value="dark">Dark Mode (Default)</option>
@@ -211,8 +287,17 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                     </div>
                 </div>
                 <div className={CARD_FOOTER}>
-                    <button type="button" className={BTN_PRIMARY} onClick={saveAppearance}>
-                        {appearanceSaved ? 'Saved!' : 'Save Appearance'}
+                    <button
+                        type="button"
+                        className={BTN_PRIMARY}
+                        disabled={appearanceForm.processing}
+                        onClick={saveAppearance}
+                    >
+                        {appearanceForm.recentlySuccessful
+                            ? 'Saved!'
+                            : appearanceForm.processing
+                              ? 'Saving...'
+                              : 'Save Appearance'}
                     </button>
                 </div>
             </div>
@@ -229,7 +314,7 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                         </label>
 
                         <div className="flex flex-col gap-[8px] rounded-[8px] border border-bion-border bg-bion-bg p-[8px]">
-                            {services.map((service, index) => (
+                            {fieldsForm.data.services.map((service, index) => (
                                 <div
                                     key={index}
                                     className="flex items-center gap-[12px] rounded-[6px] border border-bion-border bg-bion-surface p-[10px_12px]"
@@ -274,7 +359,10 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                                 Show a dropdown for clients to select their budget range.
                             </span>
                         </div>
-                        <ToggleSwitch checked={askBudget} onChange={setAskBudget} />
+                        <ToggleSwitch
+                            checked={fieldsForm.data.askBudget}
+                            onChange={(value) => fieldsForm.setData('askBudget', value)}
+                        />
                     </div>
 
                     <div className="flex items-center justify-between border-t border-bion-border pt-[20px]">
@@ -286,12 +374,24 @@ export default function SettingsLeadForm({ settings }: SettingsLeadFormPageProps
                                 Clients can upload briefs or reference images (up to 10MB).
                             </span>
                         </div>
-                        <ToggleSwitch checked={allowAttachments} onChange={setAllowAttachments} />
+                        <ToggleSwitch
+                            checked={fieldsForm.data.allowAttachments}
+                            onChange={(value) => fieldsForm.setData('allowAttachments', value)}
+                        />
                     </div>
                 </div>
                 <div className={CARD_FOOTER}>
-                    <button type="button" className={BTN_PRIMARY} onClick={saveFields}>
-                        {fieldsSaved ? 'Saved!' : 'Save Fields'}
+                    <button
+                        type="button"
+                        className={BTN_PRIMARY}
+                        disabled={fieldsForm.processing}
+                        onClick={saveFields}
+                    >
+                        {fieldsForm.recentlySuccessful
+                            ? 'Saved!'
+                            : fieldsForm.processing
+                              ? 'Saving...'
+                              : 'Save Fields'}
                     </button>
                 </div>
             </div>
