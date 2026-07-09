@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Fragment } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import type { BiondeskTone, PublicDocumentPageProps } from '@/types';
 
@@ -43,6 +44,8 @@ function PrimaryActionIcon() {
 }
 
 export default function PublicDocumentPage({ document }: PublicDocumentPageProps) {
+    const pdf = useDocumentPdfDownload(document.pdfUrls);
+
     return (
         <>
             <Head title={`${document.number} — Biondesk`} />
@@ -77,9 +80,13 @@ export default function PublicDocumentPage({ document }: PublicDocumentPageProps
                         <button
                             type="button"
                             className="inline-flex items-center gap-[7px] rounded-[8px] bg-transparent px-[16px] py-[9px] text-[13.5px] font-semibold text-bion-text [transition:opacity_0.12s_ease,transform_0.1s_ease] hover:bg-bion-surface-raised active:scale-[0.97]"
+                            onClick={pdf.download}
+                            disabled={pdf.downloading}
                         >
                             <DownloadIcon />
-                            <span className="max-[760px]:hidden">Download PDF</span>
+                            <span className="max-[760px]:hidden">
+                                {pdf.downloading ? 'Generating…' : 'Download PDF'}
+                            </span>
                         </button>
                         <button
                             type="button"
@@ -90,6 +97,12 @@ export default function PublicDocumentPage({ document }: PublicDocumentPageProps
                         </button>
                     </div>
                 </header>
+
+                {pdf.error ? (
+                    <div className="border-b border-bion-border bg-bion-danger-soft px-[32px] py-[8px] text-center text-[12.5px] text-bion-danger max-[760px]:px-[16px]">
+                        {pdf.error}
+                    </div>
+                ) : null}
 
                 <main className="flex flex-1 items-start justify-center px-[20px] py-[40px] max-[760px]:px-[10px] max-[760px]:py-[20px]">
                     <div className="w-full max-w-[820px]">

@@ -1,6 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as invoices } from '@/routes/invoices';
@@ -47,6 +48,7 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
     const [linkCopied, setLinkCopied] = useState(false);
     const [reminderSent, setReminderSent] = useState(false);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
+    const pdf = useDocumentPdfDownload(invoice.pdfUrls);
     const { data, setData, post, processing, errors, reset } = useForm({
         method: 'Bank Transfer',
         amountValue: '',
@@ -75,10 +77,8 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
             return;
         }
 
-        const shareUrl = `https://biondesk.test/i/${invoice.number.toLowerCase()}`;
-
         try {
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(invoice.shareUrl);
             setLinkCopied(true);
             window.setTimeout(() => setLinkCopied(false), 2000);
         } catch {
@@ -423,12 +423,20 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
                                 </svg>
                                 Schedule Auto-Reminder
                             </button>
-                            <button type="button" className={BTN_SIDEBAR_LIST}>
+                            <button
+                                type="button"
+                                className={BTN_SIDEBAR_LIST}
+                                onClick={pdf.download}
+                                disabled={pdf.downloading}
+                            >
                                 <svg className={cn(ICON_SM_CLS, 'mr-[4px]')}>
                                     <use href="#i-download" />
                                 </svg>
-                                Download PDF
+                                {pdf.downloading ? 'Generating…' : 'Download PDF'}
                             </button>
+                            {pdf.error ? (
+                                <p className="text-[12px] text-bion-danger">{pdf.error}</p>
+                            ) : null}
                         </div>
                     </div>
                 </div>

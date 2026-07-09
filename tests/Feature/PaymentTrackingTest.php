@@ -32,7 +32,7 @@ test('amount paid and amount due are computed from multiple payment records', fu
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $contact = Contact::factory()->for($team)->create();
-    $invoice = Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Invoice])->create();
+    $invoice = Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Invoice, 'discount_percent' => 0, 'tax_percent' => 0])->create();
     $invoice->syncItems([['name' => 'Project', 'description' => null, 'quantity' => 1, 'unit_price_value' => 1000]]);
 
     $invoice->payments()->create(['method' => 'Bank Transfer', 'amount_value' => 400, 'paid_at' => '2026-01-01']);

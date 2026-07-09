@@ -1,5 +1,11 @@
 export type BiondeskTone = 'accent' | 'success' | 'danger' | 'muted';
 
+export type DocumentPdfUrls = {
+    generate: string;
+    status: string;
+    download: string;
+};
+
 export type DashboardStat = {
     label: string;
     value: string;
@@ -464,6 +470,7 @@ export type ProposalDetail = ProposalDocument & {
     notes: string;
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type ProposalShowPageProps = {
@@ -486,6 +493,7 @@ export type InvoiceListItem = {
     dueSort: number;
     amount: string;
     amountValue: number;
+    shareUrl: string;
 };
 
 export type InvoicesPageProps = {
@@ -531,6 +539,7 @@ export type InvoiceDetail = InvoiceListItem & {
     payments: InvoicePayment[];
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type InvoiceShowPageProps = {
@@ -571,6 +580,7 @@ export type QuotationListItem = {
     expirySort: number;
     amount: string;
     amountValue: number;
+    shareUrl: string;
 };
 
 export type QuotationsPageProps = {
@@ -606,6 +616,7 @@ export type QuotationDetail = QuotationListItem & {
     terms: string;
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type QuotationShowPageProps = {
@@ -771,6 +782,7 @@ export type PublicDocument = {
     notes: string;
     primaryActionLabel: string;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type PublicDocumentPageProps = {

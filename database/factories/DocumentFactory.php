@@ -40,4 +40,17 @@ class DocumentFactory extends Factory
             'notes' => fake()->optional()->sentence(),
         ];
     }
+
+    /**
+     * Keep the "number" prefix in sync when a test overrides "type" via
+     * ->state([...]), since definition() can't see state overrides.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Document $document) {
+            if (! str_starts_with($document->number, "{$document->type->numberPrefix()}-")) {
+                $document->number = $document->type->numberPrefix().'-'.fake()->unique()->numerify('####');
+            }
+        });
+    }
 }

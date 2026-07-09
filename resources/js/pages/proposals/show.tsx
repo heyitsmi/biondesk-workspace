@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as proposals, move as moveProposal } from '@/routes/proposals';
@@ -37,6 +38,7 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
     const { currentTeam } = usePage().props;
     const [linkCopied, setLinkCopied] = useState(false);
     const [sentToClient, setSentToClient] = useState(proposal.stage !== 'draft');
+    const pdf = useDocumentPdfDownload(proposal.pdfUrls);
 
     const copyShareLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
@@ -283,12 +285,20 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
                         <div className="mb-[12px] flex items-center justify-between text-[13.5px] font-semibold">
                             Export
                         </div>
-                        <button type="button" className={BTN_SIDEBAR_GHOST}>
+                        <button
+                            type="button"
+                            className={BTN_SIDEBAR_GHOST}
+                            onClick={pdf.download}
+                            disabled={pdf.downloading}
+                        >
                             <svg className={ICON_SM_CLS}>
                                 <use href="#i-download" />
                             </svg>
-                            Download PDF
+                            {pdf.downloading ? 'Generating…' : 'Download PDF'}
                         </button>
+                        {pdf.error ? (
+                            <p className="mt-[8px] text-[12px] text-bion-danger">{pdf.error}</p>
+                        ) : null}
                     </div>
                 </div>
             </div>

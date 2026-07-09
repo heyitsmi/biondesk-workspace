@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocumentPdfDownloadController;
+use App\Http\Controllers\DocumentPdfGenerateController;
+use App\Http\Controllers\DocumentPdfStatusController;
+use App\Http\Controllers\DocumentPrintController;
 use App\Http\Controllers\InvoiceCreateController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
@@ -60,7 +64,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', LandingPageController::class)->name('home');
 Route::get('/p/{team:slug}', PublicLeadFormController::class)->name('public-lead-form');
 Route::post('/p/{team:slug}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
-Route::get('/d/{team:slug}/{document}', PublicDocumentController::class)->name('public-document');
+Route::get('/d/{document:public_token}', PublicDocumentController::class)->name('public-document');
+Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->name('documents.print');
+Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');
+Route::get('/d/{document:public_token}/pdf/status', DocumentPdfStatusController::class)->name('documents.pdf.status');
+Route::get('/d/{document:public_token}/pdf/download', DocumentPdfDownloadController::class)->name('documents.pdf.download');
 
 Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])

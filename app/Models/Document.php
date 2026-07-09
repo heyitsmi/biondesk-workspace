@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property int $id
@@ -37,12 +39,31 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $public_token
  */
 #[Fillable(['type', 'contact_id', 'opportunity_id', 'project_id', 'number', 'title', 'status', 'issued_at', 'valid_until', 'due_at', 'currency', 'discount_percent', 'tax_percent', 'content', 'notes'])]
-class Document extends Model
+class Document extends Model implements HasMedia
 {
     /** @use HasFactory<DocumentFactory> */
     use HasFactory;
 
+    use InteractsWithMedia;
     use LogsActivity;
+
+    /**
+     * Assign a public share token to every document as soon as it's created.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $document) {
+            $document->public_token ??= Str::random(32);
+        });
+    }
+
+    /**
+     * Register the media collections for this model.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('pdf')->singleFile();
+    }
 
     /**
      * Get the team this document belongs to.
@@ -191,19 +212,6 @@ class Document extends Model
     }
 
     /**
-     * Get a unique public share token for this document, generating one if needed.
-     */
-    public function ensurePublicToken(): string
-    {
-        if ($this->public_token === null) {
-            $this->public_token = Str::random(32);
-            $this->save();
-        }
-
-        return $this->public_token;
-    }
-
-    /**
      * Get the sum of each line item's quantity * unit price, before discount/tax.
      */
     public function subtotalValue(): int
@@ -307,12 +315,70 @@ class Document extends Model
     }
 
     /**
-     * Get the public share URL for this document, matching the current
-     * `/d/{team:slug}/{document}` route (number-based lookup).
+     * Get the public share URL for this document, token-based per decision 0.9.
      */
     public function shareUrl(): string
     {
-        return url('/d/'.$this->team->slug.'/'.mb_strtolower($this->number));
+        return url('/d/'.$this->public_token);
+    }
+
+    /**
+     * Get the generate/status/download URLs used by the "Download PDF" flow,
+     * shared by both the internal show pages and the public share page.
+     *
+     * @return array{generate: string, status: string, download: string}
+     */
+    public function pdfUrls(): array
+    {
+        return [
+            'generate' => route('documents.pdf.generate', ['document' => $this->public_token]),
+            'status' => route('documents.pdf.status', ['document' => $this->public_token]),
+            'download' => route('documents.pdf.download', ['document' => $this->public_token]),
+        ];
+    }
+
+    /**
+     * Get a content hash covering every field that affects the rendered
+     * document (header fields + line items), used to decide whether a cached
+     * PDF is still valid or needs to be regenerated.
+     */
+    public function contentHash(): string
+    {
+        $payload = [
+            'type' => $this->type->value,
+            'title' => $this->title,
+            'number' => $this->number,
+            'status' => $this->status->value,
+            'issued_at' => $this->issued_at?->toDateString(),
+            'valid_until' => $this->valid_until?->toDateString(),
+            'due_at' => $this->due_at?->toDateString(),
+            'currency' => $this->currency,
+            'discount_percent' => $this->discount_percent,
+            'tax_percent' => $this->tax_percent,
+            'content' => $this->content,
+            'notes' => $this->notes,
+            'contact_id' => $this->contact_id,
+            'project_id' => $this->project_id,
+            'items' => $this->items->map(fn (DocumentItem $item) => [
+                'name' => $item->name,
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price_value' => $item->unit_price_value,
+            ])->all(),
+        ];
+
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Determine whether the cached PDF (if any) still matches this document's
+     * current content — i.e. whether it's safe to serve without regenerating.
+     */
+    public function hasCurrentCachedPdf(): bool
+    {
+        $media = $this->getFirstMedia('pdf');
+
+        return $media !== null && $media->getCustomProperty('content_hash') === $this->contentHash();
     }
 
     /**
@@ -433,6 +499,7 @@ class Document extends Model
             'notes' => $this->notes ?? '',
             'linkedProject' => $this->linkedProjectArray(),
             'currency' => $this->currency,
+            'pdfUrls' => $this->pdfUrls(),
         ];
     }
 
@@ -457,6 +524,7 @@ class Document extends Model
             'expirySort' => self::timestampOf($this->valid_until),
             'amount' => $this->formattedTotal(),
             'amountValue' => $this->totalValue(),
+            'shareUrl' => $this->shareUrl(),
         ];
     }
 
@@ -494,6 +562,7 @@ class Document extends Model
             'terms' => $this->notes ?? '',
             'linkedProject' => $this->linkedProjectArray(),
             'currency' => $this->currency,
+            'pdfUrls' => $this->pdfUrls(),
         ];
     }
 
@@ -518,6 +587,7 @@ class Document extends Model
             'dueSort' => self::timestampOf($this->due_at),
             'amount' => $this->formattedTotal(),
             'amountValue' => $this->totalValue(),
+            'shareUrl' => $this->shareUrl(),
         ];
     }
 
@@ -558,6 +628,96 @@ class Document extends Model
             'payments' => $this->payments->map(fn (Payment $payment) => $payment->toPaymentArray())->all(),
             'linkedProject' => $this->linkedProjectArray(),
             'currency' => $this->currency,
+            'pdfUrls' => $this->pdfUrls(),
+        ];
+    }
+
+    /**
+     * Get the array shape used for the public share page (/d/{public_token}) and
+     * the print view rendered into a PDF, unified across all three document types.
+     *
+     * @return array<string, mixed>
+     */
+    public function toPublicArray(): array
+    {
+        [$recipientLabel, $dateFields, $adjustmentLabel, $adjustmentAmount, $totalLabel, $notesLabel, $primaryActionLabel] = match ($this->type) {
+            DocumentType::Proposal => [
+                'Prepared For',
+                [
+                    ['label' => 'Date Prepared', 'value' => $this->issued_at?->format('M j, Y') ?? '—', 'danger' => false],
+                    ['label' => 'Valid Until', 'value' => $this->valid_until?->format('M j, Y') ?? '—', 'danger' => false],
+                ],
+                "Tax ({$this->tax_percent}%)",
+                self::money($this->taxValue()),
+                'Total Amount',
+                'Notes',
+                'Accept Proposal',
+            ],
+            DocumentType::Quote => [
+                'Prepared For',
+                [
+                    ['label' => 'Date Issued', 'value' => $this->issued_at?->format('M j, Y') ?? '—', 'danger' => false],
+                    ['label' => 'Expiry Date', 'value' => $this->valid_until?->format('M j, Y') ?? '—', 'danger' => false],
+                ],
+                "Discount ({$this->discount_percent}%)",
+                self::money($this->discountValue()),
+                'Total Estimate',
+                'Terms & Conditions',
+                'Accept Quote',
+            ],
+            DocumentType::Invoice => [
+                'Bill To',
+                [
+                    ['label' => 'Date Issued', 'value' => $this->issued_at?->format('M j, Y') ?? '—', 'danger' => false],
+                    ['label' => 'Due Date', 'value' => $this->due_at?->format('M j, Y') ?? '—', 'danger' => $this->isOverdue()],
+                ],
+                "Tax ({$this->tax_percent}%)",
+                self::money($this->taxValue()),
+                'Invoice Total',
+                'Payment Instructions',
+                'Pay Now',
+            ],
+        };
+
+        return [
+            'kind' => $this->type === DocumentType::Quote ? 'quotation' : $this->type->value,
+            'kindLabel' => $this->type->label(),
+            'number' => $this->number,
+            'context' => $this->contextLabel(),
+            'statusLabel' => $this->displayStatusLabel(),
+            'tone' => $this->displayStatusTone(),
+            'business' => [
+                'name' => $this->team->name,
+                'address' => '',
+                'email' => '',
+            ],
+            'recipient' => [
+                'label' => $recipientLabel,
+                'name' => $this->clientName(),
+                'attn' => $this->contact?->fullName() ?? '',
+                'address' => $this->contactAddress(),
+                'email' => $this->contactEmail(),
+            ],
+            'dateFields' => $dateFields,
+            'lineItems' => $this->items->map(fn (DocumentItem $item) => [
+                'name' => $item->name,
+                'description' => $item->description ?? '',
+                'qty' => $item->quantity,
+                'price' => self::money($item->unit_price_value),
+                'total' => self::money($item->lineTotalValue()),
+            ])->all(),
+            'subtotal' => self::money($this->subtotalValue()),
+            'adjustmentLabel' => $adjustmentLabel,
+            'adjustmentAmount' => $adjustmentAmount,
+            'totalLabel' => $totalLabel,
+            'total' => self::money($this->totalValue()),
+            'amountPaid' => $this->type === DocumentType::Invoice ? self::money($this->amountPaidValue()) : null,
+            'amountDue' => $this->type === DocumentType::Invoice ? self::money($this->amountDueValue()) : null,
+            'notesLabel' => $notesLabel,
+            'notes' => $this->notes ?? '',
+            'primaryActionLabel' => $primaryActionLabel,
+            'currency' => $this->currency,
+            'pdfUrls' => $this->pdfUrls(),
         ];
     }
 

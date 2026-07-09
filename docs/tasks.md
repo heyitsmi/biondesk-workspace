@@ -37,7 +37,7 @@ Harus selesai duluan karena jadi dasar semua fase berikutnya.
 - [ ] 0.6 Tambah konfigurasi Brevo di `config/services.php` + `.env` (lihat pertanyaan klarifikasi)
 - [ ] 0.7 Tambah konfigurasi Cloudflare Turnstile (lihat pertanyaan klarifikasi)
 - [x] 0.8 Validasi `Document`: **boleh berdiri sendiri** — `opportunity_id` dan `project_id` sama-sama nullable, tidak wajib salah satu terisi (mendukung dokumen ad-hoc)
-- [x] 0.9 Skema URL dokumen publik: **ikut PRD**, `/d/{document:public_token}` (token unik, tanpa team di URL). Rute stub `/d/{team:slug}/{document}` yang sudah ada akan diganti waktu Fase 6
+- [x] 0.9 Skema URL dokumen publik: **ikut PRD**, `/d/{document:public_token}` (token unik, tanpa team di URL). Diimplementasikan di Fase 6, menggantikan rute stub `/d/{team:slug}/{document}`
 
 ## Fase 1 — Contact & Opportunity (fondasi CRM)
 
@@ -130,13 +130,15 @@ Bergantung ke Fase 4 (Document harus ada dulu).
 
 Bergantung ke Fase 4 (Document) dan keputusan 0.9 (skema URL).
 
-- [ ] 6.1 Tambah kolom `public_token` (unik) ke tabel `documents`
-- [ ] 6.2 Route publik `/d/{document:public_token}` (ganti/selaraskan dengan yang sudah dibangun di versi stub)
-- [ ] 6.3 Migrasi `public/document.tsx` dari data stub ke data asli lewat token
-- [ ] 6.4 Job queued (`ShouldQueue`) generate PDF lewat Browsershot dari route print khusus (halaman polos, tanpa tombol aksi)
-- [ ] 6.5 Simpan hasil PDF lewat media library, cache berdasarkan hash konten — tidak generate ulang kalau konten belum berubah
-- [ ] 6.6 Tombol "Download PDF" di halaman share dan di halaman internal disambungkan ke job ini
-- [ ] 6.7 Pest test: token invalid → 404; PDF ter-cache tidak generate ulang saat konten sama
+- [x] 6.1 Tambah kolom `public_token` (unik) ke tabel `documents` (sudah ada sejak Fase 4; ditambah `creating` hook di model + migration backfill untuk row lama yang belum punya token)
+- [x] 6.2 Route publik `/d/{document:public_token}` (ganti dari stub `/d/{team:slug}/{document}`)
+- [x] 6.3 Migrasi `public/document.tsx` dari data stub ke data asli lewat token (`Document::toPublicArray()`, unifikasi proposal/quotation/invoice)
+- [x] 6.4 Job queued (`GenerateDocumentPdfJob implements ShouldQueue`) generate PDF lewat Browsershot dari route print khusus `/d/{token}/print` (Blade polos, tanpa tombol aksi, CSS inline)
+- [x] 6.5 Simpan hasil PDF lewat media library (collection `pdf`, `singleFile()`), cache berdasarkan `content_hash` (SHA-256 dari seluruh field + line item) disimpan sebagai custom property media — tidak generate ulang kalau hash sama
+- [x] 6.6 Tombol "Download PDF" di halaman share dan tiga halaman internal (proposal/quotation/invoice show) disambungkan lewat hook `useDocumentPdfDownload` (generate → poll status → download)
+- [x] 6.7 Pest test: token invalid → 404; PDF ter-cache tidak generate ulang saat hash sama; regenerate saat konten berubah (`DocumentPdfTest`, `PublicDocumentPageTest`)
+
+**Fase 6 selesai**: install `spatie/browsershot` (Composer) + `puppeteer` (npm, dengan Chrome headless-shell terpasang lewat `npx puppeteer browsers install chrome-headless-shell`) — disetujui user sebelum instalasi. PDF generation genuinely queued (bukan `dispatchSync`), diverifikasi lewat `queue:listen` yang jalan di `composer run dev`; endpoint generate mengembalikan `{status: ready}` langsung kalau cache valid, atau `{status: queued}` lalu frontend polling `/pdf/status` sampai selesai baru redirect ke `/pdf/download`. `DocumentPdfRenderer` diekstrak jadi class terpisah supaya bisa di-mock di test (tidak butuh Chrome di CI). Diverifikasi manual end-to-end di browser: generate pertama kali lewat job asli + Browsershot asli (45KB PDF), klik kedua kali langsung `ready` tanpa job baru (caching bekerja).
 
 ## Fase 7 — Reminder & Email
 
