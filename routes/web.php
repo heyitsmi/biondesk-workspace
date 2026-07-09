@@ -14,6 +14,7 @@ use App\Http\Controllers\OpportunityEditController;
 use App\Http\Controllers\OpportunityMoveStageController;
 use App\Http\Controllers\OpportunityStoreController;
 use App\Http\Controllers\OpportunityUpdateController;
+use App\Http\Controllers\PaymentStoreController;
 use App\Http\Controllers\ProfileLibraryController;
 use App\Http\Controllers\ProjectCreateController;
 use App\Http\Controllers\ProjectDestroyController;
@@ -167,6 +168,9 @@ Route::prefix('app/{current_team}')
         Route::get('invoices', InvoicesController::class)->name('invoices.index');
         Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
         Route::post('invoices', InvoiceStoreController::class)->name('invoices.store');
+        Route::post('invoices/{invoice}/payments', PaymentStoreController::class)
+            ->whereNumber('invoice')
+            ->name('invoices.payments.store');
         Route::get('invoices/{invoice}', InvoiceShowController::class)
             ->whereNumber('invoice')
             ->name('invoices.show');

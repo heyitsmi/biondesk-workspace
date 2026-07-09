@@ -95,6 +95,32 @@ class Document extends Model
     }
 
     /**
+     * Get the payments recorded against this document (invoice).
+     *
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->orderBy('paid_at');
+    }
+
+    /**
+     * Get the sum of all payments recorded against this invoice.
+     */
+    public function amountPaidValue(): int
+    {
+        return $this->payments->sum('amount_value');
+    }
+
+    /**
+     * Get the remaining balance: total minus payments received so far.
+     */
+    public function amountDueValue(): int
+    {
+        return max(0, $this->totalValue() - $this->amountPaidValue());
+    }
+
+    /**
      * Generate the next sequential document number for the given team and type,
      * e.g. "P-2026-0001", "QUO-2026-0001", "INV-2026-0001".
      */
@@ -503,7 +529,7 @@ class Document extends Model
     public function toInvoiceDetailArray(): array
     {
         return [...$this->toInvoiceListItem(),
-            'dueInLabel' => $this->due_at !== null ? ($this->isOverdue() ? "Due {$this->due_at->diffForHumans()}" : "Due {$this->due_at->diffForHumans()}") : '',
+            'dueInLabel' => $this->due_at !== null ? ($this->isOverdue() ? "Overdue by {$this->due_at->diffForHumans(null, CarbonInterface::DIFF_ABSOLUTE)}" : "Due {$this->due_at->diffForHumans()}") : '',
             'business' => [
                 'name' => $this->team->name,
                 'address' => '',
@@ -526,10 +552,10 @@ class Document extends Model
             'taxLabel' => "Tax ({$this->tax_percent}%)",
             'taxAmount' => self::money($this->taxValue()),
             'total' => self::money($this->totalValue()),
-            'amountPaid' => self::money(0),
-            'amountDue' => self::money($this->totalValue()),
+            'amountPaid' => self::money($this->amountPaidValue()),
+            'amountDue' => self::money($this->amountDueValue()),
             'paymentInstructions' => $this->notes ?? '',
-            'payments' => [],
+            'payments' => $this->payments->map(fn (Payment $payment) => $payment->toPaymentArray())->all(),
             'linkedProject' => $this->linkedProjectArray(),
             'currency' => $this->currency,
         ];

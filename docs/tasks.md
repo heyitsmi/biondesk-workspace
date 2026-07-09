@@ -119,10 +119,12 @@ Model tunggal `Document` dengan `type` discriminator, sesuai PRD. Bergantung ke 
 
 Bergantung ke Fase 4 (Document harus ada dulu).
 
-- [ ] 5.1 Migration + model `Payment` (belongsTo Document/invoice, banyak record per invoice untuk kasus DP + pelunasan)
-- [ ] 5.2 Form pencatatan payment manual di halaman invoice show (field bebas: metode, jumlah, tanggal, catatan)
-- [ ] 5.3 Kalkulasi amount paid/amount due otomatis dari total payment record
-- [ ] 5.4 Pest test: banyak payment per invoice, kalkulasi amount due benar
+- [x] 5.1 Migration + model `Payment` (belongsTo Document/invoice, banyak record per invoice untuk kasus DP + pelunasan)
+- [x] 5.2 Form pencatatan payment manual di halaman invoice show (field bebas: metode, jumlah, tanggal, catatan)
+- [x] 5.3 Kalkulasi amount paid/amount due otomatis dari total payment record
+- [x] 5.4 Pest test: banyak payment per invoice, kalkulasi amount due benar (`tests/Feature/PaymentTrackingTest.php`)
+
+**Fase 5 selesai**: `Payment` belongsTo `Document`, hanya bisa dicatat untuk document bertipe invoice (controller memfilter `type = invoice` sebelum findOrFail, 404 kalau bukan invoice atau beda team). `Document::amountPaidValue()`/`amountDueValue()` dihitung dari relasi `payments` (bukan kolom tersimpan), `amountDueValue()` di-clamp minimal 0 kalau total pembayaran melebihi total invoice (overpayment tidak menghasilkan angka negatif). Form pencatatan pakai `useForm` inline di sidebar invoice show (toggle show/hide), bukan modal — konsisten dengan pola sidebar-form yang sudah ada di halaman itu. Belum ada fitur edit/hapus payment yang sudah tercatat (gap yang sama seperti attachment di Fase 3).
 
 ## Fase 6 — Share & PDF
 

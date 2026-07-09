@@ -15,7 +15,7 @@ class InvoiceShowController extends Controller
     public function __invoke(Request $request, string $current_team, int $invoice): Response
     {
         $team = $request->user()->currentTeam;
-        $document = $team->documents()->where('type', DocumentType::Invoice)->with(['contact', 'project', 'items'])->find($invoice);
+        $document = $team->documents()->where('type', DocumentType::Invoice)->with(['contact', 'project', 'items', 'payments'])->find($invoice);
 
         abort_if($document === null, 404);
 
