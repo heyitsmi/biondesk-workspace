@@ -2,9 +2,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as invoiceCreate } from '@/routes/invoices';
 import { show as projectShow } from '@/routes/projects';
-import { index as quotations } from '@/routes/quotations';
+import { convertToInvoice as convertQuotationToInvoice, index as quotations, move as moveQuotation } from '@/routes/quotations';
 import type { BiondeskTone, QuotationShowPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -58,12 +57,24 @@ export default function QuotationShowPage({ quotation }: QuotationShowPageProps)
         }
     };
 
+    const sendToClient = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.patch(
+            moveQuotation({ current_team: currentTeam.slug, quotation: quotation.id }).url,
+            { status: 'sent' },
+            { preserveScroll: true, onSuccess: () => setSentToClient(true) },
+        );
+    };
+
     const convertToInvoice = (): void => {
         if (!currentTeam) {
             return;
         }
 
-        router.visit(invoiceCreate(currentTeam.slug));
+        router.post(convertQuotationToInvoice({ current_team: currentTeam.slug, quotation: quotation.id }).url);
     };
 
     return (
@@ -99,7 +110,7 @@ export default function QuotationShowPage({ quotation }: QuotationShowPageProps)
                     <button
                         type="button"
                         className={BTN_PRIMARY}
-                        onClick={() => setSentToClient(true)}
+                        onClick={sendToClient}
                     >
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-send" />

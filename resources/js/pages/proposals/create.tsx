@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Head, router, useHttp, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as proposalCreate, index as proposals } from '@/routes/proposals';
+import { aiDraft as proposalAiDraft, create as proposalCreate, index as proposals, store as storeProposal } from '@/routes/proposals';
 import type { ProposalCreatePageProps, ProposalDraftLineItem } from '@/types';
 
 const ICON_SM_CLS =
@@ -52,17 +52,13 @@ export default function ProposalCreatePage({
     const [currency, setCurrency] = useState('USD');
 
     const [showAiPanel, setShowAiPanel] = useState(false);
-    const [brief, setBrief] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const generateTimeoutRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (generateTimeoutRef.current !== null) {
-                window.clearTimeout(generateTimeoutRef.current);
-            }
-        };
-    }, []);
+    const [aiError, setAiError] = useState<string | null>(null);
+    const {
+        data: aiData,
+        setData: setAiData,
+        post: postAiDraft,
+        processing: isGenerating,
+    } = useHttp<{ brief: string }, { title?: string; content?: string; error?: string }>({ brief: '' });
 
     const totals = useMemo(() => {
         const subtotal = lineItems.reduce(
@@ -92,29 +88,27 @@ export default function ProposalCreatePage({
     };
 
     const generateWithAi = (): void => {
-        const trimmedBrief = brief.trim();
-
-        if (trimmedBrief.length === 0 || isGenerating) {
+        if (!currentTeam || aiData.brief.trim().length === 0 || isGenerating) {
             return;
         }
 
-        setIsGenerating(true);
+        setAiError(null);
 
-        generateTimeoutRef.current = window.setTimeout(() => {
-            const generatedTitle =
-                trimmedBrief
-                    .split(/\n|\./)
-                    .find((line) => line.trim().length > 0)
-                    ?.trim()
-                    .slice(0, 60) || title;
+        void postAiDraft(proposalAiDraft(currentTeam.slug).url, {
+            onSuccess: (response) => {
+                if (response.error) {
+                    setAiError(response.error);
 
-            setTitle(generatedTitle);
-            setContent(
-                `Based on your brief, ${trimmedBrief}\n\nWe recommend the scope and timeline outlined below to meet these goals.`,
-            );
-            setIsGenerating(false);
-            generateTimeoutRef.current = null;
-        }, 900);
+                    return;
+                }
+
+                setTitle(response.title ?? title);
+                setContent(response.content ?? content);
+            },
+            onHttpException: () => {
+                setAiError('AI generation failed. Please try again.');
+            },
+        });
     };
 
     const backToProposals = (): void => {
@@ -123,6 +117,27 @@ export default function ProposalCreatePage({
         }
 
         router.visit(proposals(currentTeam.slug));
+    };
+
+    const submit = (status: 'draft' | 'sent'): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.post(storeProposal(currentTeam.slug).url, {
+            status,
+            title,
+            clientId,
+            projectId,
+            datePrepared,
+            validUntil,
+            content,
+            notes,
+            currency,
+            discountPercent,
+            taxPercent,
+            items: lineItems,
+        });
     };
 
     return (
@@ -213,14 +228,17 @@ export default function ProposalCreatePage({
                                     <textarea
                                         className="mb-[10px] min-h-[70px] w-full resize-y rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[8px] text-[13.5px] text-bion-text outline-none focus:border-bion-accent"
                                         placeholder="Describe the client's goals and you'll get a draft title and content..."
-                                        value={brief}
-                                        onChange={(event) => setBrief(event.target.value)}
+                                        value={aiData.brief}
+                                        onChange={(event) => setAiData('brief', event.target.value)}
                                     />
+                                    {aiError ? (
+                                        <p className="mb-[10px] text-[12.5px] text-bion-danger">{aiError}</p>
+                                    ) : null}
                                     <button
                                         type="button"
                                         className={cn(BTN_GHOST_SM, 'bg-bion-surface')}
                                         onClick={generateWithAi}
-                                        disabled={isGenerating || brief.trim().length === 0}
+                                        disabled={isGenerating || aiData.brief.trim().length === 0}
                                     >
                                         <svg className={ICON_SM_CLS}>
                                             <use href="#i-sparkles" />
@@ -410,7 +428,7 @@ export default function ProposalCreatePage({
                                 className={BTN_PRIMARY}
                                 onClick={(event) => {
                                     event.preventDefault();
-                                    backToProposals();
+                                    submit('sent');
                                 }}
                             >
                                 <svg className={ICON_SM_CLS}>
@@ -418,7 +436,7 @@ export default function ProposalCreatePage({
                                 </svg>
                                 Save &amp; Send
                             </button>
-                            <button type="button" className={BTN_GHOST} onClick={backToProposals}>
+                            <button type="button" className={BTN_GHOST} onClick={() => submit('draft')}>
                                 Save as Draft
                             </button>
                         </div>

@@ -102,16 +102,18 @@ Catatan/gap yang diketahui:
 
 Model tunggal `Document` dengan `type` discriminator, sesuai PRD. Bergantung ke Fase 1 (opportunity_id) dan Fase 3 (project_id).
 
-- [ ] 4.1 Migration + model `Document` (type: proposal/quote/invoice; status: draft/sent/viewed/accepted/rejected, plus `overdue` khusus invoice; relasi opsional ke `opportunity_id` dan `project_id` sesuai keputusan 0.8)
-- [ ] 4.2 Migration + model `DocumentItem` (line items, belongsTo Document)
-- [ ] 4.3 `ProposalsController` + create/edit/show controllers pakai Eloquent
-- [ ] 4.4 `QuotationsController` + create/show controllers pakai Eloquent
-- [ ] 4.5 `InvoicesController` + create/show controllers pakai Eloquent
-- [ ] 4.6 Integrasi AI generation untuk proposal, memakai Profile Library (bergantung ke Fase 8, atau AI generation jalan lebih dulu tanpa personalisasi lalu disempurnakan setelah Fase 8)
-- [ ] 4.7 Proposal accepted → tawarkan create quote/invoice draft (user pilih, bukan otomatis) — UI-nya sudah ada di beberapa alur, sambungkan ke data asli
-- [ ] 4.8 Quote accepted → buat invoice dengan import line item dari quote tersebut
-- [ ] 4.9 Pest test: CRUD tiap tipe Document, transisi status, quote→invoice line item import
-- [ ] 4.10 Hapus method stub Proposal/Quote/Invoice dari `StubWorkspaceData`
+- [x] 4.1 Migration + model `Document` (type: proposal/quote/invoice; status: draft/sent/viewed/accepted/rejected, plus `overdue` khusus invoice; relasi opsional ke `opportunity_id` dan `project_id` sesuai keputusan 0.8)
+- [x] 4.2 Migration + model `DocumentItem` (line items, belongsTo Document)
+- [x] 4.3 `ProposalsController` + create/edit/show controllers pakai Eloquent
+- [x] 4.4 `QuotationsController` + create/show controllers pakai Eloquent
+- [x] 4.5 `InvoicesController` + create/show controllers pakai Eloquent
+- [x] 4.6 Integrasi AI generation untuk proposal (tombol "Generate with AI" di proposals/create.tsx) — provider **configurable** lewat `AI_PROVIDER` env (openai/anthropic/deepseek), abstraksi di `app/Support/Ai/` (tanpa dependency Composer baru, pakai `Http` facade langsung, sama seperti pola Turnstile/Brevo). Personalisasi dari Profile Library belum disambungkan (Fase 8 belum ada model Eloquent-nya) — generation jalan tanpa konteks tambahan dulu sesuai kontingensi di atas.
+- [x] 4.7 Proposal accepted → tawarkan create quote/invoice draft (user pilih, bukan otomatis) — modal di proposals/index.tsx disambungkan ke `proposals.convert-to-quote`/`proposals.convert-to-invoice`
+- [x] 4.8 Quote accepted → buat invoice dengan import line item dari quote tersebut (`quotations.convert-to-invoice`)
+- [x] 4.9 Pest test: CRUD tiap tipe Document, transisi status, quote→invoice line item import (`tests/Feature/DocumentManagementTest.php`)
+- [x] 4.10 Hapus method stub create/edit-context Proposal/Quote/Invoice dari `StubWorkspaceData` (method list/detail dipertahankan karena `PublicDocumentController` — Fase 6 — masih memakainya)
+
+**Fase 4 selesai sepenuhnya**: Document/DocumentItem model dengan total dihitung dari line item (bukan kolom tersimpan), nomor dokumen auto-generate per tipe per tahun (`P-2026-0001`, dst), status "overdue" untuk invoice adalah state turunan (bukan kolom persisten) karena pelacakan lunas/belum baru ada di Fase 5. Skema URL publik (`/d/{team:slug}/{document}`) belum diubah ke token-based — itu bagian Fase 6 dan `PublicDocumentController` masih memakai `StubWorkspaceData::publicDocumentContext()`. Halaman quotations/invoices belum punya form edit terpisah (mengikuti stub asli yang juga tidak punya), hanya create + show dengan aksi status. AI provider dikonfirmasi user: configurable (openai/anthropic/deepseek via `AI_PROVIDER`), user sudah punya key untuk ketiganya (diisi manual di `.env` lokal).
 
 ## Fase 5 — Payment tracking
 
@@ -169,7 +171,8 @@ Bisa dikerjakan paralel kapan saja setelah Fase 0, karena tidak bergantung ke mo
 - **Role & permission**: ditunda sampai P1. Fase 1-9 cukup pakai akses single-owner per team lewat `EnsureTeamMembership` yang sudah ada, `spatie/laravel-permission` belum dipakai policy-nya dulu.
 - **Cloudflare Turnstile (poin 0.7, Fase 2)**: user sudah punya key sendiri, diisi manual di `.env` lokal (slot `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` sudah disiapkan kosong di `.env.example`). Tanpa key terisi, form publik fail closed (submit ditolak).
 - **Brevo (poin 0.6, Fase 2)**: user sudah punya API key Brevo, dipakai lewat SMTP relay bawaan Laravel (`MAIL_MAILER=smtp` ke `smtp-relay.brevo.com:587`), bukan paket API terpisah. `MAIL_USERNAME`/`MAIL_PASSWORD` diisi manual di `.env` lokal.
+- **Provider AI (poin 0.5, Fase 4)**: configurable, bukan satu provider tetap. User sudah punya API key OpenAI, Anthropic, dan DeepSeek — provider aktif dipilih lewat `AI_PROVIDER` di `.env` (`openai`/`anthropic`/`deepseek`), abstraksi ada di `app/Support/Ai/` (`AiTextGeneratorFactory`), tanpa dependency Composer baru (pakai `Http` facade langsung, konsisten dengan pola Turnstile/Brevo).
 
-## Masih perlu klarifikasi (belum menghalangi Fase 1-2, baru relevan waktu masuk fase terkait)
+## Masih perlu klarifikasi (belum menghalangi fase saat ini, baru relevan waktu masuk fase terkait)
 
-1. **Provider AI untuk proposal generation (poin 0.5, relevan di Fase 4)** — mau mulai dengan provider apa (OpenAI/Anthropic/DeepSeek/lainnya), dan apakah API key-nya sudah ada atau perlu disiapkan dulu?
+Tidak ada item terbuka saat ini.

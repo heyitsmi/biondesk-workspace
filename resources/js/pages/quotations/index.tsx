@@ -98,9 +98,10 @@ export default function QuotationsPage({ quotations: initialQuotations }: Quotat
                         >
                             <option value="">All Statuses</option>
                             <option value="draft">Draft</option>
-                            <option value="pending">Pending</option>
+                            <option value="sent">Sent</option>
+                            <option value="viewed">Viewed</option>
                             <option value="accepted">Accepted</option>
-                            <option value="declined">Declined</option>
+                            <option value="rejected">Rejected</option>
                         </select>
                     </div>
                     <button type="button" className={BTN_PRIMARY} onClick={visitCreateQuotation}>

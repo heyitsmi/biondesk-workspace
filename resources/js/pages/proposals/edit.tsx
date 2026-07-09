@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { edit as proposalEdit, index as proposals } from '@/routes/proposals';
+import { destroy as destroyProposal, edit as proposalEdit, index as proposals, update as updateProposal } from '@/routes/proposals';
 import type { ProposalDraftLineItem, ProposalEditPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -82,6 +82,34 @@ export default function ProposalEditPage({ clients, projects, proposal }: Propos
         }
 
         router.visit(proposals(currentTeam.slug));
+    };
+
+    const saveChanges = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.put(updateProposal({ current_team: currentTeam.slug, proposal: proposal.id }).url, {
+            title,
+            clientId,
+            projectId,
+            datePrepared,
+            validUntil,
+            content,
+            notes,
+            currency,
+            discountPercent,
+            taxPercent,
+            items: lineItems,
+        });
+    };
+
+    const deleteProposal = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.delete(destroyProposal({ current_team: currentTeam.slug, proposal: proposal.id }).url);
     };
 
     return (
@@ -328,7 +356,7 @@ export default function ProposalEditPage({ clients, projects, proposal }: Propos
                             Publishing
                         </div>
                         <div className="flex flex-col gap-[12px]">
-                            <button type="button" className={BTN_PRIMARY} onClick={backToProposals}>
+                            <button type="button" className={BTN_PRIMARY} onClick={saveChanges}>
                                 <svg className={ICON_SM_CLS}>
                                     <use href="#i-check" />
                                 </svg>
@@ -376,7 +404,7 @@ export default function ProposalEditPage({ clients, projects, proposal }: Propos
                         </div>
                     </div>
 
-                    <button type="button" className={BTN_DANGER_SM} onClick={backToProposals}>
+                    <button type="button" className={BTN_DANGER_SM} onClick={deleteProposal}>
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-trash" />
                         </svg>

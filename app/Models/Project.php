@@ -56,6 +56,24 @@ class Project extends Model
     }
 
     /**
+     * Get {id, title} options for the team's projects, used in document create
+     * forms' "Linked Project" picker.
+     *
+     * @return array<int, array{id: int, title: string}>
+     */
+    public static function optionsFor(Team $team): array
+    {
+        return $team->projects()
+            ->get()
+            ->map(fn (self $project) => [
+                'id' => $project->id,
+                'title' => $project->title,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Get the tasks for this project.
      *
      * @return HasMany<Task, $this>

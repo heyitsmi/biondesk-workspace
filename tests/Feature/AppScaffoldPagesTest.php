@@ -1,7 +1,10 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Enums\DocumentType;
 use App\Models\Contact;
+use App\Models\Document;
+use App\Models\DocumentItem;
 use App\Models\Opportunity;
 use App\Models\Project;
 use App\Models\User;
@@ -38,6 +41,14 @@ test('authenticated users can view app scaffold pages for their current team', f
     $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
     $project = Project::factory()->for($team)->for($opportunity)->create();
     Opportunity::factory()->for($team)->for($contact)->create();
+
+    $proposal = Document::factory()
+        ->for($team)
+        ->for($contact)
+        ->state(['type' => DocumentType::Proposal, 'title' => 'Website Redesign Proposal', 'number' => 'P-2026-004'])
+        ->has(DocumentItem::factory()->count(3), 'items')
+        ->create();
+    Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Proposal])->count(4)->create();
 
     $this->actingAs($user)
         ->get(route('projects.index', ['current_team' => $team->slug]))
@@ -98,27 +109,27 @@ test('authenticated users can view app scaffold pages for their current team', f
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/create')
             ->has('nextNumber')
-            ->has('clients', 5)
+            ->has('clients')
             ->has('projects'),
         );
 
     $this->actingAs($user)
-        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => $proposal->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/edit')
-            ->where('proposal.id', 21)
+            ->where('proposal.id', $proposal->id)
             ->where('proposal.title', 'Website Redesign Proposal')
-            ->has('clients', 5)
+            ->has('clients')
             ->has('projects'),
         );
 
     $this->actingAs($user)
-        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => $proposal->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/show')
-            ->where('proposal.id', 21)
+            ->where('proposal.id', $proposal->id)
             ->where('proposal.title', 'Website Redesign Proposal')
             ->where('proposal.number', 'P-2026-004')
             ->has('proposal.lineItems', 3)

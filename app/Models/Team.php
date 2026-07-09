@@ -148,6 +148,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all documents (proposals, quotes, invoices) for this team.
+     *
+     * @return HasMany<Document, $this>
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    /**
      * Get the lead form banner URL, or null when no banner has been uploaded.
      */
     public function leadFormBannerUrl(): ?string

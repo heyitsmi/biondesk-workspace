@@ -470,7 +470,7 @@ export type ProposalShowPageProps = {
     proposal: ProposalDetail;
 };
 
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+export type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'overdue';
 
 export type InvoiceListItem = {
     id: number;
@@ -555,7 +555,7 @@ export type InvoiceCreatePageProps = {
     projects: InvoiceCreateProjectOption[];
 };
 
-export type QuotationStatus = 'draft' | 'pending' | 'accepted' | 'declined';
+export type QuotationStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected';
 
 export type QuotationListItem = {
     id: number;

@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceCreateController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
+use App\Http\Controllers\InvoiceStoreController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OpportunitiesController;
 use App\Http\Controllers\OpportunityCreateController;
@@ -22,16 +23,26 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectShowController;
 use App\Http\Controllers\ProjectStoreController;
 use App\Http\Controllers\ProjectUpdateController;
+use App\Http\Controllers\ProposalAiDraftController;
+use App\Http\Controllers\ProposalConvertToInvoiceController;
+use App\Http\Controllers\ProposalConvertToQuoteController;
 use App\Http\Controllers\ProposalCreateController;
+use App\Http\Controllers\ProposalDestroyController;
 use App\Http\Controllers\ProposalEditController;
+use App\Http\Controllers\ProposalMoveController;
 use App\Http\Controllers\ProposalsController;
 use App\Http\Controllers\ProposalShowController;
+use App\Http\Controllers\ProposalStoreController;
+use App\Http\Controllers\ProposalUpdateController;
 use App\Http\Controllers\PublicDocumentController;
 use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\PublicLeadFormSubmitController;
+use App\Http\Controllers\QuotationConvertToInvoiceController;
 use App\Http\Controllers\QuotationCreateController;
+use App\Http\Controllers\QuotationMoveController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
+use App\Http\Controllers\QuotationStoreController;
 use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
 use App\Http\Controllers\RequestLogDestroyController;
@@ -130,19 +141,44 @@ Route::prefix('app/{current_team}')
         });
         Route::get('proposals', ProposalsController::class)->name('proposals.index');
         Route::get('proposals/create', ProposalCreateController::class)->name('proposals.create');
+        Route::post('proposals/ai-draft', ProposalAiDraftController::class)->name('proposals.ai-draft');
+        Route::post('proposals', ProposalStoreController::class)->name('proposals.store');
         Route::get('proposals/{proposal}/edit', ProposalEditController::class)
             ->whereNumber('proposal')
             ->name('proposals.edit');
+        Route::put('proposals/{proposal}', ProposalUpdateController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.update');
+        Route::delete('proposals/{proposal}', ProposalDestroyController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.destroy');
+        Route::patch('proposals/{proposal}/status', ProposalMoveController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.move');
+        Route::post('proposals/{proposal}/convert-to-quote', ProposalConvertToQuoteController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.convert-to-quote');
+        Route::post('proposals/{proposal}/convert-to-invoice', ProposalConvertToInvoiceController::class)
+            ->whereNumber('proposal')
+            ->name('proposals.convert-to-invoice');
         Route::get('proposals/{proposal}', ProposalShowController::class)
             ->whereNumber('proposal')
             ->name('proposals.show');
         Route::get('invoices', InvoicesController::class)->name('invoices.index');
         Route::get('invoices/create', InvoiceCreateController::class)->name('invoices.create');
+        Route::post('invoices', InvoiceStoreController::class)->name('invoices.store');
         Route::get('invoices/{invoice}', InvoiceShowController::class)
             ->whereNumber('invoice')
             ->name('invoices.show');
         Route::get('quotations', QuotationsController::class)->name('quotations.index');
         Route::get('quotations/create', QuotationCreateController::class)->name('quotations.create');
+        Route::post('quotations', QuotationStoreController::class)->name('quotations.store');
+        Route::patch('quotations/{quotation}/status', QuotationMoveController::class)
+            ->whereNumber('quotation')
+            ->name('quotations.move');
+        Route::post('quotations/{quotation}/convert-to-invoice', QuotationConvertToInvoiceController::class)
+            ->whereNumber('quotation')
+            ->name('quotations.convert-to-invoice');
         Route::get('quotations/{quotation}', QuotationShowController::class)
             ->whereNumber('quotation')
             ->name('quotations.show');
