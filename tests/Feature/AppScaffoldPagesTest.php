@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Models\Document;
 use App\Models\DocumentItem;
 use App\Models\Opportunity;
+use App\Models\ProfileAsset;
 use App\Models\Project;
 use App\Models\ReminderJob;
 use App\Models\User;
@@ -153,6 +154,9 @@ test('authenticated users can view app scaffold pages for their current team', f
             ->where('summary.overdueCount', 2),
         );
 
+    $profile = ProfileAsset::factory()->for($team)->create(['title' => 'Default Company Profile']);
+    ProfileAsset::factory()->for($team)->count(4)->create();
+
     $this->actingAs($user)
         ->get(route('profiles.index', ['current_team' => $team->slug]))
         ->assertOk()
@@ -170,11 +174,11 @@ test('authenticated users can view app scaffold pages for their current team', f
         );
 
     $this->actingAs($user)
-        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => 1]))
+        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => $profile->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('profiles/edit')
-            ->where('profile.id', 1)
+            ->where('profile.id', $profile->id)
             ->where('profile.title', 'Default Company Profile'),
         );
 });

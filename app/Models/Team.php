@@ -158,6 +158,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all profile library assets for this team.
+     *
+     * @return HasMany<ProfileAsset, $this>
+     */
+    public function profileAssets(): HasMany
+    {
+        return $this->hasMany(ProfileAsset::class);
+    }
+
+    /**
      * Get the lead form banner URL, or null when no banner has been uploaded.
      */
     public function leadFormBannerUrl(): ?string

@@ -156,10 +156,12 @@ Bergantung ke Fase 4/5 (butuh Document dan status Payment).
 
 Bisa dikerjakan paralel kapan saja setelah Fase 0, karena tidak bergantung ke modul lain — tapi hasil AI proposal generation (4.6) idealnya menunggu fase ini supaya personalisasinya bermakna.
 
-- [ ] 8.1 Migration + model `ProfileAsset` (portfolio, testimonial, snippet teks; upload gambar lewat media library)
-- [ ] 8.2 `ProfileLibraryController` (index/create/edit) pakai Eloquent
-- [ ] 8.3 Sambungkan Profile Library ke AI proposal generation (4.6) sebagai konteks
-- [ ] 8.4 Pest test: CRUD ProfileAsset, scoping per-team
+- [x] 8.1 Migration + model `ProfileAsset` (belongsTo Team; kategori company/team/case/asset; upload gambar lewat media library, collection `image` singleFile)
+- [x] 8.2 `ProfileLibraryController` (index/create/store/edit/update/destroy/duplicate) pakai Eloquent
+- [x] 8.3 Sambungkan Profile Library ke AI proposal generation (4.6) sebagai konteks — entri `ProfileAsset` tim ditambahkan ke system prompt `ProposalAiDraftController`
+- [x] 8.4 Pest test: CRUD ProfileAsset, scoping per-team, context AI (`ProfileLibraryTest`, tambahan test di `ProposalAiDraftTest`)
+
+**Fase 8 selesai**: Kategori `ProfileAsset` dipertahankan mengikuti taksonomi UI stub yang sudah ada (company/team/case/asset — "Company Info"/"Team Bio"/"Case Study"/"Assets") alih-alih taksonomi longgar "portfolio/testimonial/snippet" di PRD, karena keduanya menjelaskan hal yang sama dan UI-nya sudah jadi/diverifikasi sejak fase awal — tidak ada alasan membongkar ulang. Fitur duplicate profile (ada di stub asli) dipertahankan sebagai aksi backend sungguhan (`profiles.duplicate`, menyalin record + gambar via `Media::copy()`), bukan dihapus, karena sepenuhnya didukung entity yang sudah ada. Toolbar format teks (Bold/Italic/List/Link) di editor body dihapus karena dekoratif belaka (textarea polos, tidak ada rich text rendering di baliknya). AI context memakai `ProfileAsset::contextLine()` (ringkasan `[kategori] judul: excerpt`) yang di-append ke system prompt, bukan ke user prompt, supaya brief asli klien tetap terpisah dari data internal studio.
 
 ## Fase 9 — Setelah semua P0 dinamis
 

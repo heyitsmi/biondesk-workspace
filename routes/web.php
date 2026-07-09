@@ -202,9 +202,19 @@ Route::prefix('app/{current_team}')
         Route::controller(ProfileLibraryController::class)->group(function () {
             Route::get('profiles', 'index')->name('profiles.index');
             Route::get('profiles/create', 'create')->name('profiles.create');
+            Route::post('profiles', 'store')->name('profiles.store');
             Route::get('profiles/{profile}/edit', 'edit')
                 ->whereNumber('profile')
                 ->name('profiles.edit');
+            Route::put('profiles/{profile}', 'update')
+                ->whereNumber('profile')
+                ->name('profiles.update');
+            Route::delete('profiles/{profile}', 'destroy')
+                ->whereNumber('profile')
+                ->name('profiles.destroy');
+            Route::post('profiles/{profile}/duplicate', 'duplicate')
+                ->whereNumber('profile')
+                ->name('profiles.duplicate');
         });
     });
 

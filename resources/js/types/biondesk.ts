@@ -686,6 +686,7 @@ export type ProfileItem = {
     shortDescription: string;
     body: string;
     hasImage: boolean;
+    imageUrl: string | null;
 };
 
 export type ProfilesPageProps = {
@@ -697,6 +698,7 @@ export type ProfileFormValues = {
     category: '' | ProfileCategory;
     shortDescription: string;
     body: string;
+    image: File | null;
 };
 
 export type ProfileCreatePageProps = {

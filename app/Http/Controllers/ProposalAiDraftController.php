@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProfileAsset;
+use App\Models\Team;
 use App\Support\Ai\AiGenerationException;
 use App\Support\Ai\AiTextGeneratorFactory;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +34,21 @@ class ProposalAiDraftController extends Controller
             line item table, pricing, or a title heading in the content itself.>
             PROMPT;
 
+        $profileContext = $this->profileContext($request->user()->currentTeam);
+
+        if ($profileContext !== '') {
+            $systemPrompt .= <<<PROMPT
+
+
+                Personalize the draft using the studio's own profile library below —
+                its company info, team bios, case studies, and brand assets. Draw on
+                relevant skills, portfolio pieces, and past results instead of writing
+                generic filler.
+
+                {$profileContext}
+                PROMPT;
+        }
+
         try {
             $raw = $factory->make()->generate($systemPrompt, $brief);
         } catch (AiGenerationException $exception) {
@@ -41,6 +58,18 @@ class ProposalAiDraftController extends Controller
         [$title, $content] = $this->splitTitleAndContent($raw, $brief);
 
         return response()->json(['title' => $title, 'content' => $content]);
+    }
+
+    /**
+     * Build a text block summarizing the team's profile library, or an empty
+     * string when the team hasn't added any profile assets yet.
+     */
+    private function profileContext(Team $team): string
+    {
+        return $team->profileAssets()
+            ->get()
+            ->map(fn (ProfileAsset $asset) => "- {$asset->contextLine()}")
+            ->implode("\n");
     }
 
     /**
