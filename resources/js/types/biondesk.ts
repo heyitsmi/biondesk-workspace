@@ -65,6 +65,7 @@ export type OpportunityItem = {
     lastActivity: string;
     activityOrder: number;
     summary: string;
+    projectId: number | null;
 };
 
 export type OpportunitiesPageProps = {
@@ -72,6 +73,33 @@ export type OpportunitiesPageProps = {
     summary: OpportunitySummary;
     stages: PipelineStage[];
     opportunities: OpportunityItem[];
+};
+
+export type OpportunityContactOption = {
+    id: number;
+    name: string;
+};
+
+export type OpportunityFormValues = {
+    title: string;
+    contactId: number | '';
+    amountValue: string;
+    stage: string;
+    closeDate: string;
+    priority: 'low' | 'medium' | 'high';
+    description: string;
+};
+
+export type OpportunityCreatePageProps = {
+    stages: PipelineStage[];
+    contacts: OpportunityContactOption[];
+    defaults: OpportunityFormValues;
+};
+
+export type OpportunityEditPageProps = {
+    stages: PipelineStage[];
+    contacts: OpportunityContactOption[];
+    opportunity: OpportunityFormValues & { id: number };
 };
 
 export type ProjectTask = {
@@ -89,6 +117,7 @@ export type ProjectTaskStatus =
 
 export type ProjectAttachment = {
     name: string;
+    url: string;
 };
 
 export type ProjectDetailTask = {
@@ -145,6 +174,7 @@ export type ProjectItem = {
     progress: number;
     dueAt: string;
     dueOrder: number;
+    sortOrder: number;
     budget: string;
     requestLogCount: number;
     tasks: ProjectTask[];
@@ -160,6 +190,37 @@ export type ProjectsPageProps = {
     };
     stages: PipelineStage[];
     projects: ProjectItem[];
+};
+
+export type ProjectOpportunityOption = {
+    id: number;
+    title: string;
+    company: string;
+};
+
+export type ProjectFormValues = {
+    opportunityId: number | '';
+    title: string;
+    status: string;
+    startDate: string;
+    dueDate: string;
+    description: string;
+    budgetValue: string;
+};
+
+export type ProjectCreatePageProps = {
+    stages: PipelineStage[];
+    opportunities: ProjectOpportunityOption[];
+    defaults: ProjectFormValues;
+};
+
+export type ProjectEditPageProps = {
+    stages: PipelineStage[];
+    project: Omit<ProjectFormValues, 'opportunityId'> & {
+        id: number;
+        opportunityTitle: string;
+        client: string;
+    };
 };
 
 export type ProjectDetail = {
@@ -185,6 +246,109 @@ export type ProjectShowPageProps = {
         label: string;
         tone: BiondeskTone;
     }>;
+};
+
+export type ContactType = 'client' | 'lead' | 'vendor';
+
+export type ContactStatus = 'active' | 'prospect' | 'inactive';
+
+export type ContactFormValues = {
+    type: ContactType;
+    company: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    role: string;
+    location: string;
+    website: string;
+    notes: string;
+};
+
+export type ContactListItem = {
+    id: number;
+    code: string;
+    fullName: string;
+    firstName: string;
+    lastName: string;
+    initials: string;
+    company: string;
+    email: string;
+    phone: string;
+    type: ContactType;
+    typeLabel: string;
+    typeTone: BiondeskTone;
+    status: ContactStatus;
+    statusLabel: string;
+    statusTone: BiondeskTone;
+};
+
+export type ContactRelatedProject = {
+    id: number;
+    title: string;
+    stageLabel: string;
+    tone: BiondeskTone;
+    dueAt: string;
+};
+
+export type ContactRelatedInvoice = {
+    id: number;
+    number: string;
+    amount: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    dueAt: string;
+};
+
+export type ContactNoteFile = {
+    id: number;
+    label: string;
+    kind: 'note' | 'file';
+    meta: string;
+};
+
+export type ContactActivityItem = {
+    id: number;
+    title: string;
+    description: string;
+    when: string;
+    tone: BiondeskTone;
+};
+
+export type ContactDetail = ContactListItem & {
+    role: string;
+    location: string;
+    website: string;
+    notes: string;
+    billingAddress: string;
+    relatedProjects: ContactRelatedProject[];
+    relatedInvoices: ContactRelatedInvoice[];
+    notesAndFiles: ContactNoteFile[];
+    activity: ContactActivityItem[];
+};
+
+export type ContactsIndexPageProps = {
+    contacts: ContactListItem[];
+    contactsCount: string;
+    defaultFilters: {
+        search: string;
+        type: '' | ContactType;
+    };
+};
+
+export type ContactCreatePageProps = {
+    contactsCount: string;
+    defaults: ContactFormValues;
+};
+
+export type ContactEditPageProps = {
+    contactsCount: string;
+    contact: ContactDetail;
+};
+
+export type ContactShowPageProps = {
+    contactsCount: string;
+    contact: ContactDetail;
 };
 
 export type ProposalLineItem = {
@@ -221,6 +385,89 @@ export type ProposalsPageProps = {
         title: string;
         description: string;
     };
+};
+
+export type ProposalClientOption = {
+    id: number;
+    name: string;
+};
+
+export type ProposalProjectOption = {
+    id: number;
+    title: string;
+};
+
+export type ProposalCreatePageProps = {
+    nextNumber: string;
+    defaultDatePrepared: string;
+    defaultValidUntil: string;
+    clients: ProposalClientOption[];
+    projects: ProposalProjectOption[];
+};
+
+export type ProposalDraftLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+};
+
+export type ProposalEditPageProps = {
+    clients: ProposalClientOption[];
+    projects: ProposalProjectOption[];
+    proposal: {
+        id: number;
+        title: string;
+        number: string;
+        clientId: number | '';
+        datePrepared: string;
+        validUntil: string;
+        content: string;
+        lineItems: ProposalDraftLineItem[];
+        notes: string;
+    };
+};
+
+export type ProposalDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type ProposalDetail = ProposalDocument & {
+    datePrepared: string;
+    datePreparedIso: string;
+    validUntil: string;
+    validUntilIso: string;
+    preparedFor: {
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    business: {
+        name: string;
+        address: string;
+        email: string;
+    };
+    summary: string;
+    scopeIntro: string;
+    scopeItems: string[];
+    timeline: string;
+    lineItems: ProposalDetailLineItem[];
+    subtotal: string;
+    taxLabel: string;
+    taxAmount: string;
+    total: string;
+    notes: string;
+    linkedProject: { id: number; title: string } | null;
+    currency: string;
+};
+
+export type ProposalShowPageProps = {
+    proposal: ProposalDetail;
 };
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
@@ -383,15 +630,149 @@ export type QuotationCreatePageProps = {
     projects: QuotationCreateProjectOption[];
 };
 
+export type ReminderBucket = 'overdue' | 'today' | 'upcoming';
+
+export type ReminderLinkKind = 'proposal' | 'project' | 'contact' | 'invoice';
+
+export type ReminderLink = {
+    kind: ReminderLinkKind;
+    label: string;
+    id: number | null;
+};
+
+export type ReminderItem = {
+    id: number;
+    title: string;
+    bucket: ReminderBucket;
+    dueLabel: string;
+    dueSort: number;
+    completed: boolean;
+    link: ReminderLink | null;
+};
+
+export type ReminderSummary = {
+    allCount: number;
+    todayCount: number;
+    upcomingCount: number;
+    overdueCount: number;
+};
+
+export type RemindersPageProps = {
+    summary: ReminderSummary;
+    reminders: ReminderItem[];
+};
+
+export type ProfileCategory = 'company' | 'team' | 'case' | 'asset';
+
+export type ProfileItem = {
+    id: number;
+    title: string;
+    description: string;
+    category: ProfileCategory;
+    categoryLabel: string;
+    icon: string;
+    updatedAt: string;
+    shortDescription: string;
+    body: string;
+    hasImage: boolean;
+};
+
+export type ProfilesPageProps = {
+    profiles: ProfileItem[];
+};
+
+export type ProfileFormValues = {
+    title: string;
+    category: '' | ProfileCategory;
+    shortDescription: string;
+    body: string;
+};
+
+export type ProfileCreatePageProps = {
+    defaults: ProfileFormValues;
+};
+
+export type ProfileEditPageProps = {
+    profile: ProfileItem;
+};
+
+export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand';
+
+export type PublicLeadFormSettings = {
+    enabled: boolean;
+    title: string;
+    welcomeMessage: string;
+    backgroundTheme: PublicLeadFormBackgroundTheme;
+    services: string[];
+    askBudget: boolean;
+    allowAttachments: boolean;
+    bannerUrl: string | null;
+};
+
 export type PublicLeadFormPageProps = {
     team: {
         name: string;
         slug: string;
     };
-    hero: {
-        title: string;
-        description: string;
-        bannerLabel: string;
+    settings: PublicLeadFormSettings;
+    turnstileSiteKey: string | null;
+};
+
+export type SettingsLeadFormPageProps = {
+    formUrl: string;
+    settings: PublicLeadFormSettings;
+};
+
+export type PublicDocumentKind = 'invoice' | 'quotation' | 'proposal';
+
+export type PublicDocumentLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+    total: string;
+};
+
+export type PublicDocumentDateField = {
+    label: string;
+    value: string;
+    danger: boolean;
+};
+
+export type PublicDocument = {
+    kind: PublicDocumentKind;
+    kindLabel: string;
+    number: string;
+    context: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    business: {
+        name: string;
+        address: string;
+        email: string;
     };
-    highlights: string[];
+    recipient: {
+        label: string;
+        name: string;
+        attn: string;
+        address: string;
+        email: string;
+    };
+    dateFields: PublicDocumentDateField[];
+    lineItems: PublicDocumentLineItem[];
+    subtotal: string;
+    adjustmentLabel: string;
+    adjustmentAmount: string;
+    totalLabel: string;
+    total: string;
+    amountPaid: string | null;
+    amountDue: string | null;
+    notesLabel: string;
+    notes: string;
+    primaryActionLabel: string;
+    currency: string;
+};
+
+export type PublicDocumentPageProps = {
+    document: PublicDocument;
 };

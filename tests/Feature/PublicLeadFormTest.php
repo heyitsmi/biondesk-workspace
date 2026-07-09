@@ -13,7 +13,10 @@ test('public lead form renders for valid team slug', function () {
         ->component('public/lead-form')
         ->where('team.name', 'Biondesk Studio')
         ->where('team.slug', $team->slug)
-        ->has('highlights', 3),
+        ->where('settings.enabled', true)
+        ->where('settings.title', 'Work with Biondesk Studio')
+        ->has('settings.services')
+        ->has('turnstileSiteKey'),
     );
 });
 

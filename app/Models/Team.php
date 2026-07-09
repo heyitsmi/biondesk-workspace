@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
+use App\Enums\LeadFormBackgroundTheme;
 use App\Enums\TeamRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -13,12 +14,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $slug
  * @property bool $is_personal
+ * @property bool $lead_form_enabled
+ * @property string|null $lead_form_title
+ * @property string|null $lead_form_description
+ * @property string|null $lead_form_welcome_message
+ * @property LeadFormBackgroundTheme $lead_form_background_theme
+ * @property list<string>|null $lead_form_services
+ * @property bool $lead_form_ask_budget
+ * @property bool $lead_form_allow_attachments
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -26,11 +37,22 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
-class Team extends Model
+#[Fillable([
+    'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_title',
+    'lead_form_description', 'lead_form_welcome_message', 'lead_form_background_theme',
+    'lead_form_services', 'lead_form_ask_budget', 'lead_form_allow_attachments',
+])]
+class Team extends Model implements HasMedia
 {
     /** @use HasFactory<TeamFactory> */
-    use GeneratesUniqueTeamSlugs, HasFactory, SoftDeletes;
+    use GeneratesUniqueTeamSlugs, HasFactory, InteractsWithMedia, SoftDeletes;
+
+    /**
+     * Default "what do you need help with" options for teams that haven't customized them yet.
+     *
+     * @var array<int, string>
+     */
+    public const DEFAULT_LEAD_FORM_SERVICES = ['Brand Identity', 'Web Design', 'App Development', 'Marketing Strategy'];
 
     /**
      * Bootstrap the model and its traits.
@@ -55,7 +77,7 @@ class Team extends Model
     /**
      * Get the team owner.
      */
-    public function owner(): ?Model
+    public function owner(): ?User
     {
         return $this->members()
             ->wherePivot('role', TeamRole::Owner->value)
@@ -96,6 +118,74 @@ class Team extends Model
     }
 
     /**
+     * Get all contacts for this team.
+     *
+     * @return HasMany<Contact, $this>
+     */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    /**
+     * Get all opportunities for this team.
+     *
+     * @return HasMany<Opportunity, $this>
+     */
+    public function opportunities(): HasMany
+    {
+        return $this->hasMany(Opportunity::class);
+    }
+
+    /**
+     * Get all projects for this team.
+     *
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get the lead form banner URL, or null when no banner has been uploaded.
+     */
+    public function leadFormBannerUrl(): ?string
+    {
+        $url = $this->getFirstMediaUrl('lead-form-banner');
+
+        return $url === '' ? null : $url;
+    }
+
+    /**
+     * Register the media collections for this model.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('lead-form-banner')->singleFile();
+    }
+
+    /**
+     * Get the resolved public lead form settings, applying sensible fallbacks.
+     *
+     * @return array<string, mixed>
+     */
+    public function leadFormSettings(): array
+    {
+        return [
+            'enabled' => $this->lead_form_enabled,
+            'title' => $this->lead_form_title ?: "Work with {$this->name}",
+            'welcomeMessage' => $this->lead_form_welcome_message
+                ?: "Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.",
+            'backgroundTheme' => $this->lead_form_background_theme->value,
+            'services' => $this->lead_form_services ?: self::DEFAULT_LEAD_FORM_SERVICES,
+            'askBudget' => $this->lead_form_ask_budget,
+            'allowAttachments' => $this->lead_form_allow_attachments,
+            'bannerUrl' => $this->leadFormBannerUrl(),
+        ];
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -104,6 +194,11 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'lead_form_enabled' => 'boolean',
+            'lead_form_background_theme' => LeadFormBackgroundTheme::class,
+            'lead_form_services' => 'array',
+            'lead_form_ask_budget' => 'boolean',
+            'lead_form_allow_attachments' => 'boolean',
         ];
     }
 

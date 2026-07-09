@@ -82,6 +82,8 @@
     --color-bion-accent-soft: var(--bion-accent-soft);
     --color-bion-success-soft: var(--bion-success-soft);
     --color-bion-danger-soft: var(--bion-danger-soft);
+    --color-bion-info: var(--bion-info);
+    --color-bion-info-soft: var(--bion-info-soft);
     --shadow-bion-raised: var(--bion-shadow-raised);
     --shadow-bion-panel: var(--bion-shadow-panel);
     --shadow-bion-glow: var(--bion-shadow-glow);
@@ -135,6 +137,8 @@
     --bion-accent-soft: rgb(199 127 31 / 0.12);
     --bion-success-soft: rgb(31 138 95 / 0.12);
     --bion-danger-soft: rgb(214 56 61 / 0.12);
+    --bion-info: #2563eb;
+    --bion-info-soft: rgb(37 99 235 / 0.1);
     --bion-shadow-raised: 0 4px 16px rgb(0 0 0 / 0.08);
     --bion-shadow-panel: 0 24px 80px -12px rgb(0 0 0 / 0.14);
     --bion-shadow-glow: 0 0 50px -10px rgb(199 127 31 / 0.22);
@@ -187,6 +191,8 @@
     --bion-accent-soft: rgb(232 163 61 / 0.12);
     --bion-success-soft: rgb(52 168 124 / 0.12);
     --bion-danger-soft: rgb(229 72 77 / 0.12);
+    --bion-info: #60a5fa;
+    --bion-info-soft: rgb(96 165 250 / 0.12);
     --bion-shadow-raised: 0 4px 16px rgb(0 0 0 / 0.24);
     --bion-shadow-panel: 0 24px 80px -12px rgb(0 0 0 / 0.56);
     --bion-shadow-glow: 0 0 50px -10px rgb(232 163 61 / 0.22);

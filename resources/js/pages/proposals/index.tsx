@@ -1,8 +1,8 @@
-import { Head } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as proposals } from '@/routes/proposals';
+import { create as proposalCreate, edit as proposalEdit, index as proposals, show as proposalShow } from '@/routes/proposals';
 import type {
     ProposalDocument,
     ProposalLineItem,
@@ -17,7 +17,6 @@ const ICON_SM_CLS =
 const BTN =
     'inline-flex items-center gap-[7px] rounded-[8px] px-[16px] py-[9px] text-[13.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97]';
 const BTN_PRIMARY = cn(BTN, 'bg-bion-accent text-bion-accent-text hover:opacity-[0.88]');
-const BTN_GHOST = cn(BTN, 'border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised');
 const BTN_GHOST_SM =
     'inline-flex items-center gap-[7px] rounded-[6px] px-[12px] py-[6px] text-[12.5px] font-semibold [transition:opacity_0.12s_ease,transform_0.1s_ease] active:scale-[0.97] border border-bion-border bg-bion-surface text-bion-text hover:bg-bion-surface-raised';
 const BTN_PRIMARY_SM =
@@ -25,10 +24,6 @@ const BTN_PRIMARY_SM =
 
 const PILL_BASE =
     'inline-flex items-center gap-[6px] rounded-full px-[10px] py-[3px] text-[11.5px] font-medium whitespace-nowrap';
-
-const FIELD_LABEL = 'mb-[7px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
-const FIELD_INPUT =
-    'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[9px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
 
 const MODAL_BACKDROP =
     'group/modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-[20px] opacity-0 pointer-events-none [transition:opacity_0.15s_ease] [&.open]:opacity-100! [&.open]:pointer-events-auto!';
@@ -95,6 +90,7 @@ export default function ProposalsPage({
     defaultView,
     documents,
 }: ProposalsPageProps) {
+    const { currentTeam } = usePage().props;
     const [view, setView] = useState<'board' | 'list'>(defaultView);
     const [query, setQuery] = useState('');
     const [items, setItems] = useState<ProposalDocument[]>(documents);
@@ -110,18 +106,8 @@ export default function ProposalsPage({
     const [previewDocumentId, setPreviewDocumentId] = useState<number | null>(
         null,
     );
-    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
-    const [newSource, setNewSource] = useState<'manual' | 'ai'>('manual');
-    const [isGenerating, setIsGenerating] = useState(false);
     const [acceptedDocument, setAcceptedDocument] =
         useState<ProposalDocument | null>(null);
-    const generateTimeoutRef = useRef<number | null>(null);
-    const [formState, setFormState] = useState({
-        title: '',
-        client: '',
-        value: '',
-        brief: '',
-    });
 
     useEffect(() => {
         const handleDocumentClick = () => {
@@ -135,7 +121,6 @@ export default function ProposalsPage({
 
             setMenuDocumentId(null);
             setPreviewDocumentId(null);
-            setIsNewModalOpen(false);
             setAcceptedDocument(null);
         };
 
@@ -143,10 +128,6 @@ export default function ProposalsPage({
         document.addEventListener('keydown', handleEscape);
 
         return () => {
-            if (generateTimeoutRef.current !== null) {
-                window.clearTimeout(generateTimeoutRef.current);
-            }
-
             document.removeEventListener('click', handleDocumentClick);
             document.removeEventListener('keydown', handleEscape);
         };
@@ -270,90 +251,32 @@ export default function ProposalsPage({
         }
     };
 
-    const closeNewModal = (): void => {
-        if (generateTimeoutRef.current !== null) {
-            window.clearTimeout(generateTimeoutRef.current);
-            generateTimeoutRef.current = null;
-        }
-
-        setIsNewModalOpen(false);
-        setNewSource('manual');
-        setIsGenerating(false);
-        setFormState({
-            title: '',
-            client: '',
-            value: '',
-            brief: '',
-        });
-    };
-
-    const handleGenerateProposal = (): void => {
-        const brief = formState.brief.trim();
-
-        if (brief.length === 0 || isGenerating) {
+    const visitCreateProposal = (): void => {
+        if (!currentTeam) {
             return;
         }
 
-        setIsGenerating(true);
-
-        generateTimeoutRef.current = window.setTimeout(() => {
-            const generatedTitle =
-                brief
-                    .split(/\n|\./)
-                    .find((line) => line.trim().length > 0)
-                    ?.trim()
-                    .slice(0, 60) || 'New Proposal';
-
-            setFormState((currentState) => ({
-                ...currentState,
-                title: generatedTitle,
-                client:
-                    currentState.client.trim().length > 0
-                        ? currentState.client
-                        : 'New Client',
-                value:
-                    currentState.value.trim().length > 0
-                        ? currentState.value
-                        : '5000',
-            }));
-            setNewSource('manual');
-            setIsGenerating(false);
-            generateTimeoutRef.current = null;
-        }, 900);
+        router.visit(proposalCreate(currentTeam.slug));
     };
 
-    const handleCreateProposal = (): void => {
-        const nextId = Math.max(...items.map((document) => document.id), 0) + 1;
-        const rawValue = Number.parseInt(
-            formState.value.replace(/[^0-9]/g, ''),
-            10,
+    const visitEditProposal = (documentId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.visit(
+            proposalEdit({ current_team: currentTeam.slug, proposal: documentId }),
         );
-        const amountValue = Number.isNaN(rawValue) ? 0 : rawValue;
+    };
 
-        const newDocument: ProposalDocument = {
-            id: nextId,
-            title: formState.title.trim() || 'Untitled Proposal',
-            number: `P-2026-${String(nextId).padStart(3, '0')}`,
-            client: formState.client.trim() || 'Unknown Client',
-            stage: 'draft',
-            stageLabel: STATUS_LABEL.draft,
-            tone: STATUS_TONE.draft,
-            amount: formatCurrency(amountValue),
-            amountValue,
-            updatedAt: 'Just now',
-            dateSort: 0,
-            shareUrl: `https://biondesk.test/d/p-2026-${String(nextId).padStart(3, '0')}`,
-            items: [
-                {
-                    label: 'Project scope',
-                    amount: formatCurrency(amountValue),
-                },
-            ],
-        };
+    const visitProposalDocument = (documentId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
 
-        setItems((currentItems) => [...currentItems, newDocument]);
-        setView('board');
-        closeNewModal();
+        router.visit(
+            proposalShow({ current_team: currentTeam.slug, proposal: documentId }),
+        );
     };
 
     const duplicateProposal = (document: ProposalDocument): void => {
@@ -448,7 +371,7 @@ export default function ProposalsPage({
                     <button
                         type="button"
                         className={BTN_PRIMARY}
-                        onClick={() => setIsNewModalOpen(true)}
+                        onClick={visitCreateProposal}
                     >
                         <ShellIcon icon="i-plus" small />
                         New Proposal
@@ -577,6 +500,17 @@ export default function ProposalsPage({
                                                                     'opacity-100! pointer-events-auto! [transform:translateY(0)_scale(1)]!',
                                                             )}
                                                         >
+                                                            <button
+                                                                type="button"
+                                                                className="flex w-full items-center gap-[10px] rounded-[7px] px-[10px] py-[9px] text-left text-[13px] text-bion-text hover:bg-bion-bg"
+                                                                onClick={() => {
+                                                                    setMenuDocumentId(null);
+                                                                    visitEditProposal(document.id);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </button>
+
                                                             <div className="px-[8px] pt-[6px] pb-[4px] text-[11px] text-bion-text-muted uppercase">
                                                                 Move to
                                                             </div>
@@ -715,180 +649,6 @@ export default function ProposalsPage({
                     )}
                 </div>
                 <div
-                    className={cn(MODAL_BACKDROP, isNewModalOpen && 'open')}
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) {
-                            closeNewModal();
-                        }
-                    }}
-                >
-                    <div
-                        className={MODAL}
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className={MODAL_HEAD}>
-                            <h3 className="text-[15.5px] font-bold">New Proposal</h3>
-                            <button
-                                type="button"
-                                className={SLIDEOVER_CLOSE}
-                                onClick={closeNewModal}
-                            >
-                                <ShellIcon icon="i-x" />
-                            </button>
-                        </div>
-
-                        <div className={MODAL_BODY}>
-                            <div className="mb-[16px] flex rounded-[8px] border border-bion-border bg-bion-bg p-[2px]">
-                                <button
-                                    type="button"
-                                    className={cn(
-                                        'flex flex-1 items-center justify-center gap-[6px] rounded-[6px] py-[7px] text-[12.5px] font-medium text-bion-text-muted',
-                                        newSource === 'manual' && 'bg-bion-accent-soft! text-bion-accent!',
-                                    )}
-                                    onClick={() => setNewSource('manual')}
-                                >
-                                    <ShellIcon icon="i-edit" small />
-                                    Write Manually
-                                </button>
-                                <button
-                                    type="button"
-                                    className={cn(
-                                        'flex flex-1 items-center justify-center gap-[6px] rounded-[6px] py-[7px] text-[12.5px] font-medium text-bion-text-muted',
-                                        newSource === 'ai' && 'bg-bion-accent-soft! text-bion-accent!',
-                                    )}
-                                    onClick={() => setNewSource('ai')}
-                                >
-                                    <ShellIcon icon="i-sparkles" small />
-                                    Generate with AI
-                                </button>
-                            </div>
-
-                            {newSource === 'manual' ? (
-                                <>
-                                    <div className="mb-[16px]">
-                                        <span className={FIELD_LABEL}>
-                                            Title
-                                        </span>
-                                        <input
-                                            className={FIELD_INPUT}
-                                            value={formState.title}
-                                            onChange={(event) => {
-                                                const nextValue = event.currentTarget.value;
-
-                                                setFormState(
-                                                    (currentState) => ({
-                                                        ...currentState,
-                                                        title: nextValue,
-                                                    }),
-                                                );
-                                            }}
-                                            placeholder="e.g. Website Redesign Proposal"
-                                        />
-                                    </div>
-
-                                    <div className="flex gap-[10px]">
-                                        <div className="mb-[16px] flex-1">
-                                            <span className={FIELD_LABEL}>
-                                                Client
-                                            </span>
-                                            <input
-                                                className={FIELD_INPUT}
-                                                value={formState.client}
-                                                onChange={(event) => {
-                                                    const nextValue = event.currentTarget.value;
-
-                                                    setFormState(
-                                                        (currentState) => ({
-                                                            ...currentState,
-                                                            client: nextValue,
-                                                        }),
-                                                    );
-                                                }}
-                                                placeholder="Client name"
-                                            />
-                                        </div>
-
-                                        <div className="mb-[16px] flex-1">
-                                            <span className={FIELD_LABEL}>
-                                                Value
-                                            </span>
-                                            <input
-                                                className={FIELD_INPUT}
-                                                value={formState.value}
-                                                onChange={(event) => {
-                                                    const nextValue = event.currentTarget.value;
-
-                                                    setFormState(
-                                                        (currentState) => ({
-                                                            ...currentState,
-                                                            value: nextValue,
-                                                        }),
-                                                    );
-                                                }}
-                                                placeholder="$0"
-                                            />
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="mb-[16px]">
-                                        <span className={FIELD_LABEL}>
-                                            Paste a brief or job post
-                                        </span>
-                                        <textarea
-                                            className={cn(FIELD_INPUT, 'resize-y')}
-                                            rows={5}
-                                            value={formState.brief}
-                                            onChange={(event) => {
-                                                const nextValue = event.currentTarget.value;
-
-                                                setFormState(
-                                                    (currentState) => ({
-                                                        ...currentState,
-                                                        brief: nextValue,
-                                                    }),
-                                                );
-                                            }}
-                                            placeholder="Paste the client's brief, job post, or discovery call notes..."
-                                        />
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className={cn(BTN_GHOST, 'w-full justify-center')}
-                                        onClick={handleGenerateProposal}
-                                        disabled={isGenerating}
-                                    >
-                                        <ShellIcon icon="i-sparkles" small />
-                                        {isGenerating
-                                            ? 'Generating...'
-                                            : 'Generate proposal'}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        <div className={MODAL_FOOT}>
-                            <button
-                                type="button"
-                                className={BTN_GHOST}
-                                onClick={closeNewModal}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className={BTN_PRIMARY}
-                                onClick={handleCreateProposal}
-                            >
-                                Create Proposal
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div
                     className={cn(MODAL_BACKDROP, previewDocument && 'open')}
                     onClick={(event) => {
                         if (event.target === event.currentTarget) {
@@ -992,6 +752,26 @@ export default function ProposalsPage({
                                     </button>
                                     <button
                                         type="button"
+                                        className={BTN_GHOST_SM}
+                                        onClick={() =>
+                                            visitEditProposal(previewDocument.id)
+                                        }
+                                    >
+                                        <ShellIcon icon="i-edit" small />
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={BTN_GHOST_SM}
+                                        onClick={() =>
+                                            visitProposalDocument(previewDocument.id)
+                                        }
+                                    >
+                                        <ShellIcon icon="i-file" small />
+                                        Open Document
+                                    </button>
+                                    <button
+                                        type="button"
                                         className={BTN_PRIMARY_SM}
                                         onClick={() =>
                                             setPreviewDocumentId(null)
@@ -1059,10 +839,6 @@ export default function ProposalsPage({
             </div>
         </>
     );
-}
-
-function formatCurrency(value: number): string {
-    return `$${value.toLocaleString('en-US')}`;
 }
 
 function StatusPill({ status }: { status: ProposalStatus }) {

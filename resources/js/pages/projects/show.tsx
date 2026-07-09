@@ -1,13 +1,19 @@
-import { Head } from '@inertiajs/react';
-import { useMemo, useState   } from 'react';
-import type {ChangeEvent, KeyboardEvent} from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as projects, show as projectShow } from '@/routes/projects';
+import { edit as projectEdit, index as projects, show as projectShow, update as updateProject } from '@/routes/projects';
+import {
+    convertToTask as convertRequestLogToTask,
+    destroy as destroyRequestLog,
+    store as storeRequestLog,
+    update as updateRequestLog,
+} from '@/routes/projects/request-logs';
+import { destroy as destroyTask, move as moveTask, store as storeTask, update as updateTask } from '@/routes/projects/tasks';
 import type {
     BiondeskTone,
     ProjectAttachment,
-    ProjectDetailRequestLog,
     ProjectRequestClassification,
     ProjectRequestSource,
     ProjectShowPageProps,
@@ -57,7 +63,8 @@ type TaskDraft = {
     status: ProjectTaskStatus;
     description: string;
     tags: string[];
-    attachments: ProjectAttachment[];
+    existingAttachments: ProjectAttachment[];
+    newAttachments: File[];
 };
 
 type RequestDraft = {
@@ -65,7 +72,8 @@ type RequestDraft = {
     source: ProjectRequestSource;
     classification: ProjectRequestClassification;
     notes: string;
-    attachments: ProjectAttachment[];
+    existingAttachments: ProjectAttachment[];
+    newAttachments: File[];
 };
 
 const toneClassMap: Record<BiondeskTone, string> = {
@@ -109,24 +117,24 @@ const emptyRequestDraft = (): RequestDraft => ({
     source: 'WhatsApp',
     classification: 'new',
     notes: '',
-    attachments: [],
+    existingAttachments: [],
+    newAttachments: [],
 });
 
 export default function ProjectShowPage({
-    project: initialProject,
+    project,
     stages,
     taskStages,
     defaultTaskView,
 }: ProjectShowPageProps) {
-    const [project, setProject] = useState(initialProject);
+    const { currentTeam } = usePage().props;
     const [detailsForm, setDetailsForm] = useState({
-        title: initialProject.title,
-        client: initialProject.client,
-        dueAt: initialProject.dueAt,
-        stage: initialProject.stage,
-        description: initialProject.description,
+        title: project.title,
+        status: project.stage,
+        description: project.description,
     });
     const [activeTab, setActiveTab] = useState<TabKey>('details');
+    const [savingDetails, setSavingDetails] = useState(false);
     const [taskView, setTaskView] =
         useState<'board' | 'list'>(defaultTaskView);
     const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -148,24 +156,7 @@ export default function ProjectShowPage({
     const [extractCandidates, setExtractCandidates] = useState<
         Array<{ id: number; text: string; selected: boolean }>
     >([]);
-
-    const stageMeta = useMemo(() => {
-        return Object.fromEntries(
-            stages.map((stage) => [
-                stage.key,
-                { label: stage.label, tone: stage.tone },
-            ]),
-        ) as Record<string, { label: string; tone: BiondeskTone }>;
-    }, [stages]);
-
-    const taskStageMeta = useMemo(() => {
-        return Object.fromEntries(
-            taskStages.map((stage) => [
-                stage.key,
-                { label: stage.label, tone: stage.tone },
-            ]),
-        ) as Record<ProjectTaskStatus, { label: string; tone: BiondeskTone }>;
-    }, [taskStages]);
+    const [extractSaving, setExtractSaving] = useState(false);
 
     const groupedTasks = useMemo(() => {
         return taskStages.map((stage) => ({
@@ -189,59 +180,38 @@ export default function ProjectShowPage({
         });
     }, [project.requestLogs, reqFilter, reqSearch]);
 
-    const appendActivity = (text: string, tone: BiondeskTone = 'accent'): void => {
-        setProject((current) => ({
-            ...current,
-            activity: [
-                {
-                    text,
-                    time: 'Just now',
-                    tone,
-                },
-                ...current.activity,
-            ],
-        }));
-    };
-
     const saveDetails = (): void => {
-        setProject((current) => ({
-            ...current,
-            title: detailsForm.title.trim() || current.title,
-            client: detailsForm.client.trim() || current.client,
-            dueAt: detailsForm.dueAt.trim() || current.dueAt,
-            stage: detailsForm.stage,
-            stageLabel: stageMeta[detailsForm.stage]?.label ?? current.stageLabel,
-            tone: stageMeta[detailsForm.stage]?.tone ?? current.tone,
-            description: detailsForm.description,
-        }));
+        if (!currentTeam) {
+            return;
+        }
 
-        appendActivity('Project details updated');
+        setSavingDetails(true);
+        router.put(
+            updateProject({ current_team: currentTeam.slug, project: project.id }).url,
+            detailsForm,
+            {
+                preserveScroll: true,
+                onFinish: () => setSavingDetails(false),
+            },
+        );
     };
 
     const addTask = (): void => {
         const title = newTaskTitle.trim();
 
-        if (title === '') {
+        if (title === '' || !currentTeam) {
             return;
         }
 
-        setProject((current) => ({
-            ...current,
-            tasks: [
-                ...current.tasks,
-                {
-                    id: Math.max(0, ...current.tasks.map((task) => task.id)) + 1,
-                    title,
-                    status: 'todo',
-                    description: '',
-                    tags: [],
-                    attachments: [],
-                },
-            ],
-        }));
-
-        setNewTaskTitle('');
-        appendActivity(`Task "${title}" added`);
+        router.post(
+            storeTask({ current_team: currentTeam.slug, project: project.id }).url,
+            { title, status: 'todo' },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => setNewTaskTitle(''),
+            },
+        );
     };
 
     const openTaskDetail = (taskId: number): void => {
@@ -257,7 +227,8 @@ export default function ProjectShowPage({
             status: task.status,
             description: task.description,
             tags: [...task.tags],
-            attachments: [...task.attachments],
+            existingAttachments: [...task.attachments],
+            newAttachments: [],
         });
     };
 
@@ -267,7 +238,7 @@ export default function ProjectShowPage({
     };
 
     const saveTaskDetail = (): void => {
-        if (editingTaskId === null || taskDraft === null) {
+        if (editingTaskId === null || taskDraft === null || !currentTeam) {
             return;
         }
 
@@ -277,66 +248,57 @@ export default function ProjectShowPage({
             return;
         }
 
-        setProject((current) => ({
-            ...current,
-            tasks: current.tasks.map((task) =>
-                task.id === editingTaskId
-                    ? {
-                          ...task,
-                          title: nextTitle,
-                          status: taskDraft.status,
-                          description: taskDraft.description,
-                          tags: [...taskDraft.tags],
-                          attachments: [...taskDraft.attachments],
-                      }
-                    : task,
-            ),
-        }));
-
-        appendActivity(`Task "${nextTitle}" updated`);
-        closeTaskDetail();
+        router.put(
+            updateTask({ current_team: currentTeam.slug, project: project.id, task: editingTaskId }).url,
+            {
+                title: nextTitle,
+                status: taskDraft.status,
+                description: taskDraft.description,
+                tags: taskDraft.tags,
+                attachments: taskDraft.newAttachments,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: closeTaskDetail,
+            },
+        );
     };
 
     const deleteTask = (): void => {
-        if (editingTaskId === null) {
+        if (editingTaskId === null || !currentTeam) {
             return;
         }
 
-        const task = project.tasks.find((currentTask) => currentTask.id === editingTaskId);
+        router.delete(
+            destroyTask({ current_team: currentTeam.slug, project: project.id, task: editingTaskId }).url,
+            {
+                preserveScroll: true,
+                onSuccess: closeTaskDetail,
+            },
+        );
+    };
 
-        setProject((current) => ({
-            ...current,
-            tasks: current.tasks.filter((currentTask) => currentTask.id !== editingTaskId),
-        }));
-
-        if (task) {
-            appendActivity(`Task "${task.title}" deleted`, 'danger');
+    const removeTaskQuick = (taskId: number): void => {
+        if (!currentTeam) {
+            return;
         }
 
-        closeTaskDetail();
+        router.delete(
+            destroyTask({ current_team: currentTeam.slug, project: project.id, task: taskId }).url,
+            { preserveScroll: true, preserveState: true },
+        );
     };
 
     const setTaskStatus = (taskId: number, status: ProjectTaskStatus): void => {
-        const task = project.tasks.find((currentTask) => currentTask.id === taskId);
-
-        setProject((current) => ({
-            ...current,
-            tasks: current.tasks.map((currentTask) =>
-                currentTask.id === taskId
-                    ? {
-                          ...currentTask,
-                          status,
-                      }
-                    : currentTask,
-            ),
-        }));
-
-        if (task) {
-            appendActivity(
-                `Task "${task.title}" moved to ${taskStageMeta[status].label}`,
-                status === 'done' ? 'success' : 'accent',
-            );
+        if (!currentTeam) {
+            return;
         }
+
+        router.patch(
+            moveTask({ current_team: currentTeam.slug, project: project.id, task: taskId }).url,
+            { status },
+            { preserveScroll: true, preserveState: true },
+        );
     };
 
     const handleTaskAttachmentChange = (
@@ -350,10 +312,7 @@ export default function ProjectShowPage({
 
         setTaskDraft({
             ...taskDraft,
-            attachments: [
-                ...taskDraft.attachments,
-                ...files.map((file) => ({ name: file.name })),
-            ],
+            newAttachments: [...taskDraft.newAttachments, ...files],
         });
 
         event.target.value = '';
@@ -400,7 +359,8 @@ export default function ProjectShowPage({
             source: requestLog.source,
             classification: requestLog.classification,
             notes: requestLog.notes,
-            attachments: [...requestLog.attachments],
+            existingAttachments: [...requestLog.attachments],
+            newAttachments: [],
         });
     };
 
@@ -410,93 +370,61 @@ export default function ProjectShowPage({
     };
 
     const saveRequestDetail = (): void => {
-        if (requestDraft === null || requestDraft.text.trim() === '') {
+        if (requestDraft === null || requestDraft.text.trim() === '' || !currentTeam) {
             return;
         }
 
+        const payload = {
+            text: requestDraft.text.trim(),
+            source: requestDraft.source,
+            classification: requestDraft.classification,
+            notes: requestDraft.notes,
+            attachments: requestDraft.newAttachments,
+        };
+
         if (editingRequestId === null) {
-            const newRequest: ProjectDetailRequestLog = {
-                id:
-                    Math.max(0, ...project.requestLogs.map((requestLog) => requestLog.id)) +
-                    1,
-                text: requestDraft.text.trim(),
-                source: requestDraft.source,
-                classification: requestDraft.classification,
-                notes: requestDraft.notes,
-                attachments: [...requestDraft.attachments],
-                date: 'Just now',
-            };
-
-            setProject((current) => ({
-                ...current,
-                requestLogs: [newRequest, ...current.requestLogs],
-            }));
-            appendActivity('New request log added');
+            router.post(
+                storeRequestLog({ current_team: currentTeam.slug, project: project.id }).url,
+                payload,
+                { preserveScroll: true, onSuccess: closeRequestDetail },
+            );
         } else {
-            setProject((current) => ({
-                ...current,
-                requestLogs: current.requestLogs.map((requestLog) =>
-                    requestLog.id === editingRequestId
-                        ? {
-                              ...requestLog,
-                              text: requestDraft.text.trim(),
-                              source: requestDraft.source,
-                              classification: requestDraft.classification,
-                              notes: requestDraft.notes,
-                              attachments: [...requestDraft.attachments],
-                          }
-                        : requestLog,
-                ),
-            }));
-            appendActivity('Request log updated');
+            router.put(
+                updateRequestLog({ current_team: currentTeam.slug, project: project.id, requestLog: editingRequestId }).url,
+                payload,
+                { preserveScroll: true, onSuccess: closeRequestDetail },
+            );
         }
-
-        closeRequestDetail();
     };
 
     const dismissRequest = (requestId: number): void => {
-        setProject((current) => ({
-            ...current,
-            requestLogs: current.requestLogs.filter(
-                (requestLog) => requestLog.id !== requestId,
-            ),
-        }));
-
-        appendActivity('Request log dismissed', 'danger');
-
-        if (editingRequestId === requestId) {
-            closeRequestDetail();
-        }
-    };
-
-    const convertRequestToTask = (requestId: number): void => {
-        const requestLog = project.requestLogs.find(
-            (currentRequest) => currentRequest.id === requestId,
-        );
-
-        if (!requestLog) {
+        if (!currentTeam) {
             return;
         }
 
-        setProject((current) => ({
-            ...current,
-            tasks: [
-                ...current.tasks,
-                {
-                    id: Math.max(0, ...current.tasks.map((task) => task.id)) + 1,
-                    title: requestLog.text,
-                    status: 'todo',
-                    description: requestLog.notes,
-                    tags: [],
-                    attachments: [...requestLog.attachments],
+        router.delete(
+            destroyRequestLog({ current_team: currentTeam.slug, project: project.id, requestLog: requestId }).url,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (editingRequestId === requestId) {
+                        closeRequestDetail();
+                    }
                 },
-            ],
-            requestLogs: current.requestLogs.filter(
-                (currentRequest) => currentRequest.id !== requestId,
-            ),
-        }));
+            },
+        );
+    };
 
-        appendActivity('Request converted into task');
+    const convertRequestToTask = (requestId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.post(
+            convertRequestLogToTask({ current_team: currentTeam.slug, project: project.id, requestLog: requestId }).url,
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const handleRequestAttachmentChange = (
@@ -510,10 +438,7 @@ export default function ProjectShowPage({
 
         setRequestDraft({
             ...requestDraft,
-            attachments: [
-                ...requestDraft.attachments,
-                ...files.map((file) => ({ name: file.name })),
-            ],
+            newAttachments: [...requestDraft.newAttachments, ...files],
         });
 
         event.target.value = '';
@@ -533,6 +458,7 @@ export default function ProjectShowPage({
         setExtractInput('');
         setExtractFileNames([]);
         setExtractCandidates([]);
+        setExtractSaving(false);
     };
 
     const handleExtractFileChange = (
@@ -542,6 +468,30 @@ export default function ProjectShowPage({
 
         setExtractFileNames(files.map((file) => file.name));
         event.target.value = '';
+    };
+
+    const addTasksSequentially = (titles: string[], onDone: () => void): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        if (titles.length === 0) {
+            onDone();
+
+            return;
+        }
+
+        const [first, ...rest] = titles;
+
+        router.post(
+            storeTask({ current_team: currentTeam.slug, project: project.id }).url,
+            { title: first, status: 'backlog' },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => addTasksSequentially(rest, onDone),
+            },
+        );
     };
 
     const runExtract = (): void => {
@@ -554,28 +504,11 @@ export default function ProjectShowPage({
                 return;
             }
 
-            setProject((current) => ({
-                ...current,
-                tasks: [
-                    ...current.tasks,
-                    ...selectedCandidates.map((candidate, index) => ({
-                        id:
-                            Math.max(0, ...current.tasks.map((task) => task.id)) +
-                            index +
-                            1,
-                        title: candidate.text,
-                        status: 'backlog' as ProjectTaskStatus,
-                        description: '',
-                        tags: [],
-                        attachments: [],
-                    })),
-                ],
-            }));
-
-            appendActivity(
-                `${selectedCandidates.length} task suggestion${selectedCandidates.length > 1 ? 's' : ''} added to backlog`,
+            setExtractSaving(true);
+            addTasksSequentially(
+                selectedCandidates.map((candidate) => candidate.text),
+                closeExtractModal,
             );
-            closeExtractModal();
 
             return;
         }
@@ -624,15 +557,30 @@ export default function ProjectShowPage({
             <Head title={project.title} />
 
             <div className="flex min-h-0 flex-1 flex-col">
-                <div className="mb-[16px] shrink-0">
-                    <h1 className="mb-[5px] text-[21px] font-bold">{project.title}</h1>
-                    <div className="flex flex-wrap items-center gap-[10px] text-[13px] text-bion-text-muted">
-                        <span>{project.client}</span>
-                        <span className={toneClassMap[project.tone]}>
-                            <span className={cn('h-[6px] w-[6px] rounded-full', toneDotMap[project.tone])} />
-                            {project.stageLabel}
-                        </span>
+                <div className="mb-[16px] flex shrink-0 items-start justify-between gap-[12px]">
+                    <div>
+                        <h1 className="mb-[5px] text-[21px] font-bold">{project.title}</h1>
+                        <div className="flex flex-wrap items-center gap-[10px] text-[13px] text-bion-text-muted">
+                            <span>{project.client}</span>
+                            <span className={toneClassMap[project.tone]}>
+                                <span className={cn('h-[6px] w-[6px] rounded-full', toneDotMap[project.tone])} />
+                                {project.stageLabel}
+                            </span>
+                            {project.dueAt !== '' ? <span>Due {project.dueAt}</span> : null}
+                        </div>
                     </div>
+
+                    {currentTeam ? (
+                        <Link
+                            href={projectEdit({ current_team: currentTeam.slug, project: project.id })}
+                            className={BTN_GHOST}
+                        >
+                            <svg className={ICON_SM_CLS}>
+                                <use href="#i-edit" />
+                            </svg>
+                            Edit Project
+                        </Link>
+                    ) : null}
                 </div>
 
                 <div className="mb-[18px] flex shrink-0 gap-0 overflow-x-auto border-b border-bion-border">
@@ -672,46 +620,15 @@ export default function ProjectShowPage({
                                 />
                             </div>
 
-                            <div className="flex gap-[12px]">
-                                <div className="mb-[18px] flex-1">
-                                    <span className={FIELD_LABEL}>Client</span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        value={detailsForm.client}
-                                        onChange={(event) =>
-                                            setDetailsForm((current) => ({
-                                                ...current,
-                                                client: event.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                                <div className="mb-[18px] flex-1">
-                                    <span className={FIELD_LABEL}>
-                                        Due date
-                                    </span>
-                                    <input
-                                        className={FIELD_INPUT}
-                                        value={detailsForm.dueAt}
-                                        onChange={(event) =>
-                                            setDetailsForm((current) => ({
-                                                ...current,
-                                                dueAt: event.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                            </div>
-
                             <div className="mb-[18px]">
                                 <span className={FIELD_LABEL}>Status</span>
                                 <select
                                     className={FIELD_INPUT}
-                                    value={detailsForm.stage}
+                                    value={detailsForm.status}
                                     onChange={(event) =>
                                         setDetailsForm((current) => ({
                                             ...current,
-                                            stage: event.target.value,
+                                            status: event.target.value,
                                         }))
                                     }
                                 >
@@ -747,9 +664,23 @@ export default function ProjectShowPage({
                                 type="button"
                                 className={BTN_PRIMARY}
                                 onClick={saveDetails}
+                                disabled={savingDetails}
                             >
-                                Save changes
+                                {savingDetails ? 'Saving...' : 'Save changes'}
                             </button>
+
+                            {currentTeam ? (
+                                <p className="mt-[14px] text-[12.5px] text-bion-text-muted">
+                                    Need to change the client, dates, or budget?{' '}
+                                    <Link
+                                        href={projectEdit({ current_team: currentTeam.slug, project: project.id })}
+                                        className="font-medium text-bion-accent underline"
+                                    >
+                                        Edit full project details
+                                    </Link>
+                                    .
+                                </p>
+                            ) : null}
                         </div>
                     </div>
 
@@ -880,18 +811,7 @@ export default function ProjectShowPage({
                                                             className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[5px] text-bion-text-muted opacity-0 [transition:opacity_0.12s_ease] group-hover:opacity-100 hover:bg-bion-danger-soft hover:text-bion-danger"
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
-                                                                setProject(
-                                                                    (current) => ({
-                                                                        ...current,
-                                                                        tasks: current.tasks.filter(
-                                                                            (
-                                                                                currentTask,
-                                                                            ) =>
-                                                                                currentTask.id !==
-                                                                                task.id,
-                                                                        ),
-                                                                    }),
-                                                                );
+                                                                removeTaskQuick(task.id);
                                                             }}
                                                         >
                                                             <svg className={ICON_SM_CLS}>
@@ -1357,16 +1277,32 @@ export default function ProjectShowPage({
                         <div className="mb-[18px]">
                             <span className={FIELD_LABEL}>Attachments</span>
                             <div className="mb-[10px] flex flex-col gap-[6px]">
-                                {taskDraft?.attachments.map(
+                                {taskDraft?.existingAttachments.map(
                                     (attachment, index) => (
-                                        <div
-                                            key={`${attachment.name}-${index}`}
-                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
+                                        <a
+                                            key={`existing-${attachment.name}-${index}`}
+                                            href={attachment.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px] hover:border-bion-accent"
                                         >
                                             <svg className={ICON_SM_CLS}>
                                                 <use href="#i-paperclip" />
                                             </svg>
                                             <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{attachment.name}</span>
+                                        </a>
+                                    ),
+                                )}
+                                {taskDraft?.newAttachments.map(
+                                    (file, index) => (
+                                        <div
+                                            key={`new-${file.name}-${index}`}
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
+                                        >
+                                            <svg className={ICON_SM_CLS}>
+                                                <use href="#i-paperclip" />
+                                            </svg>
+                                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{file.name}</span>
                                             <button
                                                 type="button"
                                                 className="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-bion-text-muted hover:text-bion-danger"
@@ -1375,13 +1311,13 @@ export default function ProjectShowPage({
                                                         current
                                                             ? {
                                                                   ...current,
-                                                                  attachments:
-                                                                      current.attachments.filter(
+                                                                  newAttachments:
+                                                                      current.newAttachments.filter(
                                                                           (
-                                                                              _attachment,
-                                                                              attachmentIndex,
+                                                                              _file,
+                                                                              fileIndex,
                                                                           ) =>
-                                                                              attachmentIndex !==
+                                                                              fileIndex !==
                                                                               index,
                                                                       ),
                                                               }
@@ -1582,16 +1518,32 @@ export default function ProjectShowPage({
                         <div className="mb-[18px]">
                             <span className={FIELD_LABEL}>Attachments</span>
                             <div className="mb-[10px] flex flex-col gap-[6px]">
-                                {requestDraft?.attachments.map(
+                                {requestDraft?.existingAttachments.map(
                                     (attachment, index) => (
-                                        <div
-                                            key={`${attachment.name}-${index}`}
-                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
+                                        <a
+                                            key={`existing-${attachment.name}-${index}`}
+                                            href={attachment.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px] hover:border-bion-accent"
                                         >
                                             <svg className={ICON_SM_CLS}>
                                                 <use href="#i-paperclip" />
                                             </svg>
                                             <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{attachment.name}</span>
+                                        </a>
+                                    ),
+                                )}
+                                {requestDraft?.newAttachments.map(
+                                    (file, index) => (
+                                        <div
+                                            key={`new-${file.name}-${index}`}
+                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
+                                        >
+                                            <svg className={ICON_SM_CLS}>
+                                                <use href="#i-paperclip" />
+                                            </svg>
+                                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{file.name}</span>
                                             <button
                                                 type="button"
                                                 className="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-bion-text-muted hover:text-bion-danger"
@@ -1600,13 +1552,13 @@ export default function ProjectShowPage({
                                                         current
                                                             ? {
                                                                   ...current,
-                                                                  attachments:
-                                                                      current.attachments.filter(
+                                                                  newAttachments:
+                                                                      current.newAttachments.filter(
                                                                           (
-                                                                              _attachment,
-                                                                              attachmentIndex,
+                                                                              _file,
+                                                                              fileIndex,
                                                                           ) =>
-                                                                              attachmentIndex !==
+                                                                              fileIndex !==
                                                                               index,
                                                                       ),
                                                               }
@@ -1832,20 +1784,23 @@ export default function ProjectShowPage({
                             type="button"
                             className={BTN_PRIMARY}
                             onClick={runExtract}
+                            disabled={extractSaving}
                         >
-                            {extractCandidates.length > 0
-                                ? `Add ${
-                                      extractCandidates.filter(
-                                          (candidate) => candidate.selected,
-                                      ).length
-                                  } task${
-                                      extractCandidates.filter(
-                                          (candidate) => candidate.selected,
-                                      ).length === 1
-                                          ? ''
-                                          : 's'
-                                  } to Backlog`
-                                : 'Extract tasks'}
+                            {extractSaving
+                                ? 'Adding...'
+                                : extractCandidates.length > 0
+                                  ? `Add ${
+                                        extractCandidates.filter(
+                                            (candidate) => candidate.selected,
+                                        ).length
+                                    } task${
+                                        extractCandidates.filter(
+                                            (candidate) => candidate.selected,
+                                        ).length === 1
+                                            ? ''
+                                            : 's'
+                                    } to Backlog`
+                                  : 'Extract tasks'}
                         </button>
                     </div>
                 </div>
