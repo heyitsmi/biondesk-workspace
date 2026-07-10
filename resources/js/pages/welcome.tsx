@@ -1,5 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import {
     AlertCircle,
     ArrowRight,
@@ -18,6 +17,8 @@ import {
     Sparkles,
     X,
 } from 'lucide-react';
+import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { dashboard, login, register } from '@/routes';
 
 const landingStyles = `
@@ -157,91 +158,6 @@ const pricingPlans = [
     },
 ] as const;
 
-const landingThemeStyle = {
-    '--background': '#0b0e14',
-    '--foreground': '#edeff3',
-    '--card': '#12161f',
-    '--card-foreground': '#edeff3',
-    '--popover': '#12161f',
-    '--popover-foreground': '#edeff3',
-    '--primary': '#edeff3',
-    '--primary-foreground': '#12161f',
-    '--secondary': '#1a1f2b',
-    '--secondary-foreground': '#edeff3',
-    '--muted': '#1a1f2b',
-    '--muted-foreground': '#8b93a6',
-    '--accent': '#1a1f2b',
-    '--accent-foreground': '#edeff3',
-    '--border': '#232838',
-    '--input': '#232838',
-    '--ring': '#3b4459',
-    '--sidebar': '#12161f',
-    '--sidebar-foreground': '#edeff3',
-    '--sidebar-primary': '#edeff3',
-    '--sidebar-primary-foreground': '#12161f',
-    '--sidebar-accent': '#1a1f2b',
-    '--sidebar-accent-foreground': '#edeff3',
-    '--sidebar-border': '#232838',
-    '--sidebar-ring': '#3b4459',
-    '--bion-bg': '#0b0e14',
-    '--bion-surface': '#12161f',
-    '--bion-surface-raised': '#1a1f2b',
-    '--bion-border': '#232838',
-    '--bion-text': '#edeff3',
-    '--bion-text-muted': '#8b93a6',
-    '--bion-accent': '#e8a33d',
-    '--bion-accent-text': '#12161f',
-    '--bion-success': '#34a87c',
-    '--bion-danger': '#e5484d',
-    '--bion-accent-soft': 'rgb(232 163 61 / 0.12)',
-    '--bion-success-soft': 'rgb(52 168 124 / 0.12)',
-    '--bion-danger-soft': 'rgb(229 72 77 / 0.12)',
-    '--bion-shadow-raised': '0 4px 16px rgb(0 0 0 / 0.24)',
-    '--bion-shadow-panel': '0 24px 80px -12px rgb(0 0 0 / 0.56)',
-    '--bion-shadow-glow': '0 0 50px -10px rgb(232 163 61 / 0.22)',
-    '--color-background': '#0b0e14',
-    '--color-foreground': '#edeff3',
-    '--color-card': '#12161f',
-    '--color-card-foreground': '#edeff3',
-    '--color-popover': '#12161f',
-    '--color-popover-foreground': '#edeff3',
-    '--color-primary': '#edeff3',
-    '--color-primary-foreground': '#12161f',
-    '--color-secondary': '#1a1f2b',
-    '--color-secondary-foreground': '#edeff3',
-    '--color-muted': '#1a1f2b',
-    '--color-muted-foreground': '#8b93a6',
-    '--color-accent': '#1a1f2b',
-    '--color-accent-foreground': '#edeff3',
-    '--color-border': '#232838',
-    '--color-input': '#232838',
-    '--color-ring': '#3b4459',
-    '--color-sidebar': '#12161f',
-    '--color-sidebar-foreground': '#edeff3',
-    '--color-sidebar-primary': '#edeff3',
-    '--color-sidebar-primary-foreground': '#12161f',
-    '--color-sidebar-accent': '#1a1f2b',
-    '--color-sidebar-accent-foreground': '#edeff3',
-    '--color-sidebar-border': '#232838',
-    '--color-sidebar-ring': '#3b4459',
-    '--color-bion-bg': '#0b0e14',
-    '--color-bion-surface': '#12161f',
-    '--color-bion-surface-raised': '#1a1f2b',
-    '--color-bion-border': '#232838',
-    '--color-bion-text': '#edeff3',
-    '--color-bion-text-muted': '#8b93a6',
-    '--color-bion-accent': '#e8a33d',
-    '--color-bion-accent-text': '#12161f',
-    '--color-bion-success': '#34a87c',
-    '--color-bion-danger': '#e5484d',
-    '--color-bion-accent-soft': 'rgb(232 163 61 / 0.12)',
-    '--color-bion-success-soft': 'rgb(52 168 124 / 0.12)',
-    '--color-bion-danger-soft': 'rgb(229 72 77 / 0.12)',
-    '--shadow-bion-raised': '0 4px 16px rgb(0 0 0 / 0.24)',
-    '--shadow-bion-panel': '0 24px 80px -12px rgb(0 0 0 / 0.56)',
-    '--shadow-bion-glow': '0 0 50px -10px rgb(232 163 61 / 0.22)',
-} as CSSProperties;
-
 export default function Welcome() {
     const { auth, currentTeam } = usePage().props;
     const workspaceHref = currentTeam ? dashboard(currentTeam.slug) : login();
@@ -295,7 +211,10 @@ export default function Welcome() {
             });
 
             stepVisuals.forEach((visual) => {
-                visual.classList.toggle('is-active', visual.dataset.step === step);
+                visual.classList.toggle(
+                    'is-active',
+                    visual.dataset.step === step,
+                );
             });
         };
 
@@ -414,17 +333,14 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Biondesk" />
+            <Head title="Biondesk | The Independent's Command Center" />
             <style>{landingStyles}</style>
 
-            <div
-                style={landingThemeStyle}
-                className="landing-scrollbar dark min-h-screen scroll-smooth bg-[#0b0e14] font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text"
-            >
+            <div className="landing-scrollbar dark min-h-screen scroll-smooth bg-bion-bg font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text">
                 <header className="fixed top-0 z-50 w-full border-b border-bion-border/50 bg-bion-bg/60 backdrop-blur-xl">
                     <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-6 items-center justify-center rounded-md border border-bion-border bg-bion-surface-raised">
+                            <div className="flex size-6 items-center justify-center rounded-md border border-bion-border bg-bion-surface">
                                 <div className="size-1.5 rounded-full bg-bion-accent" />
                             </div>
                             <span className="text-sm font-semibold tracking-wide text-bion-text">
@@ -740,12 +656,16 @@ export default function Welcome() {
 
                                 <ul className="space-y-6">
                                     <FeatureListItem
-                                        icon={<Globe className="size-5 text-bion-text" />}
+                                        icon={
+                                            <Globe className="size-5 text-bion-text" />
+                                        }
                                         title="Bring Your Own Pipeline"
                                         description="Log opportunities from Upwork, LinkedIn, or direct referrals. Create custom public forms that feed directly into your inbox."
                                     />
                                     <FeatureListItem
-                                        icon={<CreditCard className="size-5 text-bion-text" />}
+                                        icon={
+                                            <CreditCard className="size-5 text-bion-text" />
+                                        }
                                         title="Agnostic Invoicing"
                                         description="Bill in any currency. Provide your own Stripe link, Wise details, or bank transfer instructions. Track multiple partial payments per invoice."
                                     />
@@ -754,12 +674,12 @@ export default function Welcome() {
 
                             <div
                                 data-fade-up
-                                className="fade-up delay-200 relative h-[400px] overflow-hidden rounded-2xl border border-bion-border bg-bion-bg"
+                                className="fade-up relative h-[400px] overflow-hidden rounded-2xl border border-bion-border bg-bion-bg delay-200"
                             >
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(232,163,61,0.08)_0%,transparent_60%)] opacity-50" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="absolute size-24 rounded-full border border-bion-accent/30 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                                    <div className="absolute size-48 rounded-full border border-bion-accent/20 animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                                    <div className="absolute size-24 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full border border-bion-accent/30" />
+                                    <div className="absolute size-48 animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full border border-bion-accent/20" />
 
                                     <div className="relative z-10 flex size-16 items-center justify-center rounded-xl border border-bion-accent bg-bion-surface shadow-bion-glow">
                                         <div className="size-3 rounded-full bg-bion-accent" />
@@ -994,20 +914,23 @@ export default function Welcome() {
 
                 <section id="pricing" className="relative bg-bion-bg py-32">
                     <div className="mx-auto max-w-4xl px-6 text-center">
-                        <h2 data-fade-up className="fade-up mb-4 text-3xl font-bold md:text-4xl">
+                        <h2
+                            data-fade-up
+                            className="fade-up mb-4 text-3xl font-bold md:text-4xl"
+                        >
                             Clear, independent pricing.
                         </h2>
                         <p
                             data-fade-up
-                            className="fade-up delay-100 mb-16 text-lg text-bion-text-muted"
+                            className="fade-up mb-16 text-lg text-bion-text-muted delay-100"
                         >
-                            Zero cuts taken from your client payments. You
-                            bring your own payment methods.
+                            Zero cuts taken from your client payments. You bring
+                            your own payment methods.
                         </p>
 
                         <div
                             data-fade-up
-                            className="fade-up delay-200 grid gap-6 md:grid-cols-2"
+                            className="fade-up grid gap-6 delay-200 md:grid-cols-2"
                         >
                             {pricingPlans.map((plan) => (
                                 <article
@@ -1156,11 +1079,17 @@ function WorkflowStep({
     description: ReactNode;
 }) {
     return (
-        <div data-step-trigger data-step={step} className="step-trigger step-text">
-            <div className="mb-3 text-[10px] font-bold tracking-widest text-bion-text uppercase data-[step=1]:text-bion-accent">
-                <span className={step === '1' ? 'text-bion-accent' : ''}>
-                    {eyebrow}
-                </span>
+        <div
+            data-step-trigger
+            data-step={step}
+            className="step-trigger step-text"
+        >
+            <div
+                className={`mb-3 text-[10px] font-bold tracking-widest uppercase ${
+                    step === '1' ? 'text-bion-accent' : 'text-bion-text'
+                }`}
+            >
+                {eyebrow}
             </div>
             <h3 className="mb-4 text-3xl font-bold">{title}</h3>
             <p className="text-lg leading-relaxed text-bion-text-muted">

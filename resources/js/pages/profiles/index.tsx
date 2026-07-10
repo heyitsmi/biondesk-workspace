@@ -127,6 +127,30 @@ export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPage
             </div>
 
             <div className="grid gap-[20px] [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+                {visibleItems.length === 0 ? (
+                    <div className="col-span-full flex flex-col items-center justify-center gap-[12px] rounded-[12px] border border-dashed border-bion-border bg-bion-surface px-[20px] py-[64px] text-center">
+                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-[12px] bg-bion-surface-raised text-bion-text-muted">
+                            <svg className="h-[22px] w-[22px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
+                                <use href="#i-layers" />
+                            </svg>
+                        </div>
+                        <div className="text-[14.5px] font-semibold text-bion-text">
+                            {activeTab === 'all' ? 'No profiles yet' : 'No profiles in this category'}
+                        </div>
+                        <p className="max-w-[320px] text-[13px] leading-normal text-bion-text-muted">
+                            {activeTab === 'all'
+                                ? 'Create reusable company profiles, team bios, and case studies to speed up your proposals.'
+                                : 'Try a different category, or create a new profile in this one.'}
+                        </p>
+                        <button type="button" className={cn(BTN_PRIMARY, 'mt-[4px]')} onClick={visitCreate}>
+                            <svg className={ICON_SM_CLS}>
+                                <use href="#i-plus" />
+                            </svg>
+                            Create Profile
+                        </button>
+                    </div>
+                ) : null}
+
                 {visibleItems.map((item) => (
                     <div
                         key={item.id}
