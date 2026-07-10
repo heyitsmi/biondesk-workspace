@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, Check, Globe, ReceiptText, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { ArrowRight, Check, Globe, Menu, ReceiptText, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { dashboard, login, register } from '@/routes';
 
@@ -90,16 +90,13 @@ const landingStyles = `
     }
 `;
 
-const placeholderImages = {
-    hero: 'https://placehold.co/1200x700/12161F/8B93A6?text=Biondesk+Workflow+Preview',
-    platform:
-        'https://placehold.co/900x600/12161F/8B93A6?text=Lead+to+Invoice+Workflow',
-    lead: 'https://placehold.co/800x600/12161F/8B93A6?text=Lead+Capture',
-    proposal:
-        'https://placehold.co/800x600/12161F/8B93A6?text=Proposal+Drafting',
-    execution:
-        'https://placehold.co/800x600/12161F/8B93A6?text=Project+Execution',
-    invoice: 'https://placehold.co/800x600/12161F/8B93A6?text=Invoice+Tracking',
+const landingImages = {
+    hero: '/landing/dashboard.png',
+    platform: '/landing/flow.png',
+    lead: '/landing/lead-capture.png',
+    proposal: '/landing/draft-proposal.png',
+    execution: '/landing/project-execution.png',
+    invoice: '/landing/invoice-tracking.png',
 } as const;
 
 const earlyAccessHighlights = [
@@ -145,10 +142,86 @@ const faqs = [
     },
 ] as const;
 
+const navItems = [
+    { href: '#platform', label: 'Platform' },
+    { href: '#workflow', label: 'Workflow' },
+    { href: '#fit', label: 'Fit' },
+    { href: '#faq', label: 'FAQ' },
+    { href: '#early-access', label: 'Early Access' },
+] as const;
+
+const siteUrl = 'https://biondesk.com';
+const seoTitle = 'Biondesk | Workflow Workspace for Freelancers and Agencies';
+const seoDescription =
+    'Biondesk helps freelancers and small agencies manage client workflow from lead capture to proposals, projects, invoices, reminders, and manual payment tracking.';
+const ogImageUrl = `${siteUrl}/landing/og-image.png`;
+const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+        {
+            '@type': 'Organization',
+            name: 'Biondesk',
+            url: siteUrl,
+            founder: {
+                '@type': 'Person',
+                name: 'Hilmi Hidayat',
+            },
+        },
+        {
+            '@type': 'WebSite',
+            name: 'Biondesk',
+            url: siteUrl,
+            description: seoDescription,
+            potentialAction: {
+                '@type': 'RegisterAction',
+                target: `${siteUrl}/register`,
+                name: 'Join Biondesk early access',
+            },
+        },
+        {
+            '@type': 'SoftwareApplication',
+            name: 'Biondesk',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            url: siteUrl,
+            description: seoDescription,
+            creator: {
+                '@type': 'Person',
+                name: 'Hilmi Hidayat',
+            },
+            audience: {
+                '@type': 'Audience',
+                audienceType: 'Freelancers and small agencies',
+            },
+            featureList: [
+                'Lead capture',
+                'Opportunity pipeline',
+                'Proposal and quote management',
+                'Project and task management',
+                'Invoice creation',
+                'Manual payment tracking',
+                'Reminder workflow',
+            ],
+        },
+        {
+            '@type': 'FAQPage',
+            mainEntity: faqs.map((faq) => ({
+                '@type': 'Question',
+                name: faq.question,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: faq.answer,
+                },
+            })),
+        },
+    ],
+} as const;
+
 export default function Welcome() {
     const { auth, currentTeam } = usePage().props;
     const workspaceHref = currentTeam ? dashboard(currentTeam.slug) : login();
     const primaryCtaHref = auth.user ? workspaceHref : register();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const year = new Date().getFullYear();
 
     useEffect(() => {
@@ -320,7 +393,40 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Biondesk | Workflow Workspace for Independents" />
+            <Head title={seoTitle}>
+                <meta name="description" content={seoDescription} />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={siteUrl} />
+
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Biondesk" />
+                <meta property="og:locale" content="en_US" />
+                <meta property="og:url" content={siteUrl} />
+                <meta property="og:title" content={seoTitle} />
+                <meta property="og:description" content={seoDescription} />
+                <meta property="og:image" content={ogImageUrl} />
+                <meta property="og:image:secure_url" content={ogImageUrl} />
+                <meta property="og:image:type" content="image/png" />
+                <meta property="og:image:width" content="1536" />
+                <meta property="og:image:height" content="1024" />
+                <meta
+                    property="og:image:alt"
+                    content="Biondesk workflow workspace preview"
+                />
+
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={seoTitle} />
+                <meta name="twitter:description" content={seoDescription} />
+                <meta name="twitter:image" content={ogImageUrl} />
+                <meta
+                    name="twitter:image:alt"
+                    content="Biondesk workflow workspace preview"
+                />
+
+                <script type="application/ld+json">
+                    {JSON.stringify(structuredData)}
+                </script>
+            </Head>
             <style>{landingStyles}</style>
 
             <div className="landing-scrollbar dark min-h-screen scroll-smooth bg-bion-bg font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text">
@@ -336,36 +442,15 @@ export default function Welcome() {
                         </div>
 
                         <nav className="hidden items-center gap-6 md:flex">
-                            <a
-                                href="#platform"
-                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                            >
-                                Platform
-                            </a>
-                            <a
-                                href="#workflow"
-                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                            >
-                                Workflow
-                            </a>
-                            <a
-                                href="#fit"
-                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                            >
-                                Fit
-                            </a>
-                            <a
-                                href="#faq"
-                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                            >
-                                FAQ
-                            </a>
-                            <a
-                                href="#early-access"
-                                className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                            >
-                                Early Access
-                            </a>
+                            {navItems.map((item) => (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
                         </nav>
 
                         <div className="flex items-center gap-4">
@@ -380,11 +465,75 @@ export default function Welcome() {
 
                             <Link
                                 href={primaryCtaHref}
+                                onClick={() => setIsMobileMenuOpen(false)}
                                 className="fluid-transition inline-flex items-center rounded bg-bion-text px-4 py-1.5 text-xs font-semibold text-bion-bg hover:bg-bion-text-muted"
                             >
                                 {auth.user
                                     ? 'Open Workspace'
                                     : 'Join Early Access'}
+                            </Link>
+
+                            <button
+                                type="button"
+                                className="fluid-transition inline-flex size-9 items-center justify-center rounded border border-bion-border bg-bion-surface text-bion-text-muted hover:text-bion-text md:hidden"
+                                aria-controls="mobile-landing-menu"
+                                aria-expanded={isMobileMenuOpen}
+                                aria-label={
+                                    isMobileMenuOpen
+                                        ? 'Close navigation menu'
+                                        : 'Open navigation menu'
+                                }
+                                onClick={() =>
+                                    setIsMobileMenuOpen((isOpen) => !isOpen)
+                                }
+                            >
+                                {isMobileMenuOpen ? (
+                                    <X className="size-4" />
+                                ) : (
+                                    <Menu className="size-4" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        id="mobile-landing-menu"
+                        className={`border-t border-bion-border/50 bg-bion-bg/95 px-6 py-4 shadow-bion-raised backdrop-blur-xl md:hidden ${
+                            isMobileMenuOpen ? 'block' : 'hidden'
+                        }`}
+                    >
+                        <nav className="flex flex-col gap-1">
+                            {navItems.map((item) => (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    className="fluid-transition rounded-lg px-3 py-3 text-sm font-medium text-bion-text-muted hover:bg-bion-surface hover:text-bion-text"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
+                        </nav>
+
+                        <div className="mt-4 grid gap-3 border-t border-bion-border pt-4">
+                            {!auth.user ? (
+                                <Link
+                                    href={login()}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="fluid-transition rounded-lg border border-bion-border px-4 py-3 text-center text-sm font-semibold text-bion-text hover:bg-bion-surface"
+                                >
+                                    Sign in
+                                </Link>
+                            ) : null}
+
+                            <Link
+                                href={primaryCtaHref}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="fluid-transition rounded-lg bg-bion-accent px-4 py-3 text-center text-sm font-semibold text-bion-accent-text shadow-bion-glow hover:opacity-90"
+                            >
+                                {auth.user
+                                    ? 'Open workspace'
+                                    : 'Join early access'}
                             </Link>
                         </div>
                     </div>
@@ -437,11 +586,11 @@ export default function Welcome() {
                     <div className="app-reveal-container z-20 mx-auto mt-20 w-full max-w-[1200px] px-4">
                         <div
                             data-app-mockup
-                            className="app-mockup relative aspect-[12/7] w-full overflow-hidden rounded-2xl border border-bion-border bg-bion-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)]"
+                            className="app-mockup relative aspect-video w-full overflow-hidden rounded-2xl border border-bion-border bg-bion-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)]"
                         >
                             <img
-                                src={placeholderImages.hero}
-                                alt="Placeholder preview of the Biondesk workflow workspace interface"
+                                src={landingImages.hero}
+                                alt="Biondesk dashboard preview showing the workflow workspace"
                                 className="h-full w-full object-cover"
                                 loading="eager"
                             />
@@ -487,11 +636,11 @@ export default function Welcome() {
 
                             <div
                                 data-fade-up
-                                className="fade-up relative aspect-[3/2] overflow-hidden rounded-2xl border border-bion-border bg-bion-bg shadow-bion-raised delay-200"
+                                className="fade-up relative aspect-video overflow-hidden rounded-2xl border border-bion-border bg-bion-bg shadow-bion-raised delay-200"
                             >
                                 <img
-                                    src={placeholderImages.platform}
-                                    alt="Placeholder visual showing Biondesk as a lead-to-invoice workflow"
+                                    src={landingImages.platform}
+                                    alt="Biondesk workflow overview from lead capture to invoice tracking"
                                     className="h-full w-full object-cover"
                                     loading="lazy"
                                 />
@@ -551,24 +700,24 @@ export default function Welcome() {
                                     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-bion-border bg-bion-surface shadow-bion-raised">
                                         <WorkflowVisual
                                             step="1"
-                                            src={placeholderImages.lead}
-                                            alt="Placeholder visual for Biondesk lead capture workflow"
+                                            src={landingImages.lead}
+                                            alt="Biondesk lead capture workflow screen"
                                             isActive
                                         />
                                         <WorkflowVisual
                                             step="2"
-                                            src={placeholderImages.proposal}
-                                            alt="Placeholder visual for Biondesk proposal drafting workflow"
+                                            src={landingImages.proposal}
+                                            alt="Biondesk proposal drafting workflow screen"
                                         />
                                         <WorkflowVisual
                                             step="3"
-                                            src={placeholderImages.execution}
-                                            alt="Placeholder visual for Biondesk project execution workflow"
+                                            src={landingImages.execution}
+                                            alt="Biondesk project execution workflow screen"
                                         />
                                         <WorkflowVisual
                                             step="4"
-                                            src={placeholderImages.invoice}
-                                            alt="Placeholder visual for Biondesk invoice tracking workflow"
+                                            src={landingImages.invoice}
+                                            alt="Biondesk invoice tracking workflow screen"
                                         />
                                     </div>
                                 </div>
