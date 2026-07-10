@@ -30,6 +30,7 @@ class OpportunityEditController extends Controller
                 ])
                 ->all(),
             'contacts' => Contact::optionsFor($team),
+            'quickAddedContact' => $request->session()->get('quickAddedContact'),
             'opportunity' => [
                 'id' => $model->id,
                 'title' => $model->title,

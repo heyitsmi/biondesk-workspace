@@ -64,6 +64,12 @@ class ContactController extends Controller
 
         $contact = $team->contacts()->create($request->validated());
 
+        if ($request->boolean('quick_add')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Client added.')]);
+
+            return back()->with('quickAddedContact', $contact->toOption());
+        }
+
         return to_route('contacts.show', ['current_team' => $team->slug, 'contact' => $contact->id]);
     }
 

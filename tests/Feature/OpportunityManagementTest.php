@@ -46,6 +46,27 @@ test('the create page returns stages, team contacts, and defaults', function () 
         );
 });
 
+test('the create page includes the quick added contact from flash data', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $contact = Contact::factory()->for($team)->create(['company' => 'Acme Corp']);
+
+    $this->actingAs($user)
+        ->withSession([
+            'quickAddedContact' => [
+                'id' => $contact->id,
+                'name' => 'Acme Corp',
+            ],
+        ])
+        ->get(route('opportunities.create', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('opportunities/create')
+            ->where('quickAddedContact.id', $contact->id)
+            ->where('quickAddedContact.name', 'Acme Corp'),
+        );
+});
+
 test('an opportunity can be created for a contact belonging to the team', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
@@ -134,6 +155,29 @@ test('an opportunity can be edited and updated', function () {
 
     expect($opportunity->fresh()->title)->toBe('New Title');
     expect($opportunity->fresh()->stage)->toBe(OpportunityStage::Negotiation);
+});
+
+test('the edit page includes the quick added contact from flash data', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $contact = Contact::factory()->for($team)->create();
+    $newContact = Contact::factory()->for($team)->create(['company' => 'Acme Corp']);
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+
+    $this->actingAs($user)
+        ->withSession([
+            'quickAddedContact' => [
+                'id' => $newContact->id,
+                'name' => 'Acme Corp',
+            ],
+        ])
+        ->get(route('opportunities.edit', ['current_team' => $team->slug, 'opportunity' => $opportunity->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('opportunities/edit')
+            ->where('quickAddedContact.id', $newContact->id)
+            ->where('quickAddedContact.name', 'Acme Corp'),
+        );
 });
 
 test('an opportunity\'s stage can be moved via the drag endpoint', function () {
