@@ -27,6 +27,7 @@ class OpportunityCreateController extends Controller
                 ])
                 ->all(),
             'contacts' => Contact::optionsFor($team),
+            'quickAddedContact' => $request->session()->get('quickAddedContact'),
             'defaults' => [
                 'title' => '',
                 'contactId' => '',

@@ -99,12 +99,14 @@ export type OpportunityFormValues = {
 export type OpportunityCreatePageProps = {
     stages: PipelineStage[];
     contacts: OpportunityContactOption[];
+    quickAddedContact?: OpportunityContactOption | null;
     defaults: OpportunityFormValues;
 };
 
 export type OpportunityEditPageProps = {
     stages: PipelineStage[];
     contacts: OpportunityContactOption[];
+    quickAddedContact?: OpportunityContactOption | null;
     opportunity: OpportunityFormValues & { id: number };
 };
 
@@ -115,11 +117,7 @@ export type ProjectTask = {
 };
 
 export type ProjectTaskStatus =
-    | 'backlog'
-    | 'todo'
-    | 'in_progress'
-    | 'in_review'
-    | 'done';
+    'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done';
 
 export type ProjectAttachment = {
     name: string;
@@ -142,17 +140,10 @@ export type ProjectRequestLog = {
 };
 
 export type ProjectRequestClassification =
-    | 'new'
-    | 'duplicate'
-    | 'related'
-    | 'contradiction';
+    'new' | 'duplicate' | 'related' | 'contradiction';
 
 export type ProjectRequestSource =
-    | 'WhatsApp'
-    | 'Email'
-    | 'Telegram'
-    | 'Phone call'
-    | 'Other';
+    'WhatsApp' | 'Email' | 'Telegram' | 'Phone call' | 'Other';
 
 export type ProjectDetailRequestLog = {
     id: number;
@@ -477,7 +468,8 @@ export type ProposalShowPageProps = {
     proposal: ProposalDetail;
 };
 
-export type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'overdue';
+export type InvoiceStatus =
+    'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'overdue';
 
 export type InvoiceListItem = {
     id: number;
@@ -564,7 +556,8 @@ export type InvoiceCreatePageProps = {
     projects: InvoiceCreateProjectOption[];
 };
 
-export type QuotationStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected';
+export type QuotationStatus =
+    'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected';
 
 export type QuotationListItem = {
     id: number;

@@ -78,6 +78,14 @@ class Contact extends Model
     }
 
     /**
+     * Get the contact name used in compact selectors.
+     */
+    public function displayName(): string
+    {
+        return $this->company ?: $this->fullName();
+    }
+
+    /**
      * Get the contact's initials, e.g. "JS".
      */
     public function initials(): string
@@ -91,6 +99,19 @@ class Contact extends Model
     }
 
     /**
+     * Get the compact option shape used in selectors.
+     *
+     * @return array{id: int, name: string}
+     */
+    public function toOption(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->displayName(),
+        ];
+    }
+
+    /**
      * Get {id, name} options for a team's contacts, used in dropdowns.
      *
      * @return array<int, array{id: int, name: string}>
@@ -99,10 +120,7 @@ class Contact extends Model
     {
         return $team->contacts()
             ->get()
-            ->map(fn (self $contact) => [
-                'id' => $contact->id,
-                'name' => $contact->company ?: $contact->fullName(),
-            ])
+            ->map(fn (self $contact) => $contact->toOption())
             ->values()
             ->all();
     }

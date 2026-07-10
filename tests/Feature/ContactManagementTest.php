@@ -67,6 +67,29 @@ test('a contact can be created from the camelCase payload the frontend form send
     expect($contact->last_name)->toBe('Doe');
 });
 
+test('a contact can be quick added and redirect back to the opportunity form', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $response = $this->from(route('opportunities.create', ['current_team' => $team->slug]))
+        ->actingAs($user)
+        ->post(route('contacts.store', ['current_team' => $team->slug]), [
+            'quick_add' => true,
+            'type' => 'client',
+            'firstName' => 'Jane',
+            'lastName' => 'Doe',
+            'company' => 'Acme Corp',
+        ]);
+
+    $contact = Contact::sole();
+
+    $response->assertRedirect(route('opportunities.create', ['current_team' => $team->slug]));
+    $response->assertSessionHas('quickAddedContact', [
+        'id' => $contact->id,
+        'name' => 'Acme Corp',
+    ]);
+});
+
 test('contact creation requires a first name', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
