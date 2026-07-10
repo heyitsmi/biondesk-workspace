@@ -8,16 +8,16 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 
 ## Goals
 
-1. Biondesk bisa menjalankan seluruh alur kerja freelancer/agency: lead, project, task, proposal, quote, invoice, payment tracking, dan reminder, dalam satu sistem yang koheren
+1. Biondesk bisa menjalankan seluruh alur kerja freelancer/agency: lead, project, task, proposal, quote, invoice, payment tracking manual, dan reminder, dalam satu sistem yang koheren
 2. Project dan Task management jadi fitur inti sejak versi pertama, bukan tambahan belakangan
 3. Positioning produk konsisten di semua lapisan (data model, UI, copy) sebagai tool untuk freelancer dan agency lintas platform, tidak terkunci ke satu marketplace atau negara tertentu
-4. Setelah versi awal stabil, siap dipakai oleh user eksternal untuk validasi distribusi
+4. Setelah versi awal stabil, siap dipakai oleh user eksternal lewat early access untuk validasi distribusi dan workflow nyata sebelum paid plan diaktifkan
 
 ## Non-goals
 
-- **Bukan payment gateway untuk invoice klien** — tetap manual tracking, BYO payment instructions. Otomatisasi gateway (kalau dibutuhkan nanti) eksplisit di luar scope sekarang
+- **Bukan payment gateway untuk invoice klien** — tetap manual tracking, BYO payment instructions/link. Client membayar langsung ke user; Biondesk tidak memproses, menahan, routing, escrow, atau reconcile otomatis pembayaran invoice klien
 - **Bukan multi-level company/organization di atas Contact** — dicatat sebagai kebutuhan masa depan (lihat Open Questions), belum dibangun sekarang
-- **Bukan rilis publik dengan self-serve onboarding penuh** — target fase ini adalah versi inti yang stabil, rilis ke user eksternal dan monetisasi publik itu langkah setelahnya
+- **Bukan paid public launch dengan self-serve billing penuh** — target fase ini adalah versi inti yang stabil dan early access untuk user eksternal; monetisasi publik itu langkah setelah ada sinyal willingness-to-pay
 
 ## User stories
 
@@ -28,7 +28,8 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 - Sebagai user, saya ingin project yang sedang dikerjakan punya task breakdown, dengan tampilan table atau Kanban board sesuai kebutuhan saat itu
 - Sebagai user, saya ingin proposal bisa di-generate AI dari brief apapun bentuknya, baik itu job post marketplace maupun ringkasan discovery call
 - Sebagai user, saya ingin proposal, quote, dan invoice bisa dibagikan ke klien lewat link yang interaktif, sekaligus punya versi PDF yang bisa diunduh atau dilampirkan email
-- Sebagai user, saya ingin mencatat pembayaran secara manual dengan metode apapun (transfer bank, Stripe, PayPal, Midtrans, tunai), termasuk pembayaran bertahap dalam satu invoice yang sama
+- Sebagai user, saya ingin mencatat pembayaran secara manual dengan metode apapun (transfer bank, Stripe link, PayPal link, Midtrans link pribadi, tunai), termasuk pembayaran bertahap dalam satu invoice yang sama
+- Sebagai user, saya ingin menambahkan payment link atau instruksi bank milik saya sendiri ke invoice, supaya klien membayar langsung ke saya tanpa Biondesk menjadi perantara pembayaran
 - Sebagai user, saya ingin reminder otomatis terkirim untuk invoice yang mendekati atau lewat jatuh tempo, tanpa saya perlu ingat manual
 - Sebagai user, saya ingin punya link public lead form sendiri yang bisa disematkan di bio media sosial, supaya orang bisa langsung kirim inquiry tanpa perlu chat manual dulu
 - Sebagai user, saya ingin bisa kustomisasi tampilan lead form saya sendiri (banner, judul, deskripsi), supaya kesannya representasi brand saya, bukan form generic
@@ -38,6 +39,7 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 
 - Sebagai freelancer baru yang mencoba Biondesk, saya ingin onboarding yang tidak berasumsi saya kerja lewat platform tertentu
 - Sebagai freelancer baru, saya ingin melihat bahwa tool ini fleksibel untuk cara kerja saya sendiri, bukan dirancang khusus untuk satu jenis freelancer saja
+- Sebagai calon user early access, saya ingin memahami sejak awal bahwa Biondesk fokus ke workflow dan invoice tracking manual, bukan payment processing
 
 ## Data model / entitas utama
 
@@ -92,7 +94,8 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 
 **Payment tracking**
 - Given invoice terkirim, when user catat pembayaran manual, then bisa lebih dari satu payment record per invoice (menangani DP dan pelunasan dalam satu dokumen yang sama)
-- Given invoice punya field payment instructions, then user bebas isi link Midtrans, Stripe, nomor rekening, atau kombinasi apapun
+- Given invoice punya field payment instructions, then user bebas isi payment link miliknya sendiri, nomor rekening, atau kombinasi instruksi apapun
+- Given client membayar invoice, when pembayaran terjadi, then dana selalu masuk langsung ke user melalui metode pembayaran milik user, bukan lewat Biondesk
 
 **Share & PDF**
 - Given proposal/quote/invoice dikirim, when klien buka link publik, then tampil sebagai webview interaktif yang ringan (tanpa perlu login)
@@ -104,7 +107,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 
 ### P1 — nice to have
 
-- Subscription billing Biondesk sendiri (Free dan Pro, $5/bulan) lewat Midtrans, dipakai untuk monetisasi setelah rilis ke user eksternal
+- Subscription billing Biondesk sendiri (Free/Pro atau model lain) lewat gateway seperti Midtrans, **ditunda** sampai ada sinyal willingness-to-pay yang jelas dari user early access
 - Activity log lengkap di semua entity utama
 - AI cost/estimate calculator untuk bantu user menentukan harga project
 - Refinement reminder rules (custom template per rule)
@@ -116,7 +119,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 
 - Company-level grouping di atas Contact, untuk agency yang punya beberapa contact person dalam satu perusahaan klien
 - BYO payment gateway penuh untuk invoice (kalau ada sinyal kuat dari user eksternal)
-- Self-serve onboarding publik dan landing page pemasaran
+- Self-serve onboarding publik penuh, termasuk billing dan lifecycle user yang lebih matang. Landing page pemasaran dasar sudah ada, tetapi bisa terus disempurnakan berdasarkan positioning early access
 - Request Log versi AI: extraction otomatis dari chat yang di-paste, dengan deteksi duplikat/kontradiksi pakai semantic search (pgvector + embedding). Ini upgrade signifikan dari Request Log manual di P0, worth dipertimbangkan serius sebagai diferensiator, tapi butuh infrastruktur tambahan (pgvector, API AI terpisah untuk extraction) yang belum jadi prioritas sekarang
 - Ops portal terpisah (subdomain sendiri) untuk kelola organisasi, user, dan subscription lintas tenant, relevan begitu ada banyak user eksternal yang perlu dikelola
 
@@ -150,7 +153,7 @@ Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman pub
 
 **Email**: Brevo untuk semua transactional email (reminder, notifikasi dokumen terkirim, notifikasi lead baru).
 
-**Payment gateway**: Midtrans, khusus untuk subscription billing Biondesk sendiri. Tidak dipakai untuk payment invoice klien, itu tetap manual.
+**Payment gateway**: belum aktif untuk paid public plan. Jika Midtrans atau gateway lain dipakai nanti, konteksnya khusus subscription billing Biondesk sendiri. Tidak dipakai untuk payment invoice klien, yang tetap manual dan dibayar langsung dari client ke user.
 
 **Deploy**: DigitalOcean Droplet + Laravel Forge.
 
@@ -159,18 +162,20 @@ Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman pub
 **Leading indicators**
 - Seluruh fitur P0 berjalan stabil dan dipakai aktif dalam pemakaian sehari-hari dalam 2 minggu setelah rilis versi awal
 - Project dan Task management jadi bagian rutin dari alur kerja, bukan fitur yang jarang disentuh
+- Early access user memahami positioning produk: workflow workspace dengan invoice/payment tracking manual, bukan payment processor
 
-**Lagging indicators (setelah rilis ke user eksternal)**
+**Lagging indicators (setelah early access dibuka)**
 - Jumlah user eksternal yang benar-benar mencoba (bukan cuma daftar)
 - Feedback soal apakah pain point yang jadi dasar produk ini juga dirasakan freelancer/agency lain dengan cara yang sama
+- Sinyal willingness-to-pay sebelum subscription billing dibangun atau diaktifkan
 
 ## Open questions
 
-- **[Product]** Kapan waktu yang tepat untuk mulai menawarkan akses ke user eksternal pertama, dan berapa target jumlahnya untuk validasi awal?
+- **[Product]** Berapa target user early access pertama untuk validasi awal, dan channel distribusi mana yang paling masuk akal untuk mendapatkannya?
 - **[Product]** Company-level grouping di atas Contact, seberapa mendesak ini dibutuhkan? Perlu ditunggu sinyal dari user eksternal dulu atau dibangun preventif?
 - **[Engineering]** Apakah Document perlu validasi supaya minimal salah satu dari `opportunity_id` atau `project_id` terisi, atau boleh dua-duanya kosong (dokumen berdiri sendiri)?
-- **[Business]** Subscription billing Midtrans, apakah diaktifkan bareng dengan rilis ke user eksternal, atau ditunda sampai ada sinyal willingness-to-pay yang jelas?
+- **[Business]** Subscription billing Midtrans/gateway lain ditunda sampai sinyal willingness-to-pay jelas; kapan indikatornya dianggap cukup kuat untuk mulai dibangun?
 
 ## Timeline considerations
 
-Tidak ada hard deadline eksternal. Dikerjakan sampai seluruh alur P0 stabil dan bisa dipakai sehari-hari. Setelah itu, baru dipertimbangkan untuk membuka akses ke user eksternal sebagai langkah validasi distribusi, sebelum menambah fitur P1/P2 lebih jauh.
+Tidak ada hard deadline eksternal. Dikerjakan sampai seluruh alur P0 stabil dan bisa dipakai sehari-hari. Setelah itu, akses dibuka bertahap sebagai early access untuk validasi distribusi dan workflow, sebelum mendorong paid plan atau menambah fitur P1/P2 lebih jauh.

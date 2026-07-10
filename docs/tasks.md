@@ -4,13 +4,22 @@
 
 ## Status saat ini
 
-Yang sudah ada:
-- Halaman React/Inertia untuk semua modul (Dashboard, Opportunities, Projects, Contacts, Proposals, Quotations, Invoices, Reminders, Profile Library, Settings, public lead form, public document view) — **semua masih pakai data stub** dari `App\Support\Biondesk\StubWorkspaceData`, tidak ada baris data asli yang tersimpan.
-- Fondasi auth (Fortify: login, register, 2FA, passkey, password confirmation) dan Team/Membership/TeamInvitation sudah jalan dengan data asli.
-- Package Spatie sudah ter-install (`laravel-permission`, `laravel-medialibrary`, `laravel-activitylog`) dan migration tabelnya sudah jalan, tapi belum dipakai di model manapun selain Team/User.
-- Belum ada: migration/model untuk Contact, Opportunity, Project, Task, RequestLog, Document, DocumentItem, Payment, ReminderJob, ProfileAsset, Template. Belum ada `laravel/browsershot`, AI SDK package, integrasi Turnstile, atau integrasi Brevo.
+Dokumen ini awalnya dibuat sebagai breakdown eksekusi untuk mengubah halaman stub menjadi sistem dinamis. Per Juli 2026, fase P0 utama sudah selesai: modul Dashboard, Opportunities, Projects, Contacts, Proposals, Quotations, Invoices, Reminders, Profile Library, Settings, public lead form, dan public document view sudah tersambung ke data asli. `StubWorkspaceData` sudah dihapus.
 
-Yang mau dikerjakan sekarang: **mengubah setiap modul dari stub ke dinamis, satu per satu**, mengikuti urutan dependency data model di PRD (Contact → Opportunity → Project → Document → Payment → dst), supaya setiap fase bisa langsung dipakai dan dites sebelum lanjut ke fase berikutnya.
+Yang sudah berjalan:
+- Fondasi auth (Fortify: login, register, 2FA, passkey, password confirmation) dan Team/Membership/TeamInvitation.
+- Data model utama: Contact, Opportunity, Project, Task, RequestLog, Document, DocumentItem, Payment, ReminderJob, ProfileAsset.
+- Public lead form dengan Turnstile fail-closed dan notifikasi email.
+- Public document share memakai token `/d/{document:public_token}`.
+- PDF generation via queued job dan Spatie Browsershot.
+- Payment tracking invoice bersifat manual. Client membayar langsung ke user lewat payment link atau instruksi pembayaran milik user; Biondesk tidak memproses, menahan, routing, escrow, atau reconcile otomatis pembayaran client.
+
+Fokus setelah P0:
+- Membuka early access untuk 5-10 user eksternal sebagai validasi distribusi dan workflow nyata.
+- Menyempurnakan landing page, onboarding, dan positioning agar jelas bahwa Biondesk adalah workflow workspace, bukan payment processor.
+- Menunda subscription billing Biondesk sampai ada sinyal willingness-to-pay yang cukup kuat.
+
+Riwayat fase di bawah tetap dipertahankan sebagai catatan keputusan dan implementasi.
 
 ## Pendekatan tiap fase
 
