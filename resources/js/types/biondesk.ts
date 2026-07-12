@@ -704,6 +704,23 @@ export type ProfileEditPageProps = {
 
 export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand' | 'custom';
 
+export type SocialLinkPlatform =
+    | 'instagram'
+    | 'twitter'
+    | 'linkedin'
+    | 'facebook'
+    | 'tiktok'
+    | 'youtube'
+    | 'github'
+    | 'dribbble'
+    | 'behance'
+    | 'website';
+
+export type SocialLink = {
+    platform: SocialLinkPlatform;
+    url: string;
+};
+
 export type PublicLeadFormSettings = {
     enabled: boolean;
     slug: string;
@@ -715,6 +732,7 @@ export type PublicLeadFormSettings = {
     backgroundImageUrl: string | null;
     coverUrl: string | null;
     services: string[];
+    socialLinks: SocialLink[];
     askBudget: boolean;
     allowAttachments: boolean;
     bannerUrl: string | null;

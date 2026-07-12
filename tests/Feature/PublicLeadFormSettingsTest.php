@@ -238,6 +238,75 @@ test('a cover banner and background image upload via the camelCase keys the fron
     expect($team->leadFormCoverUrl())->not->toBeNull();
 });
 
+test('a team owner can save social and custom links', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'social_links' => [
+            ['platform' => 'instagram', 'url' => 'https://instagram.com/hilmi'],
+            ['platform' => 'website', 'url' => 'https://hilmi.dev'],
+        ],
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormSocialLinks())->toBe([
+        ['platform' => 'instagram', 'url' => 'https://instagram.com/hilmi'],
+        ['platform' => 'website', 'url' => 'https://hilmi.dev'],
+    ]);
+});
+
+test('social links are saved via the camelCase key the frontend sends', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'socialLinks' => [
+            ['platform' => 'github', 'url' => 'https://github.com/hilmi'],
+        ],
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormSocialLinks())->toBe([
+        ['platform' => 'github', 'url' => 'https://github.com/hilmi'],
+    ]);
+});
+
+test('a social link with an unknown platform is rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'social_links' => [
+            ['platform' => 'myspace', 'url' => 'https://myspace.com/hilmi'],
+        ],
+    ])->assertSessionHasErrors('social_links.0.platform');
+});
+
+test('a social link with an invalid url is rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'social_links' => [
+            ['platform' => 'instagram', 'url' => 'not-a-url'],
+        ],
+    ])->assertSessionHasErrors('social_links.0.url');
+});
+
+test('more than 8 social links are rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $links = collect(range(1, 9))
+        ->map(fn (int $i) => ['platform' => 'website', 'url' => "https://example.com/{$i}"])
+        ->all();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'social_links' => $links,
+    ])->assertSessionHasErrors('social_links');
+});
+
 test('a team member without update permission cannot update lead form settings', function () {
     $owner = User::factory()->create();
     $team = Team::find($owner->current_team_id);

@@ -25,6 +25,7 @@ class PublicLeadFormSettingsController extends Controller
         'background_theme' => 'lead_form_background_theme',
         'background_color' => 'lead_form_background_color',
         'services' => 'lead_form_services',
+        'social_links' => 'lead_form_social_links',
         'ask_budget' => 'lead_form_ask_budget',
         'allow_attachments' => 'lead_form_allow_attachments',
     ];

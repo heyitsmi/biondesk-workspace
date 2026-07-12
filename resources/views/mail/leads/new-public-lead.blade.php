@@ -14,6 +14,15 @@
 {{ $opportunity->description }}
 @endif
 
+@php $attachments = $opportunity->attachmentsArray(); @endphp
+@if (count($attachments) > 0)
+**Attachments:**
+
+@foreach ($attachments as $attachment)
+- [{{ $attachment['name'] }}]({{ $attachment['url'] }})
+@endforeach
+@endif
+
 The opportunity has been added to your **Inbox** stage, ready for follow-up.
 
 @component('mail::button', ['url' => config('app.url')])

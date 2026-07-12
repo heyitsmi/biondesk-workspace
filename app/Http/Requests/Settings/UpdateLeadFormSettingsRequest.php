@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Enums\LeadFormBackgroundTheme;
+use App\Enums\SocialLinkPlatform;
 use App\Models\Team;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -44,6 +45,7 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'welcome_message' => 'welcomeMessage',
             'background_theme' => 'backgroundTheme',
             'background_color' => 'backgroundColor',
+            'social_links' => 'socialLinks',
             'ask_budget' => 'askBudget',
             'allow_attachments' => 'allowAttachments',
         ];
@@ -101,6 +103,9 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'cover_banner' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'services' => ['sometimes', 'array'],
             'services.*' => ['string', 'max:100'],
+            'social_links' => ['sometimes', 'array', 'max:8'],
+            'social_links.*.platform' => ['required', Rule::enum(SocialLinkPlatform::class)],
+            'social_links.*.url' => ['required', 'url', 'max:500'],
             'ask_budget' => ['sometimes', 'boolean'],
             'allow_attachments' => ['sometimes', 'boolean'],
             'banner' => ['sometimes', 'nullable', 'image', 'max:2048'],

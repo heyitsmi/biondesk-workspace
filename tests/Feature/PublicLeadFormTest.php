@@ -43,3 +43,36 @@ test('public lead form renders and resolves via a custom lead form slug', functi
 
     $this->get(route('public-lead-form', ['team' => $team->slug]))->assertOk();
 });
+
+test('public lead form exposes the form title used for the browser tab', function () {
+    $team = Team::factory()->create(['name' => 'Biondesk Studio', 'lead_form_title' => 'Custom Inquiry Title']);
+
+    $response = $this->get(route('public-lead-form', ['team' => $team->slug]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('public/lead-form')
+        ->where('settings.title', 'Custom Inquiry Title'),
+    );
+});
+
+test('public lead form exposes saved social links', function () {
+    $team = Team::factory()->create([
+        'name' => 'Biondesk Studio',
+        'lead_form_social_links' => [
+            ['platform' => 'instagram', 'url' => 'https://instagram.com/biondesk'],
+            ['platform' => 'website', 'url' => 'https://biondesk.test'],
+        ],
+    ]);
+
+    $response = $this->get(route('public-lead-form', ['team' => $team->slug]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('public/lead-form')
+        ->where('settings.socialLinks', [
+            ['platform' => 'instagram', 'url' => 'https://instagram.com/biondesk'],
+            ['platform' => 'website', 'url' => 'https://biondesk.test'],
+        ]),
+    );
+});

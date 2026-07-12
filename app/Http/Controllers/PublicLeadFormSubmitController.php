@@ -63,6 +63,12 @@ class PublicLeadFormSubmitController extends Controller
             'description' => $description,
         ]);
 
+        if ($team->lead_form_allow_attachments) {
+            foreach ($request->file('attachments', []) as $attachment) {
+                $opportunity->addMedia($attachment)->toMediaCollection('attachments');
+            }
+        }
+
         if ($owner = $team->owner()) {
             Mail::to($owner->email)->send(new NewPublicLeadReceived($contact, $opportunity));
         }

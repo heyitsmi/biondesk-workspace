@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
 use App\Enums\LeadFormBackgroundTheme;
+use App\Enums\SocialLinkPlatform;
 use App\Enums\TeamRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -30,6 +31,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property LeadFormBackgroundTheme $lead_form_background_theme
  * @property string|null $lead_form_background_color
  * @property list<string>|null $lead_form_services
+ * @property array<int, mixed>|null $lead_form_social_links
  * @property bool $lead_form_ask_budget
  * @property bool $lead_form_allow_attachments
  * @property Carbon|null $created_at
@@ -42,7 +44,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[Fillable([
     'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_slug', 'lead_form_title',
     'lead_form_description', 'lead_form_welcome_message', 'lead_form_background_theme',
-    'lead_form_background_color', 'lead_form_services', 'lead_form_ask_budget', 'lead_form_allow_attachments',
+    'lead_form_background_color', 'lead_form_services', 'lead_form_social_links',
+    'lead_form_ask_budget', 'lead_form_allow_attachments',
 ])]
 class Team extends Model implements HasMedia
 {
@@ -240,6 +243,24 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get the lead form social/custom links, filtering out any malformed entries.
+     *
+     * @return array<int, array{platform: string, url: string}>
+     */
+    public function leadFormSocialLinks(): array
+    {
+        return collect($this->lead_form_social_links ?? [])
+            ->filter(fn ($link) => is_array($link)
+                && is_string($link['platform'] ?? null)
+                && SocialLinkPlatform::tryFrom($link['platform']) !== null
+                && is_string($link['url'] ?? null)
+                && $link['url'] !== '')
+            ->map(fn (array $link) => ['platform' => $link['platform'], 'url' => $link['url']])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Get the resolved public lead form settings, applying sensible fallbacks.
      *
      * @return array<string, mixed>
@@ -258,6 +279,7 @@ class Team extends Model implements HasMedia
             'backgroundImageUrl' => $this->leadFormBackgroundImageUrl(),
             'coverUrl' => $this->leadFormCoverUrl(),
             'services' => $this->lead_form_services ?: self::DEFAULT_LEAD_FORM_SERVICES,
+            'socialLinks' => $this->leadFormSocialLinks(),
             'askBudget' => $this->lead_form_ask_budget,
             'allowAttachments' => $this->lead_form_allow_attachments,
             'bannerUrl' => $this->leadFormBannerUrl(),
@@ -276,6 +298,7 @@ class Team extends Model implements HasMedia
             'lead_form_enabled' => 'boolean',
             'lead_form_background_theme' => LeadFormBackgroundTheme::class,
             'lead_form_services' => 'array',
+            'lead_form_social_links' => 'array',
             'lead_form_ask_budget' => 'boolean',
             'lead_form_allow_attachments' => 'boolean',
         ];
