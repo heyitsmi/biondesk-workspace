@@ -167,6 +167,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all recurring invoice templates for this team.
+     *
+     * @return HasMany<RecurringInvoiceTemplate, $this>
+     */
+    public function recurringInvoiceTemplates(): HasMany
+    {
+        return $this->hasMany(RecurringInvoiceTemplate::class);
+    }
+
+    /**
      * Get all profile library assets for this team.
      *
      * @return HasMany<ProfileAsset, $this>

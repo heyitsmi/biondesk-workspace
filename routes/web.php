@@ -48,6 +48,12 @@ use App\Http\Controllers\QuotationMoveController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
 use App\Http\Controllers\QuotationStoreController;
+use App\Http\Controllers\RecurringInvoiceCreateController;
+use App\Http\Controllers\RecurringInvoiceEditController;
+use App\Http\Controllers\RecurringInvoiceMoveController;
+use App\Http\Controllers\RecurringInvoiceShowController;
+use App\Http\Controllers\RecurringInvoiceStoreController;
+use App\Http\Controllers\RecurringInvoiceUpdateController;
 use App\Http\Controllers\ReminderDismissController;
 use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
@@ -183,6 +189,22 @@ Route::prefix('app/{current_team}')
         Route::get('invoices/{invoice}', InvoiceShowController::class)
             ->whereNumber('invoice')
             ->name('invoices.show');
+        Route::get('invoices/recurring/create', RecurringInvoiceCreateController::class)
+            ->name('invoices.recurring.create');
+        Route::post('invoices/recurring', RecurringInvoiceStoreController::class)
+            ->name('invoices.recurring.store');
+        Route::get('invoices/recurring/{template}', RecurringInvoiceShowController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.show');
+        Route::get('invoices/recurring/{template}/edit', RecurringInvoiceEditController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.edit');
+        Route::put('invoices/recurring/{template}', RecurringInvoiceUpdateController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.update');
+        Route::patch('invoices/recurring/{template}/status', RecurringInvoiceMoveController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.move');
         Route::get('quotations', QuotationsController::class)->name('quotations.index');
         Route::get('quotations/create', QuotationCreateController::class)->name('quotations.create');
         Route::post('quotations', QuotationStoreController::class)->name('quotations.store');

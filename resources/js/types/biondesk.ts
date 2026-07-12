@@ -486,10 +486,64 @@ export type InvoiceListItem = {
     amount: string;
     amountValue: number;
     shareUrl: string;
+    isRecurring: boolean;
+};
+
+export type RecurringInvoiceListItem = {
+    id: number;
+    client: string;
+    title: string;
+    cadenceLabel: string;
+    nextInvoiceAt: string;
+    nextInvoiceSort: number;
+    statusLabel: 'Active' | 'Paused';
+    tone: BiondeskTone;
+    amount: string;
+    amountValue: number;
+    autoSend: boolean;
+};
+
+export type RecurringInvoiceDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+};
+
+export type RecurringInvoiceDetail = RecurringInvoiceListItem & {
+    intervalMonths: number;
+    dueDays: number;
+    startsAt: string;
+    endsAt: string | null;
+    occurrencesGenerated: number;
+    notes: string;
+    currency: string;
+    taxPercent: number;
+    contactId: number | '';
+    projectId: number | '';
+    lineItems: RecurringInvoiceDetailLineItem[];
+    generatedInvoices: InvoiceListItem[];
+};
+
+export type RecurringInvoiceShowPageProps = {
+    template: RecurringInvoiceDetail;
+};
+
+export type RecurringInvoiceCreatePageProps = {
+    defaultStartsAt: string;
+    clients: InvoiceCreateClientOption[];
+    projects: InvoiceCreateProjectOption[];
+};
+
+export type RecurringInvoiceEditPageProps = {
+    template: RecurringInvoiceDetail;
+    clients: InvoiceCreateClientOption[];
+    projects: InvoiceCreateProjectOption[];
 };
 
 export type InvoicesPageProps = {
     invoices: InvoiceListItem[];
+    recurringTemplates: RecurringInvoiceListItem[];
 };
 
 export type InvoiceDetailLineItem = {
