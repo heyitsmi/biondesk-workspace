@@ -26,6 +26,8 @@ class PublicLeadFormSettingsController extends Controller
         'background_color' => 'lead_form_background_color',
         'services' => 'lead_form_services',
         'social_links' => 'lead_form_social_links',
+        'meta_title' => 'lead_form_meta_title',
+        'meta_description' => 'lead_form_meta_description',
         'ask_budget' => 'lead_form_ask_budget',
         'allow_attachments' => 'lead_form_allow_attachments',
     ];
@@ -75,6 +77,10 @@ class PublicLeadFormSettingsController extends Controller
 
         if ($request->hasFile('cover_banner')) {
             $team->addMedia($request->file('cover_banner'))->toMediaCollection('lead-form-cover');
+        }
+
+        if ($request->hasFile('og_image')) {
+            $team->addMedia($request->file('og_image'))->toMediaCollection('lead-form-og-image');
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Lead form settings updated.')]);

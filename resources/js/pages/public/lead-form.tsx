@@ -349,7 +349,32 @@ export default function PublicLeadFormPage({
 
     return (
         <>
-            <Head title={settings.title} />
+            <Head title={settings.title}>
+                <meta name="description" content={settings.metaDescription} />
+                <meta property="og:type" content="website" />
+                <meta property="og:title" content={settings.metaTitle} />
+                <meta
+                    property="og:description"
+                    content={settings.metaDescription}
+                />
+                {settings.ogImageUrl ? (
+                    <meta property="og:image" content={settings.ogImageUrl} />
+                ) : null}
+                <meta
+                    name="twitter:card"
+                    content={
+                        settings.ogImageUrl ? 'summary_large_image' : 'summary'
+                    }
+                />
+                <meta name="twitter:title" content={settings.metaTitle} />
+                <meta
+                    name="twitter:description"
+                    content={settings.metaDescription}
+                />
+                {settings.ogImageUrl ? (
+                    <meta name="twitter:image" content={settings.ogImageUrl} />
+                ) : null}
+            </Head>
 
             <div
                 style={pageStyle}

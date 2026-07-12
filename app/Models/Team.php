@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -32,6 +33,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property string|null $lead_form_background_color
  * @property list<string>|null $lead_form_services
  * @property array<int, mixed>|null $lead_form_social_links
+ * @property string|null $lead_form_meta_title
+ * @property string|null $lead_form_meta_description
  * @property bool $lead_form_ask_budget
  * @property bool $lead_form_allow_attachments
  * @property Carbon|null $created_at
@@ -45,6 +48,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
     'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_slug', 'lead_form_title',
     'lead_form_description', 'lead_form_welcome_message', 'lead_form_background_theme',
     'lead_form_background_color', 'lead_form_services', 'lead_form_social_links',
+    'lead_form_meta_title', 'lead_form_meta_description',
     'lead_form_ask_budget', 'lead_form_allow_attachments',
 ])]
 class Team extends Model implements HasMedia
@@ -203,6 +207,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get the lead form social sharing (OG) image URL, or null when none has been uploaded.
+     */
+    public function leadFormOgImageUrl(): ?string
+    {
+        $url = $this->getFirstMediaUrl('lead-form-og-image');
+
+        return $url === '' ? null : $url;
+    }
+
+    /**
      * Register the media collections for this model.
      */
     public function registerMediaCollections(): void
@@ -210,6 +224,7 @@ class Team extends Model implements HasMedia
         $this->addMediaCollection('lead-form-banner')->singleFile();
         $this->addMediaCollection('lead-form-background')->singleFile();
         $this->addMediaCollection('lead-form-cover')->singleFile();
+        $this->addMediaCollection('lead-form-og-image')->singleFile();
     }
 
     /**
@@ -267,13 +282,16 @@ class Team extends Model implements HasMedia
      */
     public function leadFormSettings(): array
     {
+        $title = $this->lead_form_title ?: "Work with {$this->name}";
+        $welcomeMessage = $this->lead_form_welcome_message
+            ?: "Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.";
+
         return [
             'enabled' => $this->lead_form_enabled,
             'slug' => $this->leadFormPublicSlug(),
             'customSlug' => $this->lead_form_slug,
-            'title' => $this->lead_form_title ?: "Work with {$this->name}",
-            'welcomeMessage' => $this->lead_form_welcome_message
-                ?: "Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.",
+            'title' => $title,
+            'welcomeMessage' => $welcomeMessage,
             'backgroundTheme' => $this->lead_form_background_theme->value,
             'backgroundColor' => $this->lead_form_background_color,
             'backgroundImageUrl' => $this->leadFormBackgroundImageUrl(),
@@ -283,6 +301,9 @@ class Team extends Model implements HasMedia
             'askBudget' => $this->lead_form_ask_budget,
             'allowAttachments' => $this->lead_form_allow_attachments,
             'bannerUrl' => $this->leadFormBannerUrl(),
+            'metaTitle' => $this->lead_form_meta_title ?: $title,
+            'metaDescription' => $this->lead_form_meta_description ?: Str::limit($welcomeMessage, 160),
+            'ogImageUrl' => $this->leadFormOgImageUrl() ?: $this->leadFormCoverUrl() ?: $this->leadFormBannerUrl(),
         ];
     }
 

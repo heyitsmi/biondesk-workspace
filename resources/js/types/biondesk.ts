@@ -702,7 +702,8 @@ export type ProfileEditPageProps = {
     profile: ProfileItem;
 };
 
-export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand' | 'custom';
+export type PublicLeadFormBackgroundTheme =
+    'dark' | 'light' | 'brand' | 'custom';
 
 export type SocialLinkPlatform =
     | 'instagram'
@@ -736,6 +737,9 @@ export type PublicLeadFormSettings = {
     askBudget: boolean;
     allowAttachments: boolean;
     bannerUrl: string | null;
+    metaTitle: string;
+    metaDescription: string;
+    ogImageUrl: string | null;
 };
 
 export type PublicLeadFormPageProps = {

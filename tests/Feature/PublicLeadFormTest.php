@@ -76,3 +76,38 @@ test('public lead form exposes saved social links', function () {
         ]),
     );
 });
+
+test('public lead form exposes custom SEO meta title and description', function () {
+    $team = Team::factory()->create([
+        'name' => 'Biondesk Studio',
+        'lead_form_meta_title' => 'Custom SEO Title',
+        'lead_form_meta_description' => 'Custom SEO description for search engines.',
+    ]);
+
+    $response = $this->get(route('public-lead-form', ['team' => $team->slug]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('public/lead-form')
+        ->where('settings.metaTitle', 'Custom SEO Title')
+        ->where('settings.metaDescription', 'Custom SEO description for search engines.'),
+    );
+});
+
+test('public lead form falls back SEO meta fields to title and welcome message', function () {
+    $team = Team::factory()->create([
+        'name' => 'Biondesk Studio',
+        'lead_form_title' => 'Work with Biondesk',
+        'lead_form_welcome_message' => 'Tell us about your project and budget.',
+    ]);
+
+    $response = $this->get(route('public-lead-form', ['team' => $team->slug]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('public/lead-form')
+        ->where('settings.metaTitle', 'Work with Biondesk')
+        ->where('settings.metaDescription', 'Tell us about your project and budget.')
+        ->where('settings.ogImageUrl', null),
+    );
+});

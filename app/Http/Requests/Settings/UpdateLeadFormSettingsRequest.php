@@ -32,6 +32,7 @@ class UpdateLeadFormSettingsRequest extends FormRequest
         $camelCaseFileFallbacks = [
             'background_image' => 'backgroundImage',
             'cover_banner' => 'coverBanner',
+            'og_image' => 'ogImage',
         ];
 
         foreach ($camelCaseFileFallbacks as $snakeCase => $camelCase) {
@@ -46,6 +47,8 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'background_theme' => 'backgroundTheme',
             'background_color' => 'backgroundColor',
             'social_links' => 'socialLinks',
+            'meta_title' => 'metaTitle',
+            'meta_description' => 'metaDescription',
             'ask_budget' => 'askBudget',
             'allow_attachments' => 'allowAttachments',
         ];
@@ -68,6 +71,14 @@ class UpdateLeadFormSettingsRequest extends FormRequest
 
         if ($this->has('background_color') && trim((string) $this->input('background_color')) === '') {
             $this->merge(['background_color' => null]);
+        }
+
+        if ($this->has('meta_title') && trim((string) $this->input('meta_title')) === '') {
+            $this->merge(['meta_title' => null]);
+        }
+
+        if ($this->has('meta_description') && trim((string) $this->input('meta_description')) === '') {
+            $this->merge(['meta_description' => null]);
         }
     }
 
@@ -106,6 +117,9 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'social_links' => ['sometimes', 'array', 'max:8'],
             'social_links.*.platform' => ['required', Rule::enum(SocialLinkPlatform::class)],
             'social_links.*.url' => ['required', 'url', 'max:500'],
+            'meta_title' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'meta_description' => ['sometimes', 'nullable', 'string', 'max:300'],
+            'og_image' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'ask_budget' => ['sometimes', 'boolean'],
             'allow_attachments' => ['sometimes', 'boolean'],
             'banner' => ['sometimes', 'nullable', 'image', 'max:2048'],

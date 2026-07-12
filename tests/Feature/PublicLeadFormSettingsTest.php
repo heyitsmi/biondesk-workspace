@@ -307,6 +307,102 @@ test('more than 8 social links are rejected', function () {
     ])->assertSessionHasErrors('social_links');
 });
 
+test('a team owner can save SEO meta title and description', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'meta_title' => 'Custom SEO Title',
+        'meta_description' => 'A custom description for search engines and link previews.',
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_meta_title)->toBe('Custom SEO Title');
+    expect($team->lead_form_meta_description)->toBe('A custom description for search engines and link previews.');
+});
+
+test('SEO meta fields are saved via the camelCase keys the frontend sends', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'metaTitle' => 'Camel Title',
+        'metaDescription' => 'Camel description.',
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_meta_title)->toBe('Camel Title');
+    expect($team->lead_form_meta_description)->toBe('Camel description.');
+});
+
+test('clearing the SEO meta fields falls back to the title and welcome message', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+    $team->update([
+        'lead_form_meta_title' => 'Old Title',
+        'lead_form_meta_description' => 'Old description.',
+    ]);
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'meta_title' => '',
+        'meta_description' => '',
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_meta_title)->toBeNull();
+    expect($team->lead_form_meta_description)->toBeNull();
+    expect($team->leadFormSettings()['metaTitle'])->toBe($team->leadFormSettings()['title']);
+});
+
+test('a meta title over 255 characters is rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'meta_title' => str_repeat('a', 256),
+    ])->assertSessionHasErrors('meta_title');
+});
+
+test('a meta description over 300 characters is rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'meta_description' => str_repeat('a', 301),
+    ])->assertSessionHasErrors('meta_description');
+});
+
+test('a team owner can upload a social sharing image', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'og_image' => UploadedFile::fake()->image('og.png'),
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormOgImageUrl())->not->toBeNull();
+});
+
+test('a social sharing image uploaded via the camelCase key the frontend sends is saved', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'ogImage' => UploadedFile::fake()->image('og.png'),
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormOgImageUrl())->not->toBeNull();
+});
+
 test('a team member without update permission cannot update lead form settings', function () {
     $owner = User::factory()->create();
     $team = Team::find($owner->current_team_id);

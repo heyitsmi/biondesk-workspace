@@ -96,6 +96,12 @@ type LinksFormValues = {
     socialLinks: SocialLink[];
 };
 
+type SeoFormValues = {
+    metaTitle: string;
+    metaDescription: string;
+    ogImage: File | null;
+};
+
 type LinkFieldErrors = Partial<Record<'lead_form_slug', string>>;
 
 type AppearanceFieldErrors = Partial<
@@ -115,7 +121,13 @@ type LinksFieldErrors = Partial<
     Record<`social_links.${number}.${'platform' | 'url'}`, string>
 >;
 
+type SeoFieldErrors = Partial<
+    Record<'meta_title' | 'meta_description' | 'og_image', string>
+>;
+
 const DEFAULT_BACKGROUND_COLOR = '#0b0e14';
+const RECOMMENDED_META_TITLE_LENGTH = 60;
+const RECOMMENDED_META_DESCRIPTION_LENGTH = 160;
 
 export default function SettingsLeadForm({
     formUrl,
@@ -133,9 +145,13 @@ export default function SettingsLeadForm({
     const [coverBannerPreview, setCoverBannerPreview] = useState<string | null>(
         settings.coverUrl,
     );
+    const [ogImagePreview, setOgImagePreview] = useState<string | null>(
+        settings.ogImageUrl,
+    );
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const backgroundImageInputRef = useRef<HTMLInputElement>(null);
     const coverBannerInputRef = useRef<HTMLInputElement>(null);
+    const ogImageInputRef = useRef<HTMLInputElement>(null);
 
     const linkPrefix = formUrl.slice(0, formUrl.length - settings.slug.length);
 
@@ -163,9 +179,16 @@ export default function SettingsLeadForm({
         socialLinks: settings.socialLinks,
     });
 
+    const seoForm = useForm<SeoFormValues>({
+        metaTitle: settings.metaTitle,
+        metaDescription: settings.metaDescription,
+        ogImage: null,
+    });
+
     const linkErrors = linkForm.errors as LinkFieldErrors;
     const appearanceErrors = appearanceForm.errors as AppearanceFieldErrors;
     const linksErrors = linksForm.errors as LinksFieldErrors;
+    const seoErrors = seoForm.errors as SeoFieldErrors;
 
     const copyFormLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
@@ -290,6 +313,23 @@ export default function SettingsLeadForm({
 
     const saveSocialLinks = (): void => {
         linksForm.put(update.url(), { preserveScroll: true });
+    };
+
+    const pickOgImage = (): void => {
+        ogImageInputRef.current?.click();
+    };
+
+    const onOgImageSelected = (event: ChangeEvent<HTMLInputElement>): void => {
+        const file = event.target.files?.[0] ?? null;
+        seoForm.setData('ogImage', file);
+
+        if (file) {
+            setOgImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const saveSeo = (): void => {
+        seoForm.put(update.url(), { preserveScroll: true });
     };
 
     return (
@@ -902,6 +942,150 @@ export default function SettingsLeadForm({
                             : linksForm.processing
                               ? 'Saving...'
                               : 'Save Links'}
+                    </button>
+                </div>
+            </div>
+
+            <h3 className="my-[24px] text-[15px] font-semibold text-bion-text">
+                SEO &amp; Sharing
+            </h3>
+            <div className={CARD}>
+                <div className={CARD_BODY}>
+                    <div className="flex flex-col gap-[8px]">
+                        <label className={FIELD_LABEL}>
+                            Meta Title{' '}
+                            <span
+                                className={cn(
+                                    'text-[12px] font-normal',
+                                    seoForm.data.metaTitle.length >
+                                        RECOMMENDED_META_TITLE_LENGTH
+                                        ? 'text-bion-danger'
+                                        : 'text-bion-text-muted',
+                                )}
+                            >
+                                {seoForm.data.metaTitle.length}/
+                                {RECOMMENDED_META_TITLE_LENGTH}
+                            </span>
+                        </label>
+                        <input
+                            type="text"
+                            className={FIELD_INPUT}
+                            placeholder={settings.title}
+                            value={seoForm.data.metaTitle}
+                            onChange={(event) =>
+                                seoForm.setData('metaTitle', event.target.value)
+                            }
+                        />
+                        {seoErrors.meta_title ? (
+                            <span className={FIELD_ERROR}>
+                                {seoErrors.meta_title}
+                            </span>
+                        ) : null}
+                        <p className={FIELD_HINT}>
+                            Shown in search results and browser tabs. Leave
+                            blank to use the form title.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-[8px]">
+                        <label className={FIELD_LABEL}>
+                            Meta Description{' '}
+                            <span
+                                className={cn(
+                                    'text-[12px] font-normal',
+                                    seoForm.data.metaDescription.length >
+                                        RECOMMENDED_META_DESCRIPTION_LENGTH
+                                        ? 'text-bion-danger'
+                                        : 'text-bion-text-muted',
+                                )}
+                            >
+                                {seoForm.data.metaDescription.length}/
+                                {RECOMMENDED_META_DESCRIPTION_LENGTH}
+                            </span>
+                        </label>
+                        <textarea
+                            className={cn(FIELD_INPUT, 'min-h-[80px] resize-y')}
+                            placeholder={settings.welcomeMessage}
+                            value={seoForm.data.metaDescription}
+                            onChange={(event) =>
+                                seoForm.setData(
+                                    'metaDescription',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                        {seoErrors.meta_description ? (
+                            <span className={FIELD_ERROR}>
+                                {seoErrors.meta_description}
+                            </span>
+                        ) : null}
+                        <p className={FIELD_HINT}>
+                            Shown in search results and link previews. Leave
+                            blank to use the welcome message.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-[8px]">
+                        <label className={FIELD_LABEL}>
+                            Social Sharing Image
+                        </label>
+                        <input
+                            ref={ogImageInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="hidden"
+                            onChange={onOgImageSelected}
+                        />
+                        <button
+                            type="button"
+                            onClick={pickOgImage}
+                            className="relative flex h-[120px] w-full cursor-pointer flex-col items-center justify-center gap-[8px] overflow-hidden rounded-[8px] border-2 border-dashed border-bion-border bg-bion-bg text-center [transition:border-color_0.15s_ease] hover:border-bion-accent"
+                        >
+                            {ogImagePreview ? (
+                                <img
+                                    src={ogImagePreview}
+                                    alt="Social sharing image preview"
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                />
+                            ) : (
+                                <>
+                                    <svg className="h-[18px] w-[18px] shrink-0 fill-none stroke-current [stroke-width:1.6] text-bion-text-muted [stroke-linecap:round] [stroke-linejoin:round]">
+                                        <use href="#i-image" />
+                                    </svg>
+                                    <div className="text-[13.5px] font-medium text-bion-text">
+                                        Click to upload
+                                    </div>
+                                    <div className="text-[12px] text-bion-text-muted">
+                                        Recommended 1200x630px, PNG or JPG (max
+                                        5MB)
+                                    </div>
+                                </>
+                            )}
+                        </button>
+                        {seoErrors.og_image ? (
+                            <span className={FIELD_ERROR}>
+                                {seoErrors.og_image}
+                            </span>
+                        ) : null}
+                        <p className={FIELD_HINT}>
+                            Shown when your form link is shared on social media
+                            or chat apps. Falls back to your cover banner or
+                            logo when not set.
+                        </p>
+                    </div>
+                </div>
+                <div className={CARD_FOOTER}>
+                    <button
+                        type="button"
+                        className={BTN_PRIMARY}
+                        disabled={seoForm.processing}
+                        onClick={saveSeo}
+                    >
+                        {seoForm.recentlySuccessful
+                            ? 'Saved!'
+                            : seoForm.processing
+                              ? 'Saving...'
+                              : 'Save SEO Settings'}
                     </button>
                 </div>
             </div>
