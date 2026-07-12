@@ -143,7 +143,7 @@ export default function PublicLeadFormPage({ team, settings, turnstileSiteKey }:
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
-        post(submit.url(team.slug), {
+        post(submit.url(team.leadFormSlug), {
             preserveScroll: true,
             onSuccess: () => {
                 setSubmitted(true);
@@ -159,32 +159,70 @@ export default function PublicLeadFormPage({ team, settings, turnstileSiteKey }:
         .slice(0, 2)
         .toUpperCase();
 
-    const themeVars = THEME_VARS[settings.backgroundTheme === 'light' ? 'light' : 'dark'];
+    const baseThemeVars = THEME_VARS[settings.backgroundTheme === 'light' ? 'light' : 'dark'];
+    const hasCustomBackground = settings.backgroundTheme === 'custom';
+    const pageStyle: CSSProperties = hasCustomBackground
+        ? ({
+              ...baseThemeVars,
+              '--bion-bg': settings.backgroundColor ?? (baseThemeVars as Record<string, string>)['--bion-bg'],
+              ...(settings.backgroundImageUrl
+                  ? {
+                        backgroundImage: `url(${settings.backgroundImageUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }
+                  : {}),
+          } as CSSProperties)
+        : baseThemeVars;
 
     return (
         <>
             <Head title={`${team.name} lead form`} />
 
             <div
-                style={themeVars}
+                style={pageStyle}
                 className="flex min-h-screen flex-col items-center justify-center bg-bion-bg px-[20px] py-[40px] font-display text-[14px] leading-normal text-bion-text antialiased"
             >
                 <div className="w-full max-w-[560px]">
                     <div className="overflow-hidden rounded-[16px] border border-bion-border bg-bion-surface shadow-bion-raised">
-                        <div className="border-b border-bion-border bg-bion-surface-raised px-[40px] pt-[40px] pb-[30px] text-center max-[600px]:px-[24px] max-[600px]:pt-[32px] max-[600px]:pb-[24px]">
-                            {settings.bannerUrl ? (
-                                <img
-                                    src={settings.bannerUrl}
-                                    alt={team.name}
-                                    className="mx-auto mb-[20px] h-[64px] w-[64px] rounded-[16px] object-cover"
-                                />
-                            ) : (
-                                <div className="mx-auto mb-[20px] flex h-[64px] w-[64px] items-center justify-center rounded-[16px] bg-bion-accent text-[24px] font-bold text-bion-accent-text">
-                                    {initials}
+                        <div className="relative border-b border-bion-border bg-bion-surface-raised text-center">
+                            {settings.coverUrl ? (
+                                <div className="h-[120px] w-full overflow-hidden">
+                                    <img
+                                        src={settings.coverUrl}
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                    />
                                 </div>
-                            )}
-                            <h1 className="mb-[8px] text-[24px] font-bold">{settings.title}</h1>
-                            <p className="text-[14.5px] text-bion-text-muted">{settings.welcomeMessage}</p>
+                            ) : null}
+                            <div
+                                className={cn(
+                                    'px-[40px] pb-[30px] max-[600px]:px-[24px] max-[600px]:pb-[24px]',
+                                    settings.coverUrl ? '-mt-[32px]' : 'pt-[40px] max-[600px]:pt-[32px]',
+                                )}
+                            >
+                                {settings.bannerUrl ? (
+                                    <img
+                                        src={settings.bannerUrl}
+                                        alt={team.name}
+                                        className={cn(
+                                            'mx-auto mb-[20px] h-[64px] w-[64px] rounded-[16px] object-cover',
+                                            settings.coverUrl && 'border-[3px] border-bion-surface shadow-bion-raised',
+                                        )}
+                                    />
+                                ) : (
+                                    <div
+                                        className={cn(
+                                            'mx-auto mb-[20px] flex h-[64px] w-[64px] items-center justify-center rounded-[16px] bg-bion-accent text-[24px] font-bold text-bion-accent-text',
+                                            settings.coverUrl && 'border-[3px] border-bion-surface shadow-bion-raised',
+                                        )}
+                                    >
+                                        {initials}
+                                    </div>
+                                )}
+                                <h1 className="mb-[8px] text-[24px] font-bold">{settings.title}</h1>
+                                <p className="text-[14.5px] text-bion-text-muted">{settings.welcomeMessage}</p>
+                            </div>
                         </div>
 
                         <div className="px-[40px] pt-[32px] pb-[40px] max-[600px]:px-[24px] max-[600px]:pt-[24px] max-[600px]:pb-[32px]">

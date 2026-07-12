@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Settings;
 
 use App\Enums\LeadFormBackgroundTheme;
+use App\Models\Team;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,9 +23,27 @@ class UpdateLeadFormSettingsRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Move any camelCase file uploads to their snake_case keys first, before
+        // anything below touches has()/input() — those call Request::allFiles(),
+        // which memoizes its result on first access. Mutating the file bag after
+        // that point would stay invisible to hasFile()/file() for the rest of the
+        // request, including in the controller.
+        $camelCaseFileFallbacks = [
+            'background_image' => 'backgroundImage',
+            'cover_banner' => 'coverBanner',
+        ];
+
+        foreach ($camelCaseFileFallbacks as $snakeCase => $camelCase) {
+            if (! $this->files->has($snakeCase) && $this->files->has($camelCase)) {
+                $this->files->set($snakeCase, $this->files->get($camelCase));
+            }
+        }
+
         $camelCaseFallbacks = [
+            'lead_form_slug' => 'leadFormSlug',
             'welcome_message' => 'welcomeMessage',
             'background_theme' => 'backgroundTheme',
+            'background_color' => 'backgroundColor',
             'ask_budget' => 'askBudget',
             'allow_attachments' => 'allowAttachments',
         ];
@@ -39,6 +59,14 @@ class UpdateLeadFormSettingsRequest extends FormRequest
         if ($merge !== []) {
             $this->merge($merge);
         }
+
+        if ($this->has('lead_form_slug') && trim((string) $this->input('lead_form_slug')) === '') {
+            $this->merge(['lead_form_slug' => null]);
+        }
+
+        if ($this->has('background_color') && trim((string) $this->input('background_color')) === '') {
+            $this->merge(['background_color' => null]);
+        }
     }
 
     /**
@@ -48,16 +76,34 @@ class UpdateLeadFormSettingsRequest extends FormRequest
      */
     public function rules(): array
     {
+        $team = $this->user()?->currentTeam;
+
         return [
             'enabled' => ['sometimes', 'boolean'],
+            'lead_form_slug' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:3',
+                'max:60',
+                'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/',
+                function (string $attribute, mixed $value, Closure $fail) use ($team): void {
+                    if ($value !== null && Team::leadFormSlugTaken($value, $team?->id)) {
+                        $fail('This link is already taken.');
+                    }
+                },
+            ],
             'title' => ['sometimes', 'string', 'max:255'],
             'welcome_message' => ['sometimes', 'nullable', 'string'],
             'background_theme' => ['sometimes', Rule::enum(LeadFormBackgroundTheme::class)],
+            'background_color' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'background_image' => ['sometimes', 'nullable', 'image', 'max:5120'],
+            'cover_banner' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'services' => ['sometimes', 'array'],
             'services.*' => ['string', 'max:100'],
             'ask_budget' => ['sometimes', 'boolean'],
             'allow_attachments' => ['sometimes', 'boolean'],
-            'banner' => ['sometimes', 'image', 'max:2048'],
+            'banner' => ['sometimes', 'nullable', 'image', 'max:2048'],
         ];
     }
 }

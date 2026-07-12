@@ -19,9 +19,11 @@ class PublicLeadFormSettingsController extends Controller
      */
     private const FIELD_MAP = [
         'enabled' => 'lead_form_enabled',
+        'lead_form_slug' => 'lead_form_slug',
         'title' => 'lead_form_title',
         'welcome_message' => 'lead_form_welcome_message',
         'background_theme' => 'lead_form_background_theme',
+        'background_color' => 'lead_form_background_color',
         'services' => 'lead_form_services',
         'ask_budget' => 'lead_form_ask_budget',
         'allow_attachments' => 'lead_form_allow_attachments',
@@ -35,7 +37,7 @@ class PublicLeadFormSettingsController extends Controller
         $team = $request->user()->currentTeam;
 
         return Inertia::render('settings/lead-form', [
-            'formUrl' => route('public-lead-form', ['team' => $team->slug]),
+            'formUrl' => route('public-lead-form', ['team' => $team->leadFormPublicSlug()]),
             'settings' => $team->leadFormSettings(),
         ]);
     }
@@ -63,7 +65,15 @@ class PublicLeadFormSettingsController extends Controller
         }
 
         if ($request->hasFile('banner')) {
-            $team->addMediaFromRequest('banner')->toMediaCollection('lead-form-banner');
+            $team->addMedia($request->file('banner'))->toMediaCollection('lead-form-banner');
+        }
+
+        if ($request->hasFile('background_image')) {
+            $team->addMedia($request->file('background_image'))->toMediaCollection('lead-form-background');
+        }
+
+        if ($request->hasFile('cover_banner')) {
+            $team->addMedia($request->file('cover_banner'))->toMediaCollection('lead-form-cover');
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Lead form settings updated.')]);

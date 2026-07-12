@@ -63,8 +63,8 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingPageController::class)->name('home');
-Route::get('/p/{team:slug}', PublicLeadFormController::class)->name('public-lead-form');
-Route::post('/p/{team:slug}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
+Route::get('/p/{team}', PublicLeadFormController::class)->name('public-lead-form');
+Route::post('/p/{team}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
 Route::get('/d/{document:public_token}', PublicDocumentController::class)->name('public-document');
 Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->name('documents.print');
 Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');

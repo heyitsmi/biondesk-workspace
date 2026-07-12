@@ -21,12 +21,14 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string|null $lead_form_slug
  * @property bool $is_personal
  * @property bool $lead_form_enabled
  * @property string|null $lead_form_title
  * @property string|null $lead_form_description
  * @property string|null $lead_form_welcome_message
  * @property LeadFormBackgroundTheme $lead_form_background_theme
+ * @property string|null $lead_form_background_color
  * @property list<string>|null $lead_form_services
  * @property bool $lead_form_ask_budget
  * @property bool $lead_form_allow_attachments
@@ -38,9 +40,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property-read Collection<int, User> $members
  */
 #[Fillable([
-    'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_title',
+    'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_slug', 'lead_form_title',
     'lead_form_description', 'lead_form_welcome_message', 'lead_form_background_theme',
-    'lead_form_services', 'lead_form_ask_budget', 'lead_form_allow_attachments',
+    'lead_form_background_color', 'lead_form_services', 'lead_form_ask_budget', 'lead_form_allow_attachments',
 ])]
 class Team extends Model implements HasMedia
 {
@@ -178,11 +180,63 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get the lead form custom background image URL, or null when none has been uploaded.
+     */
+    public function leadFormBackgroundImageUrl(): ?string
+    {
+        $url = $this->getFirstMediaUrl('lead-form-background');
+
+        return $url === '' ? null : $url;
+    }
+
+    /**
+     * Get the lead form cover banner URL, or null when none has been uploaded.
+     */
+    public function leadFormCoverUrl(): ?string
+    {
+        $url = $this->getFirstMediaUrl('lead-form-cover');
+
+        return $url === '' ? null : $url;
+    }
+
+    /**
      * Register the media collections for this model.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('lead-form-banner')->singleFile();
+        $this->addMediaCollection('lead-form-background')->singleFile();
+        $this->addMediaCollection('lead-form-cover')->singleFile();
+    }
+
+    /**
+     * Get the public lead form URL slug: the custom slug if set, otherwise the team slug.
+     */
+    public function leadFormPublicSlug(): string
+    {
+        return $this->lead_form_slug ?: $this->slug;
+    }
+
+    /**
+     * Find a team by its public lead form identifier (custom slug or team slug).
+     */
+    public static function findByLeadFormSlug(string $identifier): self
+    {
+        return static::where('lead_form_slug', $identifier)
+            ->orWhere('slug', $identifier)
+            ->firstOrFail();
+    }
+
+    /**
+     * Determine whether the given slug is already used as a team slug or a custom
+     * lead form slug by another team.
+     */
+    public static function leadFormSlugTaken(string $slug, ?int $exceptTeamId = null): bool
+    {
+        return static::withTrashed()
+            ->where(fn ($query) => $query->where('slug', $slug)->orWhere('lead_form_slug', $slug))
+            ->when($exceptTeamId, fn ($query) => $query->where('id', '!=', $exceptTeamId))
+            ->exists();
     }
 
     /**
@@ -194,10 +248,15 @@ class Team extends Model implements HasMedia
     {
         return [
             'enabled' => $this->lead_form_enabled,
+            'slug' => $this->leadFormPublicSlug(),
+            'customSlug' => $this->lead_form_slug,
             'title' => $this->lead_form_title ?: "Work with {$this->name}",
             'welcomeMessage' => $this->lead_form_welcome_message
                 ?: "Fill out the form below to tell us about your project, and we'll get back to you within 24 hours.",
             'backgroundTheme' => $this->lead_form_background_theme->value,
+            'backgroundColor' => $this->lead_form_background_color,
+            'backgroundImageUrl' => $this->leadFormBackgroundImageUrl(),
+            'coverUrl' => $this->leadFormCoverUrl(),
             'services' => $this->lead_form_services ?: self::DEFAULT_LEAD_FORM_SERVICES,
             'askBudget' => $this->lead_form_ask_budget,
             'allowAttachments' => $this->lead_form_allow_attachments,

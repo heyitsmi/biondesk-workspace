@@ -702,13 +702,18 @@ export type ProfileEditPageProps = {
     profile: ProfileItem;
 };
 
-export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand';
+export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand' | 'custom';
 
 export type PublicLeadFormSettings = {
     enabled: boolean;
+    slug: string;
+    customSlug: string | null;
     title: string;
     welcomeMessage: string;
     backgroundTheme: PublicLeadFormBackgroundTheme;
+    backgroundColor: string | null;
+    backgroundImageUrl: string | null;
+    coverUrl: string | null;
     services: string[];
     askBudget: boolean;
     allowAttachments: boolean;
@@ -719,6 +724,7 @@ export type PublicLeadFormPageProps = {
     team: {
         name: string;
         slug: string;
+        leadFormSlug: string;
     };
     settings: PublicLeadFormSettings;
     turnstileSiteKey: string | null;

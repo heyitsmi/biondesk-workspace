@@ -56,6 +56,23 @@ test('a team owner can update the appearance settings', function () {
     expect($team->lead_form_background_theme->value)->toBe('light');
 });
 
+test('saving appearance without picking new files does not fail file validation', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->putJson(route('lead-form.update'), [
+        'title' => 'Work with Acme',
+        'welcome_message' => 'Tell us about your project.',
+        'background_theme' => 'light',
+        'banner' => null,
+        'background_image' => null,
+        'cover_banner' => null,
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->lead_form_title)->toBe('Work with Acme');
+});
+
 test('a team owner can update the fields and services settings', function () {
     $user = User::factory()->create();
     $user->refresh();
@@ -85,6 +102,140 @@ test('a team owner can upload a lead form banner', function () {
     ])->assertRedirect(route('lead-form.edit'));
 
     expect($team->fresh()->leadFormBannerUrl())->not->toBeNull();
+});
+
+test('a team owner can set a custom lead form link', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->put(route('lead-form.update'), ['lead_form_slug' => 'hilmi-studio'])
+        ->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_slug)->toBe('hilmi-studio');
+    expect($team->leadFormPublicSlug())->toBe('hilmi-studio');
+
+    $this->actingAs($user)
+        ->get(route('lead-form.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('formUrl', route('public-lead-form', ['team' => 'hilmi-studio']))
+            ->where('settings.customSlug', 'hilmi-studio'),
+        );
+});
+
+test('a custom lead form link is rejected when already taken by another team', function () {
+    Team::factory()->create(['slug' => 'acme-inc']);
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->put(route('lead-form.update'), ['lead_form_slug' => 'acme-inc'])
+        ->assertSessionHasErrors('lead_form_slug');
+
+    expect($team->fresh()->lead_form_slug)->toBeNull();
+});
+
+test('a custom lead form link is rejected when invalid format', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->put(route('lead-form.update'), ['lead_form_slug' => 'Not A Valid Slug!'])
+        ->assertSessionHasErrors('lead_form_slug');
+
+    expect($team->fresh()->lead_form_slug)->toBeNull();
+});
+
+test('clearing the custom lead form link falls back to the team slug', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+    $team->update(['lead_form_slug' => 'hilmi-studio']);
+
+    $this->actingAs($user)
+        ->put(route('lead-form.update'), ['lead_form_slug' => ''])
+        ->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_slug)->toBeNull();
+    expect($team->leadFormPublicSlug())->toBe($team->slug);
+});
+
+test('a team owner can set a custom background color', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'background_theme' => 'custom',
+        'background_color' => '#ff8800',
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_background_theme->value)->toBe('custom');
+    expect($team->lead_form_background_color)->toBe('#ff8800');
+});
+
+test('an invalid background color is rejected', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)
+        ->put(route('lead-form.update'), ['background_color' => 'orange'])
+        ->assertSessionHasErrors('background_color');
+
+    expect($team->fresh()->lead_form_background_color)->toBeNull();
+});
+
+test('a team owner can upload a custom background image', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'background_image' => UploadedFile::fake()->image('bg.png'),
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormBackgroundImageUrl())->not->toBeNull();
+});
+
+test('a team owner can upload a cover banner', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'cover_banner' => UploadedFile::fake()->image('cover.png'),
+    ])->assertRedirect(route('lead-form.edit'));
+
+    expect($team->fresh()->leadFormCoverUrl())->not->toBeNull();
+});
+
+test('a cover banner and background image upload via the camelCase keys the frontend actually sends are saved', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'backgroundImage' => UploadedFile::fake()->image('bg.png'),
+        'coverBanner' => UploadedFile::fake()->image('cover.png'),
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->leadFormBackgroundImageUrl())->not->toBeNull();
+    expect($team->leadFormCoverUrl())->not->toBeNull();
 });
 
 test('a team member without update permission cannot update lead form settings', function () {

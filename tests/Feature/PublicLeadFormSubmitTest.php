@@ -51,6 +51,29 @@ test('a public lead form submission creates a contact and an inbox opportunity',
     Mail::assertSent(NewPublicLeadReceived::class, fn ($mail) => $mail->hasTo($owner->email));
 });
 
+test('a public lead form submission works when addressed via a custom lead form slug', function () {
+    Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
+    Mail::fake();
+
+    $owner = User::factory()->create();
+    $team = $owner->currentTeam;
+    $team->update(['lead_form_slug' => 'hilmi-studio']);
+
+    $response = $this->post(route('public-lead-form.submit', ['team' => 'hilmi-studio']), [
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'email' => 'jane@acme.test',
+        'services' => ['Web Design'],
+        'message' => 'Hello there.',
+        'turnstile_token' => 'valid-token',
+    ]);
+
+    $response->assertRedirect();
+
+    $contact = Contact::where('email', 'jane@acme.test')->firstOrFail();
+    expect($contact->team_id)->toBe($team->id);
+});
+
 test('a public lead form submission reuses an existing contact by email', function () {
     Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
     Mail::fake();

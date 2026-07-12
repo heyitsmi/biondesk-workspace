@@ -28,8 +28,10 @@ class PublicLeadFormSubmitController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(StorePublicLeadRequest $request, Team $team): RedirectResponse
+    public function __invoke(StorePublicLeadRequest $request, string $team): RedirectResponse
     {
+        $team = Team::findByLeadFormSlug($team);
+
         $data = $request->validated();
 
         $contact = $team->contacts()

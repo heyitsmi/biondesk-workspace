@@ -7,6 +7,7 @@ enum LeadFormBackgroundTheme: string
     case Dark = 'dark';
     case Light = 'light';
     case Brand = 'brand';
+    case Custom = 'custom';
 
     /**
      * Get the display label for the theme.
@@ -17,6 +18,7 @@ enum LeadFormBackgroundTheme: string
             self::Dark => 'Dark Mode Default',
             self::Light => 'Light Mode',
             self::Brand => 'Brand Color Auto-Match',
+            self::Custom => 'Custom Color or Image',
         };
     }
 }
