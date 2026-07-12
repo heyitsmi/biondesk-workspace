@@ -1,10 +1,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as invoiceCreate } from '@/routes/invoices';
 import { show as projectShow } from '@/routes/projects';
-import { index as quotations } from '@/routes/quotations';
+import { convertToInvoice as convertQuotationToInvoice, index as quotations, move as moveQuotation } from '@/routes/quotations';
 import type { BiondeskTone, QuotationShowPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -40,17 +40,16 @@ const toneDotMap: Record<BiondeskTone, string> = {
 export default function QuotationShowPage({ quotation }: QuotationShowPageProps) {
     const { currentTeam } = usePage().props;
     const [linkCopied, setLinkCopied] = useState(false);
-    const [sentToClient, setSentToClient] = useState(false);
+    const [sentToClient, setSentToClient] = useState(quotation.status !== 'draft');
+    const pdf = useDocumentPdfDownload(quotation.pdfUrls);
 
     const copyShareLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
             return;
         }
 
-        const shareUrl = `https://biondesk.test/q/${quotation.number.toLowerCase()}`;
-
         try {
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(quotation.shareUrl);
             setLinkCopied(true);
             window.setTimeout(() => setLinkCopied(false), 2000);
         } catch {
@@ -58,12 +57,24 @@ export default function QuotationShowPage({ quotation }: QuotationShowPageProps)
         }
     };
 
+    const sendToClient = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.patch(
+            moveQuotation({ current_team: currentTeam.slug, quotation: quotation.id }).url,
+            { status: 'sent' },
+            { preserveScroll: true, onSuccess: () => setSentToClient(true) },
+        );
+    };
+
     const convertToInvoice = (): void => {
         if (!currentTeam) {
             return;
         }
 
-        router.visit(invoiceCreate(currentTeam.slug));
+        router.post(convertQuotationToInvoice({ current_team: currentTeam.slug, quotation: quotation.id }).url);
     };
 
     return (
@@ -99,7 +110,7 @@ export default function QuotationShowPage({ quotation }: QuotationShowPageProps)
                     <button
                         type="button"
                         className={BTN_PRIMARY}
-                        onClick={() => setSentToClient(true)}
+                        onClick={sendToClient}
                     >
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-send" />
@@ -278,12 +289,20 @@ export default function QuotationShowPage({ quotation }: QuotationShowPageProps)
                                 </svg>
                                 Schedule Auto-Reminder
                             </button>
-                            <button type="button" className={BTN_SIDEBAR_LIST}>
+                            <button
+                                type="button"
+                                className={BTN_SIDEBAR_LIST}
+                                onClick={pdf.download}
+                                disabled={pdf.downloading}
+                            >
                                 <svg className={cn(ICON_SM_CLS, 'mr-[4px]')}>
                                     <use href="#i-download" />
                                 </svg>
-                                Download PDF
+                                {pdf.downloading ? 'Generating…' : 'Download PDF'}
                             </button>
+                            {pdf.error ? (
+                                <p className="text-[12px] text-bion-danger">{pdf.error}</p>
+                            ) : null}
                         </div>
                     </div>
                 </div>

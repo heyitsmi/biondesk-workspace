@@ -26,9 +26,13 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('dashboard')
         ->has('stats', 4)
-        ->has('priorityActions', 3)
-        ->has('recentOpportunities', 4)
-        ->has('activityFeed', 4),
+        ->where('stats.0.label', 'Pipeline Value')
+        ->where('stats.1.label', 'To Be Collected')
+        ->where('stats.2.label', 'Active Projects')
+        ->where('stats.3.label', 'Win Rate')
+        ->has('priorityActions')
+        ->has('recentOpportunities')
+        ->has('activityFeed'),
     );
 });
 

@@ -1,9 +1,14 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Enums\DocumentType;
 use App\Models\Contact;
+use App\Models\Document;
+use App\Models\DocumentItem;
 use App\Models\Opportunity;
+use App\Models\ProfileAsset;
 use App\Models\Project;
+use App\Models\ReminderJob;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -38,6 +43,14 @@ test('authenticated users can view app scaffold pages for their current team', f
     $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
     $project = Project::factory()->for($team)->for($opportunity)->create();
     Opportunity::factory()->for($team)->for($contact)->create();
+
+    $proposal = Document::factory()
+        ->for($team)
+        ->for($contact)
+        ->state(['type' => DocumentType::Proposal, 'title' => 'Website Redesign Proposal', 'number' => 'P-2026-004'])
+        ->has(DocumentItem::factory()->count(3), 'items')
+        ->create();
+    Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Proposal])->count(4)->create();
 
     $this->actingAs($user)
         ->get(route('projects.index', ['current_team' => $team->slug]))
@@ -98,42 +111,51 @@ test('authenticated users can view app scaffold pages for their current team', f
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/create')
             ->has('nextNumber')
-            ->has('clients', 5)
+            ->has('clients')
             ->has('projects'),
         );
 
     $this->actingAs($user)
-        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->get(route('proposals.edit', ['current_team' => $team->slug, 'proposal' => $proposal->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/edit')
-            ->where('proposal.id', 21)
+            ->where('proposal.id', $proposal->id)
             ->where('proposal.title', 'Website Redesign Proposal')
-            ->has('clients', 5)
+            ->has('clients')
             ->has('projects'),
         );
 
     $this->actingAs($user)
-        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => 21]))
+        ->get(route('proposals.show', ['current_team' => $team->slug, 'proposal' => $proposal->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('proposals/show')
-            ->where('proposal.id', 21)
+            ->where('proposal.id', $proposal->id)
             ->where('proposal.title', 'Website Redesign Proposal')
             ->where('proposal.number', 'P-2026-004')
             ->has('proposal.lineItems', 3)
             ->has('proposal.preparedFor'),
         );
 
+    $reminderInvoice = Document::factory()->for($team)->for($contact)->state(['type' => DocumentType::Invoice])->create();
+    ReminderJob::factory()->for($reminderInvoice)->count(2)->sequence(
+        ['type' => 'invoice_overdue', 'scheduled_at' => now()->subDays(5)],
+        ['type' => 'invoice_due_soon', 'scheduled_at' => now()->subDays(3)],
+    )->create();
+
     $this->actingAs($user)
         ->get(route('reminders.index', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('reminders/index')
-            ->has('reminders', 8)
-            ->where('summary.allCount', 8)
+            ->has('reminders', 2)
+            ->where('summary.allCount', 2)
             ->where('summary.overdueCount', 2),
         );
+
+    $profile = ProfileAsset::factory()->for($team)->create(['title' => 'Default Company Profile']);
+    ProfileAsset::factory()->for($team)->count(4)->create();
 
     $this->actingAs($user)
         ->get(route('profiles.index', ['current_team' => $team->slug]))
@@ -152,11 +174,11 @@ test('authenticated users can view app scaffold pages for their current team', f
         );
 
     $this->actingAs($user)
-        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => 1]))
+        ->get(route('profiles.edit', ['current_team' => $team->slug, 'profile' => $profile->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('profiles/edit')
-            ->where('profile.id', 1)
+            ->where('profile.id', $profile->id)
             ->where('profile.title', 'Default Company Profile'),
         );
 });

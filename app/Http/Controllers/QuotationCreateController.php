@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\Biondesk\StubWorkspaceData;
+use App\Enums\DocumentType;
+use App\Models\Contact;
+use App\Models\Document;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,8 +15,16 @@ class QuotationCreateController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request, StubWorkspaceData $stubWorkspaceData): Response
+    public function __invoke(Request $request): Response
     {
-        return Inertia::render('quotations/create', $stubWorkspaceData->quotationCreateContext($request->user()->currentTeam));
+        $team = $request->user()->currentTeam;
+
+        return Inertia::render('quotations/create', [
+            'nextNumber' => Document::nextNumber($team, DocumentType::Quote),
+            'defaultIssuedAt' => now()->toDateString(),
+            'defaultExpiryAt' => now()->addDays(14)->toDateString(),
+            'clients' => Contact::optionsFor($team),
+            'projects' => Project::optionsFor($team),
+        ]);
     }
 }

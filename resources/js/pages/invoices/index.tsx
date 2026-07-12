@@ -99,7 +99,9 @@ export default function InvoicesPage({ invoices: initialInvoices }: InvoicesPage
                             <option value="">All Statuses</option>
                             <option value="draft">Draft</option>
                             <option value="sent">Sent</option>
-                            <option value="paid">Paid</option>
+                            <option value="viewed">Viewed</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
                             <option value="overdue">Overdue</option>
                         </select>
                     </div>

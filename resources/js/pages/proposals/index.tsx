@@ -2,7 +2,16 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as proposalCreate, edit as proposalEdit, index as proposals, show as proposalShow } from '@/routes/proposals';
+import {
+    convertToInvoice as convertProposalToInvoice,
+    convertToQuote as convertProposalToQuote,
+    create as proposalCreate,
+    destroy as destroyProposal,
+    edit as proposalEdit,
+    index as proposals,
+    move as moveProposal,
+    show as proposalShow,
+} from '@/routes/proposals';
 import type {
     ProposalDocument,
     ProposalLineItem,
@@ -249,6 +258,14 @@ export default function ProposalsPage({
         if (nextAcceptedDocument !== null) {
             setAcceptedDocument(nextAcceptedDocument);
         }
+
+        if (currentTeam) {
+            router.patch(
+                moveProposal({ current_team: currentTeam.slug, proposal: documentId }).url,
+                { status: nextStatus },
+                { preserveState: true, preserveScroll: true },
+            );
+        }
     };
 
     const visitCreateProposal = (): void => {
@@ -303,6 +320,31 @@ export default function ProposalsPage({
         );
         setPreviewDocumentId(null);
         setMenuDocumentId(null);
+
+        if (currentTeam) {
+            router.delete(
+                destroyProposal({ current_team: currentTeam.slug, proposal: documentId }).url,
+                { preserveScroll: true },
+            );
+        }
+    };
+
+    const createQuoteDraft = (documentId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.post(convertProposalToQuote({ current_team: currentTeam.slug, proposal: documentId }).url);
+        setAcceptedDocument(null);
+    };
+
+    const createInvoiceDraft = (documentId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.post(convertProposalToInvoice({ current_team: currentTeam.slug, proposal: documentId }).url);
+        setAcceptedDocument(null);
     };
 
     const copyShareLink = async (shareUrl: string): Promise<void> => {
@@ -822,14 +864,14 @@ export default function ProposalsPage({
                             <button
                                 type="button"
                                 className={BTN_GHOST_SM}
-                                onClick={() => setAcceptedDocument(null)}
+                                onClick={() => acceptedDocument && createQuoteDraft(acceptedDocument.id)}
                             >
                                 Create Quote draft
                             </button>
                             <button
                                 type="button"
                                 className={BTN_PRIMARY_SM}
-                                onClick={() => setAcceptedDocument(null)}
+                                onClick={() => acceptedDocument && createInvoiceDraft(acceptedDocument.id)}
                             >
                                 Create Invoice draft
                             </button>

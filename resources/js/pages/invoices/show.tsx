@@ -1,10 +1,17 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as invoices } from '@/routes/invoices';
+import { store as storePayment } from '@/routes/invoices/payments';
 import { show as projectShow } from '@/routes/projects';
 import type { BiondeskTone, InvoiceShowPageProps } from '@/types';
+
+const FIELD_LABEL_SM = 'mb-[6px] block text-[11.5px] text-bion-text-muted uppercase [letter-spacing:0.04em]';
+const FIELD_INPUT =
+    'w-full rounded-[8px] border border-bion-border bg-bion-bg px-[11px] py-[8px] text-[13.5px] text-bion-text focus:border-bion-accent focus:outline-none';
 
 const ICON_SM_CLS =
     'h-[15px] w-[15px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]';
@@ -40,16 +47,38 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
     const { currentTeam } = usePage().props;
     const [linkCopied, setLinkCopied] = useState(false);
     const [reminderSent, setReminderSent] = useState(false);
+    const [showPaymentForm, setShowPaymentForm] = useState(false);
+    const pdf = useDocumentPdfDownload(invoice.pdfUrls);
+    const { data, setData, post, processing, errors, reset } = useForm({
+        method: 'Bank Transfer',
+        amountValue: '',
+        paidAt: new Date().toISOString().slice(0, 10),
+        notes: '',
+    });
+
+    const submitPayment = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+
+        if (!currentTeam) {
+            return;
+        }
+
+        post(storePayment({ current_team: currentTeam.slug, invoice: invoice.id }).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                setShowPaymentForm(false);
+            },
+        });
+    };
 
     const copyShareLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
             return;
         }
 
-        const shareUrl = `https://biondesk.test/i/${invoice.number.toLowerCase()}`;
-
         try {
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(invoice.shareUrl);
             setLinkCopied(true);
             window.setTimeout(() => setLinkCopied(false), 2000);
         } catch {
@@ -262,12 +291,81 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
                             </div>
                         ) : null}
 
-                        <button type="button" className={BTN_SIDEBAR_GHOST}>
-                            <svg className={ICON_SM_CLS}>
-                                <use href="#i-plus" />
-                            </svg>
-                            Record Payment
-                        </button>
+                        {showPaymentForm ? (
+                            <form className="flex flex-col gap-[10px]" onSubmit={submitPayment}>
+                                <div>
+                                    <span className={FIELD_LABEL_SM}>Method</span>
+                                    <input
+                                        type="text"
+                                        className={FIELD_INPUT}
+                                        placeholder="e.g. Bank Transfer"
+                                        value={data.method}
+                                        onChange={(event) => setData('method', event.target.value)}
+                                    />
+                                    {errors.method ? (
+                                        <span className="mt-[4px] block text-[12px] text-bion-danger">{errors.method}</span>
+                                    ) : null}
+                                </div>
+
+                                <div>
+                                    <span className={FIELD_LABEL_SM}>Amount</span>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className={FIELD_INPUT}
+                                        placeholder="0"
+                                        value={data.amountValue}
+                                        onChange={(event) => setData('amountValue', event.target.value)}
+                                    />
+                                    {errors.amountValue ? (
+                                        <span className="mt-[4px] block text-[12px] text-bion-danger">{errors.amountValue}</span>
+                                    ) : null}
+                                </div>
+
+                                <div>
+                                    <span className={FIELD_LABEL_SM}>Date</span>
+                                    <input
+                                        type="date"
+                                        className={FIELD_INPUT}
+                                        value={data.paidAt}
+                                        onChange={(event) => setData('paidAt', event.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <span className={FIELD_LABEL_SM}>Notes (optional)</span>
+                                    <textarea
+                                        className={cn(FIELD_INPUT, 'min-h-[60px] resize-y')}
+                                        value={data.notes}
+                                        onChange={(event) => setData('notes', event.target.value)}
+                                    />
+                                </div>
+
+                                <div className="flex gap-[8px]">
+                                    <button type="submit" className={cn(BTN_PRIMARY, 'flex-1')} disabled={processing}>
+                                        {processing ? 'Saving…' : 'Save Payment'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={BTN_GHOST}
+                                        onClick={() => setShowPaymentForm(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <button
+                                type="button"
+                                className={BTN_SIDEBAR_GHOST}
+                                onClick={() => setShowPaymentForm(true)}
+                            >
+                                <svg className={ICON_SM_CLS}>
+                                    <use href="#i-plus" />
+                                </svg>
+                                Record Payment
+                            </button>
+                        )}
                     </div>
 
                     <div className="rounded-[12px] border border-bion-border bg-bion-surface p-[16px]">
@@ -325,12 +423,20 @@ export default function InvoiceShowPage({ invoice }: InvoiceShowPageProps) {
                                 </svg>
                                 Schedule Auto-Reminder
                             </button>
-                            <button type="button" className={BTN_SIDEBAR_LIST}>
+                            <button
+                                type="button"
+                                className={BTN_SIDEBAR_LIST}
+                                onClick={pdf.download}
+                                disabled={pdf.downloading}
+                            >
                                 <svg className={cn(ICON_SM_CLS, 'mr-[4px]')}>
                                     <use href="#i-download" />
                                 </svg>
-                                Download PDF
+                                {pdf.downloading ? 'Generating…' : 'Download PDF'}
                             </button>
+                            {pdf.error ? (
+                                <p className="text-[12px] text-bion-danger">{pdf.error}</p>
+                            ) : null}
                         </div>
                     </div>
                 </div>

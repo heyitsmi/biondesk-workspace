@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as invoiceCreate, index as invoices } from '@/routes/invoices';
+import { create as invoiceCreate, index as invoices, store as storeInvoice } from '@/routes/invoices';
 import type { InvoiceCreatePageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -80,12 +80,22 @@ export default function InvoiceCreatePage({
         setLineItems((current) => (current.length > 1 ? current.filter((item) => item.id !== id) : current));
     };
 
-    const backToInvoices = (): void => {
+    const submit = (status: 'draft' | 'sent'): void => {
         if (!currentTeam) {
             return;
         }
 
-        router.visit(invoices(currentTeam.slug));
+        router.post(storeInvoice(currentTeam.slug).url, {
+            status,
+            clientId,
+            projectId,
+            issuedAt,
+            dueAt,
+            currency,
+            notes,
+            taxPercent,
+            items: lineItems,
+        });
     };
 
     return (
@@ -300,13 +310,13 @@ export default function InvoiceCreatePage({
                             Publishing
                         </div>
                         <div className="flex flex-col gap-[12px]">
-                            <button type="button" className={BTN_PRIMARY} onClick={backToInvoices}>
+                            <button type="button" className={BTN_PRIMARY} onClick={() => submit('sent')}>
                                 <svg className={ICON_SM_CLS}>
                                     <use href="#i-check" />
                                 </svg>
                                 Save &amp; Send to Client
                             </button>
-                            <button type="button" className={BTN_GHOST} onClick={backToInvoices}>
+                            <button type="button" className={BTN_GHOST} onClick={() => submit('draft')}>
                                 Save as Draft
                             </button>
                         </div>

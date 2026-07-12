@@ -1,5 +1,11 @@
 export type BiondeskTone = 'accent' | 'success' | 'danger' | 'muted';
 
+export type DocumentPdfUrls = {
+    generate: string;
+    status: string;
+    download: string;
+};
+
 export type DashboardStat = {
     label: string;
     value: string;
@@ -455,13 +461,15 @@ export type ProposalDetail = ProposalDocument & {
     notes: string;
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type ProposalShowPageProps = {
     proposal: ProposalDetail;
 };
 
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+export type InvoiceStatus =
+    'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'overdue';
 
 export type InvoiceListItem = {
     id: number;
@@ -477,6 +485,7 @@ export type InvoiceListItem = {
     dueSort: number;
     amount: string;
     amountValue: number;
+    shareUrl: string;
 };
 
 export type InvoicesPageProps = {
@@ -522,6 +531,7 @@ export type InvoiceDetail = InvoiceListItem & {
     payments: InvoicePayment[];
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type InvoiceShowPageProps = {
@@ -546,7 +556,8 @@ export type InvoiceCreatePageProps = {
     projects: InvoiceCreateProjectOption[];
 };
 
-export type QuotationStatus = 'draft' | 'pending' | 'accepted' | 'declined';
+export type QuotationStatus =
+    'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected';
 
 export type QuotationListItem = {
     id: number;
@@ -562,6 +573,7 @@ export type QuotationListItem = {
     expirySort: number;
     amount: string;
     amountValue: number;
+    shareUrl: string;
 };
 
 export type QuotationsPageProps = {
@@ -597,6 +609,7 @@ export type QuotationDetail = QuotationListItem & {
     terms: string;
     linkedProject: { id: number; title: string } | null;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type QuotationShowPageProps = {
@@ -623,12 +636,12 @@ export type QuotationCreatePageProps = {
 
 export type ReminderBucket = 'overdue' | 'today' | 'upcoming';
 
-export type ReminderLinkKind = 'proposal' | 'project' | 'contact' | 'invoice';
+export type ReminderLinkKind = 'invoice' | 'quotation';
 
 export type ReminderLink = {
     kind: ReminderLinkKind;
     label: string;
-    id: number | null;
+    id: number;
 };
 
 export type ReminderItem = {
@@ -638,7 +651,7 @@ export type ReminderItem = {
     dueLabel: string;
     dueSort: number;
     completed: boolean;
-    link: ReminderLink | null;
+    link: ReminderLink;
 };
 
 export type ReminderSummary = {
@@ -666,6 +679,7 @@ export type ProfileItem = {
     shortDescription: string;
     body: string;
     hasImage: boolean;
+    imageUrl: string | null;
 };
 
 export type ProfilesPageProps = {
@@ -677,6 +691,7 @@ export type ProfileFormValues = {
     category: '' | ProfileCategory;
     shortDescription: string;
     body: string;
+    image: File | null;
 };
 
 export type ProfileCreatePageProps = {
@@ -762,6 +777,7 @@ export type PublicDocument = {
     notes: string;
     primaryActionLabel: string;
     currency: string;
+    pdfUrls: DocumentPdfUrls;
 };
 
 export type PublicDocumentPageProps = {

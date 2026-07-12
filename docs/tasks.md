@@ -4,13 +4,22 @@
 
 ## Status saat ini
 
-Yang sudah ada:
-- Halaman React/Inertia untuk semua modul (Dashboard, Opportunities, Projects, Contacts, Proposals, Quotations, Invoices, Reminders, Profile Library, Settings, public lead form, public document view) — **semua masih pakai data stub** dari `App\Support\Biondesk\StubWorkspaceData`, tidak ada baris data asli yang tersimpan.
-- Fondasi auth (Fortify: login, register, 2FA, passkey, password confirmation) dan Team/Membership/TeamInvitation sudah jalan dengan data asli.
-- Package Spatie sudah ter-install (`laravel-permission`, `laravel-medialibrary`, `laravel-activitylog`) dan migration tabelnya sudah jalan, tapi belum dipakai di model manapun selain Team/User.
-- Belum ada: migration/model untuk Contact, Opportunity, Project, Task, RequestLog, Document, DocumentItem, Payment, ReminderJob, ProfileAsset, Template. Belum ada `laravel/browsershot`, AI SDK package, integrasi Turnstile, atau integrasi Brevo.
+Dokumen ini awalnya dibuat sebagai breakdown eksekusi untuk mengubah halaman stub menjadi sistem dinamis. Per Juli 2026, fase P0 utama sudah selesai: modul Dashboard, Opportunities, Projects, Contacts, Proposals, Quotations, Invoices, Reminders, Profile Library, Settings, public lead form, dan public document view sudah tersambung ke data asli. `StubWorkspaceData` sudah dihapus.
 
-Yang mau dikerjakan sekarang: **mengubah setiap modul dari stub ke dinamis, satu per satu**, mengikuti urutan dependency data model di PRD (Contact → Opportunity → Project → Document → Payment → dst), supaya setiap fase bisa langsung dipakai dan dites sebelum lanjut ke fase berikutnya.
+Yang sudah berjalan:
+- Fondasi auth (Fortify: login, register, 2FA, passkey, password confirmation) dan Team/Membership/TeamInvitation.
+- Data model utama: Contact, Opportunity, Project, Task, RequestLog, Document, DocumentItem, Payment, ReminderJob, ProfileAsset.
+- Public lead form dengan Turnstile fail-closed dan notifikasi email.
+- Public document share memakai token `/d/{document:public_token}`.
+- PDF generation via queued job dan Spatie Browsershot.
+- Payment tracking invoice bersifat manual. Client membayar langsung ke user lewat payment link atau instruksi pembayaran milik user; Biondesk tidak memproses, menahan, routing, escrow, atau reconcile otomatis pembayaran client.
+
+Fokus setelah P0:
+- Membuka early access untuk 5-10 user eksternal sebagai validasi distribusi dan workflow nyata.
+- Menyempurnakan landing page, onboarding, dan positioning agar jelas bahwa Biondesk adalah workflow workspace, bukan payment processor.
+- Menunda subscription billing Biondesk sampai ada sinyal willingness-to-pay yang cukup kuat.
+
+Riwayat fase di bawah tetap dipertahankan sebagai catatan keputusan dan implementasi.
 
 ## Pendekatan tiap fase
 
@@ -37,7 +46,7 @@ Harus selesai duluan karena jadi dasar semua fase berikutnya.
 - [ ] 0.6 Tambah konfigurasi Brevo di `config/services.php` + `.env` (lihat pertanyaan klarifikasi)
 - [ ] 0.7 Tambah konfigurasi Cloudflare Turnstile (lihat pertanyaan klarifikasi)
 - [x] 0.8 Validasi `Document`: **boleh berdiri sendiri** — `opportunity_id` dan `project_id` sama-sama nullable, tidak wajib salah satu terisi (mendukung dokumen ad-hoc)
-- [x] 0.9 Skema URL dokumen publik: **ikut PRD**, `/d/{document:public_token}` (token unik, tanpa team di URL). Rute stub `/d/{team:slug}/{document}` yang sudah ada akan diganti waktu Fase 6
+- [x] 0.9 Skema URL dokumen publik: **ikut PRD**, `/d/{document:public_token}` (token unik, tanpa team di URL). Diimplementasikan di Fase 6, menggantikan rute stub `/d/{team:slug}/{document}`
 
 ## Fase 1 — Contact & Opportunity (fondasi CRM)
 
@@ -102,62 +111,74 @@ Catatan/gap yang diketahui:
 
 Model tunggal `Document` dengan `type` discriminator, sesuai PRD. Bergantung ke Fase 1 (opportunity_id) dan Fase 3 (project_id).
 
-- [ ] 4.1 Migration + model `Document` (type: proposal/quote/invoice; status: draft/sent/viewed/accepted/rejected, plus `overdue` khusus invoice; relasi opsional ke `opportunity_id` dan `project_id` sesuai keputusan 0.8)
-- [ ] 4.2 Migration + model `DocumentItem` (line items, belongsTo Document)
-- [ ] 4.3 `ProposalsController` + create/edit/show controllers pakai Eloquent
-- [ ] 4.4 `QuotationsController` + create/show controllers pakai Eloquent
-- [ ] 4.5 `InvoicesController` + create/show controllers pakai Eloquent
-- [ ] 4.6 Integrasi AI generation untuk proposal, memakai Profile Library (bergantung ke Fase 8, atau AI generation jalan lebih dulu tanpa personalisasi lalu disempurnakan setelah Fase 8)
-- [ ] 4.7 Proposal accepted → tawarkan create quote/invoice draft (user pilih, bukan otomatis) — UI-nya sudah ada di beberapa alur, sambungkan ke data asli
-- [ ] 4.8 Quote accepted → buat invoice dengan import line item dari quote tersebut
-- [ ] 4.9 Pest test: CRUD tiap tipe Document, transisi status, quote→invoice line item import
-- [ ] 4.10 Hapus method stub Proposal/Quote/Invoice dari `StubWorkspaceData`
+- [x] 4.1 Migration + model `Document` (type: proposal/quote/invoice; status: draft/sent/viewed/accepted/rejected, plus `overdue` khusus invoice; relasi opsional ke `opportunity_id` dan `project_id` sesuai keputusan 0.8)
+- [x] 4.2 Migration + model `DocumentItem` (line items, belongsTo Document)
+- [x] 4.3 `ProposalsController` + create/edit/show controllers pakai Eloquent
+- [x] 4.4 `QuotationsController` + create/show controllers pakai Eloquent
+- [x] 4.5 `InvoicesController` + create/show controllers pakai Eloquent
+- [x] 4.6 Integrasi AI generation untuk proposal (tombol "Generate with AI" di proposals/create.tsx) — provider **configurable** lewat `AI_PROVIDER` env (openai/anthropic/deepseek), abstraksi di `app/Support/Ai/` (tanpa dependency Composer baru, pakai `Http` facade langsung, sama seperti pola Turnstile/Brevo). Personalisasi dari Profile Library belum disambungkan (Fase 8 belum ada model Eloquent-nya) — generation jalan tanpa konteks tambahan dulu sesuai kontingensi di atas.
+- [x] 4.7 Proposal accepted → tawarkan create quote/invoice draft (user pilih, bukan otomatis) — modal di proposals/index.tsx disambungkan ke `proposals.convert-to-quote`/`proposals.convert-to-invoice`
+- [x] 4.8 Quote accepted → buat invoice dengan import line item dari quote tersebut (`quotations.convert-to-invoice`)
+- [x] 4.9 Pest test: CRUD tiap tipe Document, transisi status, quote→invoice line item import (`tests/Feature/DocumentManagementTest.php`)
+- [x] 4.10 Hapus method stub create/edit-context Proposal/Quote/Invoice dari `StubWorkspaceData` (method list/detail dipertahankan karena `PublicDocumentController` — Fase 6 — masih memakainya)
+
+**Fase 4 selesai sepenuhnya**: Document/DocumentItem model dengan total dihitung dari line item (bukan kolom tersimpan), nomor dokumen auto-generate per tipe per tahun (`P-2026-0001`, dst), status "overdue" untuk invoice adalah state turunan (bukan kolom persisten) karena pelacakan lunas/belum baru ada di Fase 5. Skema URL publik (`/d/{team:slug}/{document}`) belum diubah ke token-based — itu bagian Fase 6 dan `PublicDocumentController` masih memakai `StubWorkspaceData::publicDocumentContext()`. Halaman quotations/invoices belum punya form edit terpisah (mengikuti stub asli yang juga tidak punya), hanya create + show dengan aksi status. AI provider dikonfirmasi user: configurable (openai/anthropic/deepseek via `AI_PROVIDER`), user sudah punya key untuk ketiganya (diisi manual di `.env` lokal).
 
 ## Fase 5 — Payment tracking
 
 Bergantung ke Fase 4 (Document harus ada dulu).
 
-- [ ] 5.1 Migration + model `Payment` (belongsTo Document/invoice, banyak record per invoice untuk kasus DP + pelunasan)
-- [ ] 5.2 Form pencatatan payment manual di halaman invoice show (field bebas: metode, jumlah, tanggal, catatan)
-- [ ] 5.3 Kalkulasi amount paid/amount due otomatis dari total payment record
-- [ ] 5.4 Pest test: banyak payment per invoice, kalkulasi amount due benar
+- [x] 5.1 Migration + model `Payment` (belongsTo Document/invoice, banyak record per invoice untuk kasus DP + pelunasan)
+- [x] 5.2 Form pencatatan payment manual di halaman invoice show (field bebas: metode, jumlah, tanggal, catatan)
+- [x] 5.3 Kalkulasi amount paid/amount due otomatis dari total payment record
+- [x] 5.4 Pest test: banyak payment per invoice, kalkulasi amount due benar (`tests/Feature/PaymentTrackingTest.php`)
+
+**Fase 5 selesai**: `Payment` belongsTo `Document`, hanya bisa dicatat untuk document bertipe invoice (controller memfilter `type = invoice` sebelum findOrFail, 404 kalau bukan invoice atau beda team). `Document::amountPaidValue()`/`amountDueValue()` dihitung dari relasi `payments` (bukan kolom tersimpan), `amountDueValue()` di-clamp minimal 0 kalau total pembayaran melebihi total invoice (overpayment tidak menghasilkan angka negatif). Form pencatatan pakai `useForm` inline di sidebar invoice show (toggle show/hide), bukan modal — konsisten dengan pola sidebar-form yang sudah ada di halaman itu. Belum ada fitur edit/hapus payment yang sudah tercatat (gap yang sama seperti attachment di Fase 3).
 
 ## Fase 6 — Share & PDF
 
 Bergantung ke Fase 4 (Document) dan keputusan 0.9 (skema URL).
 
-- [ ] 6.1 Tambah kolom `public_token` (unik) ke tabel `documents`
-- [ ] 6.2 Route publik `/d/{document:public_token}` (ganti/selaraskan dengan yang sudah dibangun di versi stub)
-- [ ] 6.3 Migrasi `public/document.tsx` dari data stub ke data asli lewat token
-- [ ] 6.4 Job queued (`ShouldQueue`) generate PDF lewat Browsershot dari route print khusus (halaman polos, tanpa tombol aksi)
-- [ ] 6.5 Simpan hasil PDF lewat media library, cache berdasarkan hash konten — tidak generate ulang kalau konten belum berubah
-- [ ] 6.6 Tombol "Download PDF" di halaman share dan di halaman internal disambungkan ke job ini
-- [ ] 6.7 Pest test: token invalid → 404; PDF ter-cache tidak generate ulang saat konten sama
+- [x] 6.1 Tambah kolom `public_token` (unik) ke tabel `documents` (sudah ada sejak Fase 4; ditambah `creating` hook di model + migration backfill untuk row lama yang belum punya token)
+- [x] 6.2 Route publik `/d/{document:public_token}` (ganti dari stub `/d/{team:slug}/{document}`)
+- [x] 6.3 Migrasi `public/document.tsx` dari data stub ke data asli lewat token (`Document::toPublicArray()`, unifikasi proposal/quotation/invoice)
+- [x] 6.4 Job queued (`GenerateDocumentPdfJob implements ShouldQueue`) generate PDF lewat Browsershot dari route print khusus `/d/{token}/print` (Blade polos, tanpa tombol aksi, CSS inline)
+- [x] 6.5 Simpan hasil PDF lewat media library (collection `pdf`, `singleFile()`), cache berdasarkan `content_hash` (SHA-256 dari seluruh field + line item) disimpan sebagai custom property media — tidak generate ulang kalau hash sama
+- [x] 6.6 Tombol "Download PDF" di halaman share dan tiga halaman internal (proposal/quotation/invoice show) disambungkan lewat hook `useDocumentPdfDownload` (generate → poll status → download)
+- [x] 6.7 Pest test: token invalid → 404; PDF ter-cache tidak generate ulang saat hash sama; regenerate saat konten berubah (`DocumentPdfTest`, `PublicDocumentPageTest`)
+
+**Fase 6 selesai**: install `spatie/browsershot` (Composer) + `puppeteer` (npm, dengan Chrome headless-shell terpasang lewat `npx puppeteer browsers install chrome-headless-shell`) — disetujui user sebelum instalasi. PDF generation genuinely queued (bukan `dispatchSync`), diverifikasi lewat `queue:listen` yang jalan di `composer run dev`; endpoint generate mengembalikan `{status: ready}` langsung kalau cache valid, atau `{status: queued}` lalu frontend polling `/pdf/status` sampai selesai baru redirect ke `/pdf/download`. `DocumentPdfRenderer` diekstrak jadi class terpisah supaya bisa di-mock di test (tidak butuh Chrome di CI). Diverifikasi manual end-to-end di browser: generate pertama kali lewat job asli + Browsershot asli (45KB PDF), klik kedua kali langsung `ready` tanpa job baru (caching bekerja).
 
 ## Fase 7 — Reminder & Email
 
 Bergantung ke Fase 4/5 (butuh Document dan status Payment).
 
-- [ ] 7.1 Migration + model `ReminderJob` (belongsTo Document)
-- [ ] 7.2 Scheduled command: cek invoice mendekati/lewat jatuh tempo, quote belum direspon → buat/jadwalkan reminder job
-- [ ] 7.3 Kirim email reminder lewat Brevo
-- [ ] 7.4 Halaman `reminders/index.tsx` disambungkan ke data asli (bukan stub)
-- [ ] 7.5 Pest test: reminder ter-generate sesuai kondisi tanggal, tidak dobel kirim
+- [x] 7.1 Migration + model `ReminderJob` (belongsTo Document; kolom `type`, `scheduled_at`, `sent_at`, `dismissed_at`; unique `[document_id, type]`)
+- [x] 7.2 Scheduled command `reminders:generate` (daily): invoice sent/viewed dengan `due_at` dalam 3 hari → `invoice_due_soon`; invoice sent/viewed dengan `due_at` sudah lewat → `invoice_overdue`; quote sent/viewed dengan `valid_until` sudah lewat → `quote_unresponded`. Dedup lewat `firstOrCreate` + unique constraint DB
+- [x] 7.3 Kirim email reminder lewat Brevo (`DocumentReminderMail`, markdown mailable, dikirim ke `document->contact->email`; skip diam-diam kalau document tidak punya contact); `sent_at` dicatat supaya tidak pernah dikirim dua kali
+- [x] 7.4 Halaman `reminders/index.tsx` disambungkan ke data asli (`RemindersController` + `ReminderJob::toReminderArray()`)
+- [x] 7.5 Pest test: kondisi tanggal (due soon/overdue/quote expired vs belum), tidak dobel generate/kirim saat command dijalankan dua kali, document tanpa contact tidak crash, dismiss toggle + team scoping (`ReminderGenerationTest`, 9 test)
+
+**Fase 7 selesai**: `ReminderJob` murni terhubung ke Document (bukan freeform to-do) — sesuai data model yang sudah didokumentasikan di CLAUDE.md, tidak ada entity "reminder manual" terpisah. Fitur "Add Reminder" bebas teks + edit judul yang ada di UI stub **dihapus** karena tidak ada entity yang mendukungnya; diganti checkbox dismiss/undismiss yang tersambung ke `dismissed_at` sungguhan. `ReminderLinkKind` disederhanakan jadi `invoice | quotation` saja (sebelumnya juga ada `proposal`/`project`/`contact` yang tidak pernah dipakai reminder asli). Threshold "due soon" di-hardcode 3 hari (belum ada setting per-team untuk ini, sesuai PRD yang tidak menyebutkan angka spesifik).
 
 ## Fase 8 — Profile Library
 
 Bisa dikerjakan paralel kapan saja setelah Fase 0, karena tidak bergantung ke modul lain — tapi hasil AI proposal generation (4.6) idealnya menunggu fase ini supaya personalisasinya bermakna.
 
-- [ ] 8.1 Migration + model `ProfileAsset` (portfolio, testimonial, snippet teks; upload gambar lewat media library)
-- [ ] 8.2 `ProfileLibraryController` (index/create/edit) pakai Eloquent
-- [ ] 8.3 Sambungkan Profile Library ke AI proposal generation (4.6) sebagai konteks
-- [ ] 8.4 Pest test: CRUD ProfileAsset, scoping per-team
+- [x] 8.1 Migration + model `ProfileAsset` (belongsTo Team; kategori company/team/case/asset; upload gambar lewat media library, collection `image` singleFile)
+- [x] 8.2 `ProfileLibraryController` (index/create/store/edit/update/destroy/duplicate) pakai Eloquent
+- [x] 8.3 Sambungkan Profile Library ke AI proposal generation (4.6) sebagai konteks — entri `ProfileAsset` tim ditambahkan ke system prompt `ProposalAiDraftController`
+- [x] 8.4 Pest test: CRUD ProfileAsset, scoping per-team, context AI (`ProfileLibraryTest`, tambahan test di `ProposalAiDraftTest`)
+
+**Fase 8 selesai**: Kategori `ProfileAsset` dipertahankan mengikuti taksonomi UI stub yang sudah ada (company/team/case/asset — "Company Info"/"Team Bio"/"Case Study"/"Assets") alih-alih taksonomi longgar "portfolio/testimonial/snippet" di PRD, karena keduanya menjelaskan hal yang sama dan UI-nya sudah jadi/diverifikasi sejak fase awal — tidak ada alasan membongkar ulang. Fitur duplicate profile (ada di stub asli) dipertahankan sebagai aksi backend sungguhan (`profiles.duplicate`, menyalin record + gambar via `Media::copy()`), bukan dihapus, karena sepenuhnya didukung entity yang sudah ada. Toolbar format teks (Bold/Italic/List/Link) di editor body dihapus karena dekoratif belaka (textarea polos, tidak ada rich text rendering di baliknya). AI context memakai `ProfileAsset::contextLine()` (ringkasan `[kategori] judul: excerpt`) yang di-append ke system prompt, bukan ke user prompt, supaya brief asli klien tetap terpisah dari data internal studio.
 
 ## Fase 9 — Setelah semua P0 dinamis
 
-- [ ] 9.1 Regresi penuh: jalankan seluruh Pest suite + smoke test manual tiap halaman
-- [ ] 9.2 Hapus `StubWorkspaceData` sepenuhnya kalau sudah tidak ada method yang dipakai
-- [ ] 9.3 Review ulang P1 (billing Midtrans, activity log di semua entity, AI cost calculator, multi-user per team dengan role granular, theme switcher per akun, field `win_probability`/`expected_close_date`) — baru dikerjakan setelah P0 stabil dipakai harian, sesuai PRD
+- [x] 9.1 Regresi penuh: seluruh Pest suite (217 test, semua lulus) + smoke test manual tiap halaman utama (dashboard, opportunities, projects, proposals/quotations/invoices, contacts, reminders, profile library, settings lead-form) lewat browser, tanpa error console
+- [x] 9.2 Hapus `StubWorkspaceData` sepenuhnya — ternyata masih dipakai satu method (`dashboard()`) yang belum pernah masuk checklist fase manapun, jadi sebelum dihapus, dashboard landing page terlebih dulu disambungkan ke data asli (lihat catatan di bawah)
+- [x] 9.3 Review ulang P1 — tidak ada perubahan kode, semua item (billing Midtrans, activity log di semua entity, AI cost calculator, multi-user per team dengan role granular, theme switcher per akun, field `win_probability`/`expected_close_date`) tetap ditunda sesuai PRD, tidak ada blocker P0 yang ditemukan yang mengharuskan salah satu item ini dikerjakan lebih awal
+
+**Fase 9 selesai — termasuk penambahan di luar checklist awal**: dashboard (`/app/{team}/dashboard`) ternyata belum pernah disambungkan ke data asli di fase manapun (gap yang baru ketahuan saat cek pemakaian `StubWorkspaceData`). Dikonfirmasi ke user, lalu dikerjakan sebagai bagian Fase 9: `app/Support/Dashboard/DashboardSummary.php` menghitung 4 stat tile dari data asli (Pipeline Value dari opportunity yang belum won/lost, To Be Collected dari `Document::amountDueValue()` invoice yang belum draft/rejected, Active Projects dari status project, Win Rate dari 12 deal won/lost terakhir), priority actions dari invoice overdue + project waiting-on-client + opportunity tanpa aktivitas (masing-masing ada threshold hari, diurutkan berdasarkan urgensi), recent opportunities dari opportunity terbaru, dan activity feed lintas-entity dari `spatie/laravel-activitylog` (query polymorphic ke Contact/Opportunity/Project/Document/ProfileAsset/Payment, dibatasi ke team yang sedang aktif). `Payment` model ditambahkan `LogsActivity` (sebelumnya belum ada) supaya "Payment received" muncul di feed; `Contact`/`Opportunity`/`ProfileAsset` ditambahkan `setDescriptionForEvent` supaya deskripsi activity log-nya enak dibaca di feed (sebelumnya cuma teks mentah "created"/"updated"). Tidak ada percobaan menghitung tren "vs bulan lalu" karena tidak ada snapshot historis — angka yang ditampilkan semuanya real-time, bukan fabrikasi. `StubWorkspaceData` (beserta 8 method lain yang sudah mati sejak fase-fase sebelumnya) dihapus total setelah dashboard tersambung.
 
 ---
 
@@ -169,7 +190,8 @@ Bisa dikerjakan paralel kapan saja setelah Fase 0, karena tidak bergantung ke mo
 - **Role & permission**: ditunda sampai P1. Fase 1-9 cukup pakai akses single-owner per team lewat `EnsureTeamMembership` yang sudah ada, `spatie/laravel-permission` belum dipakai policy-nya dulu.
 - **Cloudflare Turnstile (poin 0.7, Fase 2)**: user sudah punya key sendiri, diisi manual di `.env` lokal (slot `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` sudah disiapkan kosong di `.env.example`). Tanpa key terisi, form publik fail closed (submit ditolak).
 - **Brevo (poin 0.6, Fase 2)**: user sudah punya API key Brevo, dipakai lewat SMTP relay bawaan Laravel (`MAIL_MAILER=smtp` ke `smtp-relay.brevo.com:587`), bukan paket API terpisah. `MAIL_USERNAME`/`MAIL_PASSWORD` diisi manual di `.env` lokal.
+- **Provider AI (poin 0.5, Fase 4)**: configurable, bukan satu provider tetap. User sudah punya API key OpenAI, Anthropic, dan DeepSeek — provider aktif dipilih lewat `AI_PROVIDER` di `.env` (`openai`/`anthropic`/`deepseek`), abstraksi ada di `app/Support/Ai/` (`AiTextGeneratorFactory`), tanpa dependency Composer baru (pakai `Http` facade langsung, konsisten dengan pola Turnstile/Brevo).
 
-## Masih perlu klarifikasi (belum menghalangi Fase 1-2, baru relevan waktu masuk fase terkait)
+## Masih perlu klarifikasi (belum menghalangi fase saat ini, baru relevan waktu masuk fase terkait)
 
-1. **Provider AI untuk proposal generation (poin 0.5, relevan di Fase 4)** — mau mulai dengan provider apa (OpenAI/Anthropic/DeepSeek/lainnya), dan apakah API key-nya sudah ada atau perlu disiapkan dulu?
+Tidak ada item terbuka saat ini.

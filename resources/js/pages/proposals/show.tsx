@@ -1,7 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { useDocumentPdfDownload } from '@/hooks/use-document-pdf-download';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as proposals } from '@/routes/proposals';
+import { index as proposals, move as moveProposal } from '@/routes/proposals';
 import type { BiondeskTone, ProposalShowPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -33,6 +35,37 @@ const toneDotMap: Record<BiondeskTone, string> = {
 };
 
 export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
+    const { currentTeam } = usePage().props;
+    const [linkCopied, setLinkCopied] = useState(false);
+    const [sentToClient, setSentToClient] = useState(proposal.stage !== 'draft');
+    const pdf = useDocumentPdfDownload(proposal.pdfUrls);
+
+    const copyShareLink = async (): Promise<void> => {
+        if (typeof navigator === 'undefined' || !navigator.clipboard) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(proposal.shareUrl);
+            setLinkCopied(true);
+            window.setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            return;
+        }
+    };
+
+    const sendToClient = (): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.patch(
+            moveProposal({ current_team: currentTeam.slug, proposal: proposal.id }).url,
+            { status: 'sent' },
+            { preserveScroll: true, onSuccess: () => setSentToClient(true) },
+        );
+    };
+
     return (
         <>
             <Head title={proposal.title} />
@@ -61,17 +94,17 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
                         </svg>
                         Preview
                     </button>
-                    <button type="button" className={BTN_GHOST}>
+                    <button type="button" className={BTN_GHOST} onClick={() => void copyShareLink()}>
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-link" />
                         </svg>
-                        Copy Link
+                        {linkCopied ? 'Link Copied' : 'Copy Link'}
                     </button>
-                    <button type="button" className={BTN_PRIMARY}>
+                    <button type="button" className={BTN_PRIMARY} onClick={sendToClient}>
                         <svg className={ICON_SM_CLS}>
                             <use href="#i-send" />
                         </svg>
-                        Send to Client
+                        {sentToClient ? 'Sent to Client' : 'Send to Client'}
                     </button>
                 </div>
             </div>
@@ -119,18 +152,8 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-[40px] py-[32px] leading-[1.6] text-bion-text" contentEditable suppressContentEditableWarning>
-                        <h2 className="mb-[16px] text-[20px] font-semibold outline-none">1. Executive Summary</h2>
-                        <p className="mb-[16px] outline-none">{proposal.summary}</p>
-
-                        <h2 className="mb-[16px] text-[20px] font-semibold outline-none">2. Scope of Work</h2>
-                        <p className="mb-[16px] outline-none">{proposal.scopeIntro}</p>
-                        <ul className="mb-[16px] list-disc pl-[20px]">
-                            {proposal.scopeItems.map((item) => (
-                                <li key={item} className="mb-[6px]">
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
+                        <h2 className="mb-[16px] text-[20px] font-semibold outline-none">Proposal Content</h2>
+                        <p className="mb-[16px] whitespace-pre-wrap outline-none">{proposal.summary}</p>
 
                         <div className="my-[32px] overflow-hidden rounded-[8px] border border-bion-border" contentEditable={false}>
                             <table className="w-full border-collapse">
@@ -188,8 +211,12 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
                             </div>
                         </div>
 
-                        <h2 className="mb-[16px] text-[20px] font-semibold outline-none">3. Timeline</h2>
-                        <p className="mb-[16px] outline-none">{proposal.timeline}</p>
+                        {proposal.notes ? (
+                            <>
+                                <h2 className="mb-[16px] text-[20px] font-semibold outline-none">Notes</h2>
+                                <p className="mb-[16px] whitespace-pre-wrap outline-none">{proposal.notes}</p>
+                            </>
+                        ) : null}
                     </div>
                 </div>
 
@@ -258,12 +285,20 @@ export default function ProposalShowPage({ proposal }: ProposalShowPageProps) {
                         <div className="mb-[12px] flex items-center justify-between text-[13.5px] font-semibold">
                             Export
                         </div>
-                        <button type="button" className={BTN_SIDEBAR_GHOST}>
+                        <button
+                            type="button"
+                            className={BTN_SIDEBAR_GHOST}
+                            onClick={pdf.download}
+                            disabled={pdf.downloading}
+                        >
                             <svg className={ICON_SM_CLS}>
                                 <use href="#i-download" />
                             </svg>
-                            Download PDF
+                            {pdf.downloading ? 'Generating…' : 'Download PDF'}
                         </button>
+                        {pdf.error ? (
+                            <p className="mt-[8px] text-[12px] text-bion-danger">{pdf.error}</p>
+                        ) : null}
                     </div>
                 </div>
             </div>

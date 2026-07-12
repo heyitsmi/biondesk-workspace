@@ -2,7 +2,13 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create as profileCreate, edit as profileEdit, index as profiles } from '@/routes/profiles';
+import {
+    create as profileCreate,
+    destroy as destroyProfile,
+    duplicate as duplicateProfile,
+    edit as profileEdit,
+    index as profiles,
+} from '@/routes/profiles';
 import type { ProfileCategory, ProfileItem, ProfilesPageProps } from '@/types';
 
 const ICON_SM_CLS =
@@ -45,7 +51,7 @@ const TABS: Array<{ key: 'all' | ProfileCategory; label: string }> = [
 
 export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPageProps) {
     const { currentTeam } = usePage().props;
-    const [items, setItems] = useState<ProfileItem[]>(initialProfiles);
+    const items = initialProfiles;
     const [activeTab, setActiveTab] = useState<'all' | ProfileCategory>('all');
 
     const visibleItems = useMemo(() => {
@@ -64,17 +70,20 @@ export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPage
         router.visit(profileCreate(currentTeam.slug));
     };
 
-    const duplicateProfile = (profile: ProfileItem): void => {
-        const nextId = Math.max(...items.map((item) => item.id), 0) + 1;
+    const runDuplicate = (profile: ProfileItem): void => {
+        if (!currentTeam) {
+            return;
+        }
 
-        setItems((current) => [
-            ...current,
-            { ...profile, id: nextId, title: `${profile.title} (Copy)`, updatedAt: 'Updated just now' },
-        ]);
+        router.post(duplicateProfile({ current_team: currentTeam.slug, profile: profile.id }).url);
     };
 
-    const deleteProfile = (profileId: number): void => {
-        setItems((current) => current.filter((item) => item.id !== profileId));
+    const runDelete = (profileId: number): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.delete(destroyProfile({ current_team: currentTeam.slug, profile: profileId }).url);
     };
 
     return (
@@ -118,6 +127,30 @@ export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPage
             </div>
 
             <div className="grid gap-[20px] [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+                {visibleItems.length === 0 ? (
+                    <div className="col-span-full flex flex-col items-center justify-center gap-[12px] rounded-[12px] border border-dashed border-bion-border bg-bion-surface px-[20px] py-[64px] text-center">
+                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-[12px] bg-bion-surface-raised text-bion-text-muted">
+                            <svg className="h-[22px] w-[22px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
+                                <use href="#i-layers" />
+                            </svg>
+                        </div>
+                        <div className="text-[14.5px] font-semibold text-bion-text">
+                            {activeTab === 'all' ? 'No profiles yet' : 'No profiles in this category'}
+                        </div>
+                        <p className="max-w-[320px] text-[13px] leading-normal text-bion-text-muted">
+                            {activeTab === 'all'
+                                ? 'Create reusable company profiles, team bios, and case studies to speed up your proposals.'
+                                : 'Try a different category, or create a new profile in this one.'}
+                        </p>
+                        <button type="button" className={cn(BTN_PRIMARY, 'mt-[4px]')} onClick={visitCreate}>
+                            <svg className={ICON_SM_CLS}>
+                                <use href="#i-plus" />
+                            </svg>
+                            Create Profile
+                        </button>
+                    </div>
+                ) : null}
+
                 {visibleItems.map((item) => (
                     <div
                         key={item.id}
@@ -150,7 +183,7 @@ export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPage
                                     type="button"
                                     title="Duplicate"
                                     className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted hover:border hover:border-bion-border hover:bg-bion-surface-raised hover:text-bion-text"
-                                    onClick={() => duplicateProfile(item)}
+                                    onClick={() => runDuplicate(item)}
                                 >
                                     <svg className={ICON_SM_CLS}>
                                         <use href="#i-copy" />
@@ -160,7 +193,7 @@ export default function ProfilesPage({ profiles: initialProfiles }: ProfilesPage
                                     type="button"
                                     title="Delete"
                                     className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] text-bion-text-muted hover:border hover:border-bion-border hover:bg-bion-surface-raised hover:text-bion-text"
-                                    onClick={() => deleteProfile(item.id)}
+                                    onClick={() => runDelete(item.id)}
                                 >
                                     <svg className={ICON_SM_CLS}>
                                         <use href="#i-trash" />
