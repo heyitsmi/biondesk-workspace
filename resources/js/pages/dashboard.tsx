@@ -144,62 +144,74 @@ export default function Dashboard({
                     </button>
                 </div>
                 <div className="p-[6px]">
-                    {priorityActions.map((action, index) => {
-                        const done = completedActions.includes(action.id);
-
-                        return (
-                            <div
-                                key={action.id}
-                                className={cn(
-                                    'flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bion-bg',
-                                    index > 0 && 'mt-[2px]',
-                                )}
-                            >
-                                <div
-                                    className={cn(
-                                        'flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px]',
-                                        action.tone === 'danger'
-                                            ? 'bg-bion-danger-soft text-bion-danger'
-                                            : 'bg-bion-accent-soft text-bion-accent',
-                                    )}
-                                >
-                                    <svg className={ICON_SM_CLS}>
-                                        <use
-                                            href={
-                                                action.tone === 'danger'
-                                                    ? '#i-alert'
-                                                    : '#i-clock'
-                                            }
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="mb-[2px] text-[13.5px] font-medium">
-                                        {action.title}
-                                    </div>
-                                    <div className="text-[12px] text-bion-text-muted">
-                                        {action.company} ·{' '}
-                                        <span className="font-mono font-medium text-bion-text">
-                                            {action.amount}
-                                        </span>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={cn(
-                                        'shrink-0 rounded-[7px] border border-bion-border bg-bion-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-bion-text [transition:background_0.12s_ease] hover:border-bion-accent hover:bg-bion-accent hover:text-bion-accent-text',
-                                        done &&
-                                            'pointer-events-none border-transparent bg-bion-success-soft text-bion-success hover:border-transparent hover:bg-bion-success-soft hover:text-bion-success',
-                                    )}
-                                    onClick={() => markActionDone(action)}
-                                >
-                                    {done
-                                        ? `${action.actionLabel} ✓`
-                                        : action.actionLabel}
-                                </button>
+                    {priorityActions.length === 0 ? (
+                        <div className="py-[32px] text-center">
+                            <div className="mx-auto mb-[12px] flex h-[40px] w-[40px] items-center justify-center rounded-[12px] border border-bion-border bg-bion-bg text-bion-text-muted">
+                                <svg className="h-[18px] w-[18px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.8]">
+                                    <path d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
-                        );
-                    })}
+                            <h3 className="mb-[2px] text-[13.5px] font-medium">You're all caught up!</h3>
+                            <p className="text-[12.5px] text-bion-text-muted">No pending actions need your attention right now.</p>
+                        </div>
+                    ) : (
+                        priorityActions.map((action, index) => {
+                            const done = completedActions.includes(action.id);
+
+                            return (
+                                <div
+                                    key={action.id}
+                                    className={cn(
+                                        'flex items-center gap-[14px] rounded-[9px] p-[12px] hover:bg-bion-bg',
+                                        index > 0 && 'mt-[2px]',
+                                    )}
+                                >
+                                    <div
+                                        className={cn(
+                                            'flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px]',
+                                            action.tone === 'danger'
+                                                ? 'bg-bion-danger-soft text-bion-danger'
+                                                : 'bg-bion-accent-soft text-bion-accent',
+                                        )}
+                                    >
+                                        <svg className={ICON_SM_CLS}>
+                                            <use
+                                                href={
+                                                    action.tone === 'danger'
+                                                        ? '#i-alert'
+                                                        : '#i-clock'
+                                                }
+                                            />
+                                        </svg>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="mb-[2px] text-[13.5px] font-medium">
+                                            {action.title}
+                                        </div>
+                                        <div className="text-[12px] text-bion-text-muted">
+                                            {action.company} ·{' '}
+                                            <span className="font-mono font-medium text-bion-text">
+                                                {action.amount}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={cn(
+                                            'shrink-0 rounded-[7px] border border-bion-border bg-bion-surface-raised px-[13px] py-[6px] text-[12px] font-semibold text-bion-text [transition:background_0.12s_ease] hover:border-bion-accent hover:bg-bion-accent hover:text-bion-accent-text',
+                                            done &&
+                                                'pointer-events-none border-transparent bg-bion-success-soft text-bion-success hover:border-transparent hover:bg-bion-success-soft hover:text-bion-success',
+                                        )}
+                                        onClick={() => markActionDone(action)}
+                                    >
+                                        {done
+                                            ? `${action.actionLabel} ✓`
+                                            : action.actionLabel}
+                                    </button>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 

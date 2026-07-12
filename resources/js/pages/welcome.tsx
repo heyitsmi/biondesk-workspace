@@ -81,11 +81,11 @@ const landingStyles = `
     }
 
     .landing-scrollbar::-webkit-scrollbar-track {
-        background: #0b0e14;
+        background: var(--bion-bg);
     }
 
     .landing-scrollbar::-webkit-scrollbar-thumb {
-        background: #232838;
+        background: var(--bion-border);
         border-radius: 9999px;
     }
 `;
@@ -232,10 +232,10 @@ export default function Welcome() {
         const previousBodyBackgroundColor = body.style.backgroundColor;
         const previousBodyColor = body.style.color;
 
-        root.classList.add('dark');
-        body.classList.add('dark');
-        body.style.backgroundColor = '#0b0e14';
-        body.style.color = '#edeff3';
+        root.classList.remove('dark');
+        body.classList.remove('dark');
+        body.style.backgroundColor = '#f6f7f9';
+        body.style.color = '#12161f';
 
         const prefersReducedMotion = window.matchMedia(
             '(prefers-reduced-motion: reduce)',
@@ -370,12 +370,12 @@ export default function Welcome() {
         window.addEventListener('resize', syncStepObservers);
 
         return () => {
-            if (!rootHadDark) {
-                root.classList.remove('dark');
+            if (rootHadDark) {
+                root.classList.add('dark');
             }
 
-            if (!bodyHadDark) {
-                body.classList.remove('dark');
+            if (bodyHadDark) {
+                body.classList.add('dark');
             }
 
             body.style.backgroundColor = previousBodyBackgroundColor;
@@ -429,7 +429,7 @@ export default function Welcome() {
             </Head>
             <style>{landingStyles}</style>
 
-            <div className="landing-scrollbar dark min-h-screen scroll-smooth bg-bion-bg font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text">
+            <div className="landing-scrollbar min-h-screen scroll-smooth bg-bion-bg font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text">
                 <header className="fixed top-0 z-50 w-full border-b border-bion-border/50 bg-bion-bg/60 backdrop-blur-xl">
                     <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
                         <div className="flex items-center gap-3">
@@ -540,7 +540,7 @@ export default function Welcome() {
                 </header>
 
                 <main className="relative flex flex-col items-center overflow-hidden pt-32 pb-20 md:pt-40 md:pb-32">
-                    <div className="pointer-events-none absolute top-0 h-[600px] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(232,163,61,0.08)_0%,transparent_60%)]" />
+                    <div className="pointer-events-none absolute top-0 h-[600px] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(199,127,31,0.08)_0%,transparent_60%)]" />
 
                     <div
                         data-fade-up
@@ -586,7 +586,7 @@ export default function Welcome() {
                     <div className="app-reveal-container z-20 mx-auto mt-20 w-full max-w-[1200px] px-4">
                         <div
                             data-app-mockup
-                            className="app-mockup relative aspect-video w-full overflow-hidden rounded-2xl border border-bion-border bg-bion-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)]"
+                            className="app-mockup relative aspect-video w-full overflow-hidden rounded-2xl border border-bion-border bg-bion-surface shadow-bion-panel"
                         >
                             <img
                                 src={landingImages.hero}
