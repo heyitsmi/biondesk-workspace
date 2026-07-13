@@ -47,6 +47,9 @@ class DashboardSummary
 
         $pipelineValue = (int) (clone $openOpportunitiesQuery)->sum('amount_value');
         $openOpportunityCount = (clone $openOpportunitiesQuery)->count();
+        $weightedPipelineValue = (int) (clone $openOpportunitiesQuery)
+            ->selectRaw('SUM(amount_value * COALESCE(win_probability, 0) / 100) as total')
+            ->value('total');
 
         $openInvoices = $team->documents()
             ->where('type', DocumentType::Invoice->value)
@@ -72,11 +75,16 @@ class DashboardSummary
         $wonCount = $closedDeals->filter(fn (OpportunityStage $stage) => $stage === OpportunityStage::Won)->count();
         $winRate = $closedDeals->isEmpty() ? 0 : (int) round($wonCount / $closedDeals->count() * 100);
 
+        $pipelineChangeText = $openOpportunityCount === 1 ? '1 open opportunity' : "{$openOpportunityCount} open opportunities";
+        if ($weightedPipelineValue > 0) {
+            $pipelineChangeText .= ' ('.Document::money($weightedPipelineValue).' expected)';
+        }
+
         return [
             [
                 'label' => 'Pipeline Value',
                 'value' => Document::money($pipelineValue),
-                'change' => $openOpportunityCount === 1 ? '1 open opportunity' : "{$openOpportunityCount} open opportunities",
+                'change' => $pipelineChangeText,
                 'tone' => 'muted',
             ],
             [

@@ -38,7 +38,7 @@ const EXAMPLE_PROMPTS = [
 
 function AssistantMarkdown({ content }: { content: string }) {
     return (
-        <div className="flex flex-col gap-[8px] text-[13.5px] leading-relaxed break-words [&_ol]:my-[2px] [&_ol]:list-decimal [&_ol]:pl-[20px] [&_p]:m-0 [&_ul]:my-[2px] [&_ul]:list-disc [&_ul]:pl-[20px]">
+        <div className="flex flex-col gap-[8px] text-[13.5px] leading-relaxed break-words [&_ol]:my-[2px] [&_ol]:list-decimal [&_ol]:pl-[20px] [&_p]:m-0 [&_ul]:my-[2px] [&_ul]:list-disc [&_ul]:pl-[20px] [&_pre>code]:!bg-transparent [&_pre>code]:!p-0">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{

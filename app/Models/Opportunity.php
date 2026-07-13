@@ -27,10 +27,11 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $source
  * @property int $amount_value
  * @property OpportunityPriority $priority
+ * @property int|null $win_probability
  * @property Carbon|null $close_date
  * @property string|null $description
  */
-#[Fillable(['title', 'stage', 'source', 'amount_value', 'priority', 'close_date', 'description', 'contact_id'])]
+#[Fillable(['title', 'stage', 'source', 'amount_value', 'win_probability', 'priority', 'close_date', 'description', 'contact_id'])]
 class Opportunity extends Model implements HasMedia
 {
     /** @use HasFactory<OpportunityFactory> */
@@ -138,6 +139,7 @@ class Opportunity extends Model implements HasMedia
             'source' => $this->source ?? '',
             'amount' => $this->formattedAmount(),
             'amountValue' => $this->amount_value,
+            'winProbability' => $this->win_probability,
             'stage' => $this->stage->value,
             'stageLabel' => $this->stage->label(),
             'tone' => $this->stage->tone(),

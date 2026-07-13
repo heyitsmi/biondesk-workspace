@@ -135,7 +135,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Refinement reminder rules (custom template per rule)
 - Multi-user per team dengan role granular
 - Light/dark theme switcher, tersimpan per akun (bukan cuma per browser), default mengikuti preferensi OS
-- Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna
+- ~~Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna~~ (Selesai diimplementasikan)
 - Promote/demote super admin lewat UI di `/ops/users` — saat ini cuma lewat `tinker`, cukup untuk kasus jarang nambah admin kedua
 
 ### P2 — future considerations

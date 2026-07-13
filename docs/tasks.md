@@ -257,6 +257,13 @@ Portal admin platform-wide, diminta langsung oleh user untuk melihat daftar user
 
 **Fase 12 selesai**: karena ini paginated list pertama di seluruh aplikasi, tidak ada konvensi lama untuk ditiru — `Pagination` component baru dibuat sesederhana mungkin (Prev/Next + indikator halaman, bukan picker nomor halaman penuh) karena ini tool admin internal, bukan UX publik. Tidak ada rate limiting atau audit trail tambahan untuk siapa yang mengakses ops portal di v1 — ini portal read-only untuk satu orang (founder), risiko rendah untuk skala saat ini, bisa direvisit kalau jumlah admin bertambah.
 
+## Fase 13 — Fitur Tambahan (Post-Launch)
+
+Pembaruan yang dilakukan setelah seluruh Fase 1-12 selesai (merupakan item P1 di PRD yang sebelumnya sempat ditunda).
+
+- [x] 13.1 **Pipeline Forecasting**: Menambahkan kolom `win_probability` (0-100) di database untuk entitas `Opportunity`, beserta validasi backend dan field input di frontend (`create.tsx` dan `edit.tsx`).
+- [x] 13.2 Memperbarui kalkulasi `DashboardSummary` untuk menampilkan *Weighted Pipeline Value* pada stat *Pipeline Value* (menghitung jumlah (amount_value * win_probability) dari setiap opportunity yang masih open).
+
 ---
 
 ## Keputusan yang sudah diambil
