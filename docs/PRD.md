@@ -143,13 +143,13 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 
 **Struktur route (monolith, satu domain)**: root domain (`biondesk.com`) melayani tiga zona lewat route group, bukan subdomain terpisah:
 - `/` — landing page marketing, tanpa auth
-- `/p/{team:slug}` — public lead form, tanpa auth
+- `/p/{team}` — public lead form, tanpa auth
 - `/d/{document:public_token}` — proposal/quote/invoice yang dibagikan ke klien, tanpa auth
 - `/app/*` — seluruh halaman Inertia, wajib auth
 
 Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman publik per team, satu untuk dokumen per token.
 
-**Public lead form**: pakai `Team.slug` sebagai identifier URL (`/p/{team:slug}`). Verifikasi Cloudflare Turnstile fail closed kalau secret key tidak ter-konfigurasi. Team punya kolom tambahan `lead_form_banner_path`, `lead_form_title`, `lead_form_description` untuk kustomisasi, disimpan lewat media library, dengan fallback ke nama team kalau kosong.
+**Public lead form**: URL param string biasa (bukan implicit route model binding), diresolusi lewat `Team::findByLeadFormSlug()` yang mengecek kolom `lead_form_slug` (custom, opsional, unik global) lalu fallback ke `Team.slug`. Verifikasi Cloudflare Turnstile fail closed kalau secret key tidak ter-konfigurasi. Kustomisasi tampilan disimpan di kolom Team (`lead_form_title`, `lead_form_welcome_message`, `lead_form_background_theme`/`_color`, `lead_form_social_links` JSON, `lead_form_meta_title`/`_description`) plus tiga media library collection terpisah (`lead-form-banner`, `lead-form-background`, `lead-form-cover`, `lead-form-og-image`), semuanya dengan fallback masuk akal (nama team, pesan generic, judul/deskripsi form) kalau belum diisi.
 
 **Email**: Brevo untuk semua transactional email (reminder, notifikasi dokumen terkirim, notifikasi lead baru).
 

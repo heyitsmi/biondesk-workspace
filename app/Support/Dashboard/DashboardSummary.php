@@ -8,11 +8,14 @@ use App\Enums\OpportunityStage;
 use App\Enums\ProjectStatus;
 use App\Models\Contact;
 use App\Models\Document;
+use App\Models\Event;
 use App\Models\Opportunity;
 use App\Models\Payment;
 use App\Models\ProfileAsset;
 use App\Models\Project;
 use App\Models\Team;
+use App\Support\Calendar\CalendarAggregator;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Activity;
 
@@ -30,6 +33,7 @@ class DashboardSummary
             'priorityActions' => $this->priorityActions($team),
             'recentOpportunities' => $this->recentOpportunities($team),
             'activityFeed' => $this->activityFeed($team),
+            'upcomingEvents' => $this->upcomingEvents($team),
         ];
     }
 
@@ -195,6 +199,64 @@ class DashboardSummary
                 'stageLabel' => $opportunity->stage->label(),
                 'tone' => $opportunity->stage->tone(),
             ])
+            ->all();
+    }
+
+    /**
+     * Get the near-term calendar items to show on the dashboard: real
+     * events due within the next 14 days (recurring events are always
+     * included regardless of their exact next occurrence — computing that
+     * precisely would mean re-implementing RRULE expansion in PHP for a
+     * 5-item widget, so this is a deliberate approximation) merged with
+     * aggregated deadlines (invoice due, quote expiry, project deadline,
+     * opportunity close) in the same window, sorted by date.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function upcomingEvents(Team $team): array
+    {
+        $from = now();
+        $to = now()->addDays(14);
+
+        $events = $team->events()
+            ->where(fn ($query) => $query->whereBetween('starts_at', [$from, $to])->orWhereNotNull('recurrence'))
+            ->orderBy('starts_at')
+            ->get()
+            ->map(fn (Event $event) => [
+                'id' => "event-{$event->id}",
+                'kind' => 'event',
+                'recordId' => $event->id,
+                'title' => $event->title,
+                'dateSort' => $event->starts_at->timestamp,
+                'dateLabel' => $event->starts_at->format('M j'),
+                'tone' => $event->color->value === 'info' ? 'accent' : $event->color->value,
+                'recurring' => $event->isRecurring(),
+            ]);
+
+        $aggregated = collect((new CalendarAggregator)->build($team, $from, $to))
+            ->map(function (array $item) {
+                $date = Carbon::parse($item['start']);
+
+                return [
+                    'id' => $item['id'],
+                    'kind' => $item['extendedProps']['kind'],
+                    'recordId' => $item['extendedProps']['recordId'],
+                    'title' => $item['title'],
+                    'dateSort' => $date->timestamp,
+                    'dateLabel' => $date->format('M j'),
+                    'tone' => match ($item['extendedProps']['kind']) {
+                        'invoice' => 'danger',
+                        'opportunity' => 'success',
+                        default => 'accent',
+                    },
+                    'recurring' => false,
+                ];
+            });
+
+        return $events->concat($aggregated)
+            ->sortBy('dateSort')
+            ->take(5)
+            ->values()
             ->all();
     }
 

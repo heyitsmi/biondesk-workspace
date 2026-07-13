@@ -12,14 +12,17 @@ class PublicLeadFormController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request, Team $team): Response
+    public function __invoke(Request $request, string $team): Response
     {
+        $teamModel = Team::findByLeadFormSlug($team);
+
         return Inertia::render('public/lead-form', [
             'team' => [
-                'name' => $team->name,
-                'slug' => $team->slug,
+                'name' => $teamModel->name,
+                'slug' => $teamModel->slug,
+                'leadFormSlug' => $teamModel->leadFormPublicSlug(),
             ],
-            'settings' => $team->leadFormSettings(),
+            'settings' => $teamModel->leadFormSettings(),
             'turnstileSiteKey' => config('services.turnstile.site_key'),
         ]);
     }

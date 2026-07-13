@@ -43,6 +43,8 @@ class StorePublicLeadRequest extends FormRequest
             'services.*' => ['string', 'max:100'],
             'budget' => ['nullable', 'string', 'max:100'],
             'message' => ['required', 'string'],
+            'attachments' => ['sometimes', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx'],
             'turnstile_token' => ['required', new ValidTurnstileToken],
         ];
     }

@@ -44,11 +44,26 @@ export type PipelineStage = {
     count?: number;
 };
 
+export type DashboardUpcomingEventKind =
+    'event' | 'invoice' | 'quote' | 'project' | 'opportunity';
+
+export type DashboardUpcomingEvent = {
+    id: string;
+    kind: DashboardUpcomingEventKind;
+    recordId: number;
+    title: string;
+    dateLabel: string;
+    dateSort: number;
+    tone: BiondeskTone;
+    recurring: boolean;
+};
+
 export type DashboardPageProps = {
     stats: DashboardStat[];
     priorityActions: DashboardPriorityAction[];
     recentOpportunities: DashboardOpportunity[];
     activityFeed: ActivityItem[];
+    upcomingEvents: DashboardUpcomingEvent[];
 };
 
 export type OpportunitySummary = {
@@ -486,10 +501,64 @@ export type InvoiceListItem = {
     amount: string;
     amountValue: number;
     shareUrl: string;
+    isRecurring: boolean;
+};
+
+export type RecurringInvoiceListItem = {
+    id: number;
+    client: string;
+    title: string;
+    cadenceLabel: string;
+    nextInvoiceAt: string;
+    nextInvoiceSort: number;
+    statusLabel: 'Active' | 'Paused';
+    tone: BiondeskTone;
+    amount: string;
+    amountValue: number;
+    autoSend: boolean;
+};
+
+export type RecurringInvoiceDetailLineItem = {
+    name: string;
+    description: string;
+    qty: number;
+    price: string;
+};
+
+export type RecurringInvoiceDetail = RecurringInvoiceListItem & {
+    intervalMonths: number;
+    dueDays: number;
+    startsAt: string;
+    endsAt: string | null;
+    occurrencesGenerated: number;
+    notes: string;
+    currency: string;
+    taxPercent: number;
+    contactId: number | '';
+    projectId: number | '';
+    lineItems: RecurringInvoiceDetailLineItem[];
+    generatedInvoices: InvoiceListItem[];
+};
+
+export type RecurringInvoiceShowPageProps = {
+    template: RecurringInvoiceDetail;
+};
+
+export type RecurringInvoiceCreatePageProps = {
+    defaultStartsAt: string;
+    clients: InvoiceCreateClientOption[];
+    projects: InvoiceCreateProjectOption[];
+};
+
+export type RecurringInvoiceEditPageProps = {
+    template: RecurringInvoiceDetail;
+    clients: InvoiceCreateClientOption[];
+    projects: InvoiceCreateProjectOption[];
 };
 
 export type InvoicesPageProps = {
     invoices: InvoiceListItem[];
+    recurringTemplates: RecurringInvoiceListItem[];
 };
 
 export type InvoiceDetailLineItem = {
@@ -702,23 +771,51 @@ export type ProfileEditPageProps = {
     profile: ProfileItem;
 };
 
-export type PublicLeadFormBackgroundTheme = 'dark' | 'light' | 'brand';
+export type PublicLeadFormBackgroundTheme =
+    'dark' | 'light' | 'brand' | 'custom';
+
+export type SocialLinkPlatform =
+    | 'instagram'
+    | 'twitter'
+    | 'linkedin'
+    | 'facebook'
+    | 'tiktok'
+    | 'youtube'
+    | 'github'
+    | 'dribbble'
+    | 'behance'
+    | 'website';
+
+export type SocialLink = {
+    platform: SocialLinkPlatform;
+    url: string;
+};
 
 export type PublicLeadFormSettings = {
     enabled: boolean;
+    slug: string;
+    customSlug: string | null;
     title: string;
     welcomeMessage: string;
     backgroundTheme: PublicLeadFormBackgroundTheme;
+    backgroundColor: string | null;
+    backgroundImageUrl: string | null;
+    coverUrl: string | null;
     services: string[];
+    socialLinks: SocialLink[];
     askBudget: boolean;
     allowAttachments: boolean;
     bannerUrl: string | null;
+    metaTitle: string;
+    metaDescription: string;
+    ogImageUrl: string | null;
 };
 
 export type PublicLeadFormPageProps = {
     team: {
         name: string;
         slug: string;
+        leadFormSlug: string;
     };
     settings: PublicLeadFormSettings;
     turnstileSiteKey: string | null;

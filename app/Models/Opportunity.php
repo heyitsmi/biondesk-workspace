@@ -14,6 +14,9 @@ use Illuminate\Support\Carbon;
 use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property int $id
@@ -28,12 +31,12 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $description
  */
 #[Fillable(['title', 'stage', 'source', 'amount_value', 'priority', 'close_date', 'description', 'contact_id'])]
-class Opportunity extends Model
+class Opportunity extends Model implements HasMedia
 {
     /** @use HasFactory<OpportunityFactory> */
     use HasFactory;
 
-    use LogsActivity;
+    use InteractsWithMedia, LogsActivity;
 
     /**
      * Get the team this opportunity belongs to.
@@ -71,6 +74,32 @@ class Opportunity extends Model
     public function formattedAmount(): string
     {
         return '$'.number_format($this->amount_value);
+    }
+
+    /**
+     * Register the media collections for this model.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('attachments');
+    }
+
+    /**
+     * Get the client-uploaded attachments (e.g. from the public lead form) as a
+     * simple array of {name, url, size}.
+     *
+     * @return array<int, array{name: string, url: string, size: int}>
+     */
+    public function attachmentsArray(): array
+    {
+        return $this->getMedia('attachments')
+            ->map(fn (Media $media) => [
+                'name' => (string) $media->file_name,
+                'url' => $media->getUrl(),
+                'size' => (int) $media->size,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

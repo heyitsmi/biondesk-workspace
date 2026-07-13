@@ -29,6 +29,13 @@
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.21",
+        "@fullcalendar/daygrid": "^6.1.21",
+        "@fullcalendar/interaction": "^6.1.21",
+        "@fullcalendar/list": "^6.1.21",
+        "@fullcalendar/react": "^6.1.21",
+        "@fullcalendar/rrule": "^6.1.21",
+        "@fullcalendar/timegrid": "^6.1.21",
         "@inertiajs/react": "^3.0.0",
         "@inertiajs/vite": "^3.0.0",
         "@laravel/passkeys": "^0.2.0",
@@ -59,6 +66,7 @@
         "puppeteer": "^25.3.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+        "rrule": "^2.8.1",
         "sonner": "^2.0.0",
         "tailwind-merge": "^3.0.1",
         "tailwindcss": "^4.0.0",

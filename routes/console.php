@@ -11,3 +11,4 @@ Schedule::call(function () {
 })->daily()->description('Delete expired team invitations');
 
 Schedule::command('reminders:generate')->daily();
+Schedule::command('invoices:generate-recurring')->daily()->withoutOverlapping();

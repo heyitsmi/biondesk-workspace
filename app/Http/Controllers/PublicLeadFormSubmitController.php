@@ -28,8 +28,10 @@ class PublicLeadFormSubmitController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(StorePublicLeadRequest $request, Team $team): RedirectResponse
+    public function __invoke(StorePublicLeadRequest $request, string $team): RedirectResponse
     {
+        $team = Team::findByLeadFormSlug($team);
+
         $data = $request->validated();
 
         $contact = $team->contacts()
@@ -60,6 +62,12 @@ class PublicLeadFormSubmitController extends Controller
             'source' => 'Public form',
             'description' => $description,
         ]);
+
+        if ($team->lead_form_allow_attachments) {
+            foreach ($request->file('attachments', []) as $attachment) {
+                $opportunity->addMedia($attachment)->toMediaCollection('attachments');
+            }
+        }
 
         if ($owner = $team->owner()) {
             Mail::to($owner->email)->send(new NewPublicLeadReceived($contact, $opportunity));

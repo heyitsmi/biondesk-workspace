@@ -1,11 +1,16 @@
 <?php
 
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentPdfDownloadController;
 use App\Http\Controllers\DocumentPdfGenerateController;
 use App\Http\Controllers\DocumentPdfStatusController;
 use App\Http\Controllers\DocumentPrintController;
+use App\Http\Controllers\EventDestroyController;
+use App\Http\Controllers\EventMoveController;
+use App\Http\Controllers\EventStoreController;
+use App\Http\Controllers\EventUpdateController;
 use App\Http\Controllers\InvoiceCreateController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
@@ -48,6 +53,12 @@ use App\Http\Controllers\QuotationMoveController;
 use App\Http\Controllers\QuotationsController;
 use App\Http\Controllers\QuotationShowController;
 use App\Http\Controllers\QuotationStoreController;
+use App\Http\Controllers\RecurringInvoiceCreateController;
+use App\Http\Controllers\RecurringInvoiceEditController;
+use App\Http\Controllers\RecurringInvoiceMoveController;
+use App\Http\Controllers\RecurringInvoiceShowController;
+use App\Http\Controllers\RecurringInvoiceStoreController;
+use App\Http\Controllers\RecurringInvoiceUpdateController;
 use App\Http\Controllers\ReminderDismissController;
 use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
@@ -63,8 +74,8 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingPageController::class)->name('home');
-Route::get('/p/{team:slug}', PublicLeadFormController::class)->name('public-lead-form');
-Route::post('/p/{team:slug}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
+Route::get('/p/{team}', PublicLeadFormController::class)->name('public-lead-form');
+Route::post('/p/{team}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
 Route::get('/d/{document:public_token}', PublicDocumentController::class)->name('public-document');
 Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->name('documents.print');
 Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');
@@ -75,6 +86,17 @@ Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('calendar', CalendarController::class)->name('calendar.index');
+        Route::post('calendar/events', EventStoreController::class)->name('calendar.events.store');
+        Route::put('calendar/events/{event}', EventUpdateController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.update');
+        Route::patch('calendar/events/{event}/move', EventMoveController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.move');
+        Route::delete('calendar/events/{event}', EventDestroyController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.destroy');
         Route::get('opportunities', OpportunitiesController::class)->name('opportunities.index');
         Route::get('opportunities/create', OpportunityCreateController::class)->name('opportunities.create');
         Route::post('opportunities', OpportunityStoreController::class)->name('opportunities.store');
@@ -183,6 +205,22 @@ Route::prefix('app/{current_team}')
         Route::get('invoices/{invoice}', InvoiceShowController::class)
             ->whereNumber('invoice')
             ->name('invoices.show');
+        Route::get('invoices/recurring/create', RecurringInvoiceCreateController::class)
+            ->name('invoices.recurring.create');
+        Route::post('invoices/recurring', RecurringInvoiceStoreController::class)
+            ->name('invoices.recurring.store');
+        Route::get('invoices/recurring/{template}', RecurringInvoiceShowController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.show');
+        Route::get('invoices/recurring/{template}/edit', RecurringInvoiceEditController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.edit');
+        Route::put('invoices/recurring/{template}', RecurringInvoiceUpdateController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.update');
+        Route::patch('invoices/recurring/{template}/status', RecurringInvoiceMoveController::class)
+            ->whereNumber('template')
+            ->name('invoices.recurring.move');
         Route::get('quotations', QuotationsController::class)->name('quotations.index');
         Route::get('quotations/create', QuotationCreateController::class)->name('quotations.create');
         Route::post('quotations', QuotationStoreController::class)->name('quotations.store');
