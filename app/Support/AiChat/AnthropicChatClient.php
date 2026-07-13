@@ -35,7 +35,7 @@ class AnthropicChatClient implements AiChatClient
         ], fn ($value) => $value !== null));
 
         if ($response->failed()) {
-            throw new AiChatException("AI provider request failed: {$response->status()}");
+            throw new AiChatException("AI provider request failed: {$response->status()} - {$response->body()}");
         }
 
         /** @var list<array<string, mixed>> $blocks */
@@ -102,7 +102,7 @@ class AnthropicChatClient implements AiChatClient
                             'type' => 'tool_use',
                             'id' => $toolCall->id,
                             'name' => $toolCall->name,
-                            'input' => $toolCall->arguments,
+                            'input' => (object) $toolCall->arguments,
                         ], $message->toolCalls),
                     ],
                 ];
