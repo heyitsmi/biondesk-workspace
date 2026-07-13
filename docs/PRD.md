@@ -59,8 +59,10 @@ Team (workspace kerja, dengan slug untuk routing)
   └── Template
   └── BionAiConversation (percakapan chat AI, per-user)
         └── BionAiMessage
-  └── BionAiUsageLog (token usage & estimasi cost per turn, dasar untuk halaman AI usage Super Admin di masa depan)
+  └── BionAiUsageLog (token usage & estimasi cost per turn, ditampilkan di Ops Portal)
 ```
+
+User punya kolom `is_super_admin` (boolean, default false) yang menandai akun sebagai Biondesk staff — tidak team-scoped, dipakai untuk akses `/ops/*` (lihat bagian Ops Portal di P0).
 
 Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase closing deal) dan ke Project (untuk quote/invoice tambahan selama eksekusi, misalnya milestone atau perubahan scope).
 
@@ -114,7 +116,16 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Given user tanya soal kondisi kerjanya sendiri (task overdue, jadwal hari ini, invoice belum dibayar, ringkasan pipeline/project), when BionAI menjawab, then jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak
 - Given user kirim pesan, when BionAI sedang memproses jawaban (termasuk yang butuh beberapa kali tool-calling round-trip), then diproses lewat queued job dan di-polling dari frontend, bukan sinkron di request utama
 - Given user punya beberapa percakapan, then bisa switch antar percakapan lewat sidebar, rename judul percakapan, dan hapus percakapan
-- Given provider AI dipanggil, when respons diterima, then token usage (input/output) dan estimasi cost dicatat per percakapan dan per user, sebagai dasar halaman AI usage Super Admin di masa depan (lihat P1)
+- Given provider AI dipanggil, when respons diterima, then token usage (input/output) dan estimasi cost dicatat per percakapan dan per user, ditampilkan di Ops Portal
+
+**Ops Portal**
+- Given user punya `is_super_admin = true`, when login berhasil (password, 2FA, atau passkey), then diarahkan ke `/ops/dashboard`, bukan dashboard tim
+- Given user bukan super admin (termasuk guest), when akses route apapun di `/ops/*`, then ditolak — 403 untuk user biasa, redirect ke login untuk guest
+- Given super admin membuka `/ops/dashboard`, then tampil ringkasan total user, total tim, dan estimasi cost AI (bulan ini + sepanjang waktu)
+- Given super admin membuka `/ops/users`, then tampil daftar seluruh user platform (bukan cuma satu tim), read-only di v1
+- Given super admin membuka `/ops/ai-usage-logs`, then tampil seluruh `BionAiUsageLog` lintas tim dengan ringkasan total cost dan token
+- Given super admin membuka `/ops/activity-logs`, then tampil seluruh activity log lintas tim
+- Given daftar di halaman manapun di Ops Portal melebihi satu halaman, then dipaginasi (bukan dimuat semua sekaligus)
 
 ### P1 — nice to have
 
@@ -125,7 +136,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Multi-user per team dengan role granular
 - Light/dark theme switcher, tersimpan per akun (bukan cuma per browser), default mengikuti preferensi OS
 - Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna
-- Halaman AI usage di Super Admin — lihat token usage dan estimasi cost per user platform-wide. Skema pencatatannya (`BionAiUsageLog`) sudah dibangun bersamaan dengan BionAI supaya halaman ini tidak butuh migration tambahan nanti, tapi UI Super Admin-nya sendiri ditunda
+- Promote/demote super admin lewat UI di `/ops/users` — saat ini cuma lewat `tinker`, cukup untuk kasus jarang nambah admin kedua
 
 ### P2 — future considerations
 
@@ -133,7 +144,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - BYO payment gateway penuh untuk invoice (kalau ada sinyal kuat dari user eksternal)
 - Self-serve onboarding publik penuh, termasuk billing dan lifecycle user yang lebih matang. Landing page pemasaran dasar sudah ada, tetapi bisa terus disempurnakan berdasarkan positioning early access
 - Request Log versi AI: extraction otomatis dari chat yang di-paste, dengan deteksi duplikat/kontradiksi pakai semantic search (pgvector + embedding). Ini upgrade signifikan dari Request Log manual di P0, worth dipertimbangkan serius sebagai diferensiator, tapi butuh infrastruktur tambahan (pgvector, API AI terpisah untuk extraction) yang belum jadi prioritas sekarang
-- Ops portal terpisah (subdomain sendiri) untuk kelola organisasi, user, dan subscription lintas tenant, relevan begitu ada banyak user eksternal yang perlu dikelola
+- Ops portal versi lanjutan (subdomain sendiri, role admin bertingkat lewat `spatie/laravel-permission`, kelola subscription lintas tenant) — versi ringan sudah jalan di P0 (`/ops/*` di domain yang sama, satu flag boolean `is_super_admin`), upgrade ini relevan begitu ada banyak staf Biondesk atau kebutuhan role admin yang lebih granular
 
 ## Arsitektur teknis
 

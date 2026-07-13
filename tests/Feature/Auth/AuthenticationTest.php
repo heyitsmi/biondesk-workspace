@@ -49,6 +49,18 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('dashboard', ['current_team' => $user->fresh()->currentTeam->slug]));
 });
 
+test('super admin users are redirected to the ops dashboard after login', function () {
+    $admin = User::factory()->superAdmin()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $admin->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('ops.dashboard'));
+});
+
 test('passkey login response redirects to the current team dashboard', function () {
     $user = User::factory()->create();
 
