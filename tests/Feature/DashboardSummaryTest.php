@@ -7,6 +7,7 @@ use App\Enums\ProjectStatus;
 use App\Models\Contact;
 use App\Models\Document;
 use App\Models\DocumentItem;
+use App\Models\Event;
 use App\Models\Opportunity;
 use App\Models\Payment;
 use App\Models\Project;
@@ -166,5 +167,58 @@ test('dashboard data is scoped to the current team', function () {
             ->where('stats.0.value', '$0')
             ->has('recentOpportunities', 0)
             ->has('activityFeed', 0),
+        );
+});
+
+test('upcoming events merges real events with aggregated deadlines, sorted and capped at five', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $contact = Contact::factory()->for($team)->create();
+
+    Event::factory()->for($team)->create([
+        'title' => 'Soonest call',
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHour(),
+        'recurrence' => null,
+    ]);
+
+    Document::factory()->for($team)->for($contact)->create([
+        'type' => DocumentType::Invoice,
+        'status' => DocumentStatus::Sent,
+        'due_at' => now()->addDays(2),
+    ]);
+
+    for ($i = 3; $i < 8; $i++) {
+        Event::factory()->for($team)->create([
+            'starts_at' => now()->addDays($i),
+            'ends_at' => now()->addDays($i)->addHour(),
+            'recurrence' => null,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('dashboard', ['current_team' => $team->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('upcomingEvents', 5)
+            ->where('upcomingEvents.0.title', 'Soonest call'),
+        );
+});
+
+test('upcoming events includes a recurring event regardless of the fixed 14-day window', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    Event::factory()->for($team)->create([
+        'title' => 'Monthly retro',
+        'starts_at' => now()->subMonths(3),
+        'ends_at' => now()->subMonths(3)->addHour(),
+        'recurrence' => 'monthly',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard', ['current_team' => $team->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('upcomingEvents.0.title', 'Monthly retro')
+            ->where('upcomingEvents.0.recurring', true),
         );
 });

@@ -1,12 +1,18 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import PendingInvitationsModal from '@/components/pending-invitations-modal';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as calendarIndex } from '@/routes/calendar';
+import { show as invoiceShow } from '@/routes/invoices';
+import { index as opportunitiesIndex } from '@/routes/opportunities';
+import { show as projectShow } from '@/routes/projects';
+import { show as quotationShow } from '@/routes/quotations';
 import type {
     DashboardInvitation,
     DashboardPageProps,
     DashboardPriorityAction,
+    DashboardUpcomingEvent,
 } from '@/types';
 
 type Props = DashboardPageProps & {
@@ -40,9 +46,10 @@ export default function Dashboard({
     priorityActions,
     recentOpportunities,
     activityFeed,
+    upcomingEvents,
     pendingInvitations = [],
 }: Props) {
-    const { auth } = usePage().props;
+    const { auth, currentTeam } = usePage().props;
     const [showInvitations, setShowInvitations] = useState(
         pendingInvitations.length > 0,
     );
@@ -69,6 +76,44 @@ export default function Dashboard({
         });
     };
 
+    const visitUpcomingEvent = (item: DashboardUpcomingEvent): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        switch (item.kind) {
+            case 'invoice':
+                router.visit(
+                    invoiceShow({
+                        current_team: currentTeam.slug,
+                        invoice: item.recordId,
+                    }),
+                );
+                break;
+            case 'quote':
+                router.visit(
+                    quotationShow({
+                        current_team: currentTeam.slug,
+                        quotation: item.recordId,
+                    }),
+                );
+                break;
+            case 'project':
+                router.visit(
+                    projectShow({
+                        current_team: currentTeam.slug,
+                        project: item.recordId,
+                    }),
+                );
+                break;
+            case 'opportunity':
+                router.visit(opportunitiesIndex(currentTeam.slug));
+                break;
+            default:
+                router.visit(calendarIndex(currentTeam.slug));
+        }
+    };
+
     return (
         <>
             <Head title="Dashboard" />
@@ -84,7 +129,9 @@ export default function Dashboard({
                     <h1 className="mb-[4px] font-display text-[24px] font-bold">
                         Good morning, {greetingName}
                     </h1>
-                    <p className="text-[13.5px] text-bion-text-muted">{dateLine}</p>
+                    <p className="text-[13.5px] text-bion-text-muted">
+                        {dateLine}
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -104,7 +151,7 @@ export default function Dashboard({
                         className="rounded-[12px] border border-bion-border bg-bion-surface p-[18px] [transition:border-color_0.15s_ease,transform_0.15s_ease] hover:-translate-y-[2px] hover:border-bion-accent"
                     >
                         <div className="mb-[14px] flex items-center justify-between">
-                            <span className="text-[12px] font-medium text-bion-text-muted uppercase [letter-spacing:0.03em]">
+                            <span className="text-[12px] font-medium [letter-spacing:0.03em] text-bion-text-muted uppercase">
                                 {stat.label}
                             </span>
                             <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border border-bion-border bg-bion-surface-raised text-bion-accent">
@@ -132,7 +179,9 @@ export default function Dashboard({
 
             <div className="mb-[20px] rounded-[12px] border border-bion-border bg-bion-surface">
                 <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
-                    <h2 className="text-[14.5px] font-semibold">Priority actions</h2>
+                    <h2 className="text-[14.5px] font-semibold">
+                        Priority actions
+                    </h2>
                     <button
                         type="button"
                         className="flex items-center gap-[4px] text-[12.5px] text-bion-text-muted hover:text-bion-accent"
@@ -147,12 +196,17 @@ export default function Dashboard({
                     {priorityActions.length === 0 ? (
                         <div className="py-[32px] text-center">
                             <div className="mx-auto mb-[12px] flex h-[40px] w-[40px] items-center justify-center rounded-[12px] border border-bion-border bg-bion-bg text-bion-text-muted">
-                                <svg className="h-[18px] w-[18px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.8]">
+                                <svg className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]">
                                     <path d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h3 className="mb-[2px] text-[13.5px] font-medium">You're all caught up!</h3>
-                            <p className="text-[12.5px] text-bion-text-muted">No pending actions need your attention right now.</p>
+                            <h3 className="mb-[2px] text-[13.5px] font-medium">
+                                You're all caught up!
+                            </h3>
+                            <p className="text-[12.5px] text-bion-text-muted">
+                                No pending actions need your attention right
+                                now.
+                            </p>
                         </div>
                     ) : (
                         priorityActions.map((action, index) => {
@@ -218,7 +272,9 @@ export default function Dashboard({
             <div className="grid grid-cols-[1.1fr_0.9fr] gap-[20px] max-[1024px]:grid-cols-1">
                 <div className="rounded-[12px] border border-bion-border bg-bion-surface">
                     <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
-                        <h2 className="text-[14.5px] font-semibold">Recent opportunities</h2>
+                        <h2 className="text-[14.5px] font-semibold">
+                            Recent opportunities
+                        </h2>
                         <button
                             type="button"
                             className="flex items-center gap-[4px] text-[12.5px] text-bion-text-muted hover:text-bion-accent"
@@ -238,13 +294,15 @@ export default function Dashboard({
                                 <span
                                     className={cn(
                                         PILL_BASE,
-                                        pillClasses[opportunity.tone] ?? pillClasses.muted,
+                                        pillClasses[opportunity.tone] ??
+                                            pillClasses.muted,
                                     )}
                                 >
                                     <span
                                         className={cn(
                                             'h-[6px] w-[6px] rounded-full',
-                                            dotClasses[opportunity.tone] ?? dotClasses.muted,
+                                            dotClasses[opportunity.tone] ??
+                                                dotClasses.muted,
                                         )}
                                     />
                                     {opportunity.stageLabel}
@@ -267,17 +325,24 @@ export default function Dashboard({
 
                 <div className="rounded-[12px] border border-bion-border bg-bion-surface">
                     <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
-                        <h2 className="text-[14.5px] font-semibold">Recent activity</h2>
+                        <h2 className="text-[14.5px] font-semibold">
+                            Recent activity
+                        </h2>
                     </div>
                     <div className="p-[6px]">
                         {activityFeed.map((item, index) => (
-                            <div key={`${item.title}-${item.when}`} className="flex gap-[12px] p-[11px_12px]">
+                            <div
+                                key={`${item.title}-${item.when}`}
+                                className="flex gap-[12px] p-[11px_12px]"
+                            >
                                 <div className="flex shrink-0 flex-col items-center pt-[3px]">
                                     <div
                                         className={cn(
                                             'h-[7px] w-[7px] rounded-full bg-bion-border',
-                                            item.tone === 'accent' && 'bg-bion-accent',
-                                            item.tone === 'success' && 'bg-bion-success',
+                                            item.tone === 'accent' &&
+                                                'bg-bion-accent',
+                                            item.tone === 'success' &&
+                                                'bg-bion-success',
                                         )}
                                     />
                                     {index !== activityFeed.length - 1 ? (
@@ -285,12 +350,90 @@ export default function Dashboard({
                                     ) : null}
                                 </div>
                                 <div>
-                                    <div className="mb-[2px] text-[13px]">{item.title}</div>
-                                    <div className="text-[11.5px] text-bion-text-muted">{item.when}</div>
+                                    <div className="mb-[2px] text-[13px]">
+                                        {item.title}
+                                    </div>
+                                    <div className="text-[11.5px] text-bion-text-muted">
+                                        {item.when}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            <div className="mt-[20px] rounded-[12px] border border-bion-border bg-bion-surface">
+                <div className="flex items-center justify-between border-b border-bion-border px-[18px] py-[16px]">
+                    <h2 className="text-[14.5px] font-semibold">
+                        Upcoming events
+                    </h2>
+                    <button
+                        type="button"
+                        className="flex items-center gap-[4px] text-[12.5px] text-bion-text-muted hover:text-bion-accent"
+                        onClick={() =>
+                            currentTeam &&
+                            router.visit(calendarIndex(currentTeam.slug))
+                        }
+                    >
+                        View calendar
+                        <svg className={ICON_SM_CLS}>
+                            <use href="#i-arrow-up-right" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="p-[6px]">
+                    {upcomingEvents.length === 0 ? (
+                        <div className="py-[32px] text-center">
+                            <div className="mx-auto mb-[12px] flex h-[40px] w-[40px] items-center justify-center rounded-[12px] border border-bion-border bg-bion-bg text-bion-text-muted">
+                                <svg className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]">
+                                    <use href="#i-calendar" />
+                                </svg>
+                            </div>
+                            <h3 className="mb-[2px] text-[13.5px] font-medium">
+                                Nothing on the calendar
+                            </h3>
+                            <p className="text-[12.5px] text-bion-text-muted">
+                                No events or deadlines in the next 14 days.
+                            </p>
+                        </div>
+                    ) : (
+                        upcomingEvents.map((item, index) => (
+                            <div
+                                key={item.id}
+                                className={cn(
+                                    'flex cursor-pointer items-center gap-[12px] rounded-[9px] p-[11px_12px] hover:bg-bion-bg',
+                                    index > 0 && 'mt-[2px]',
+                                )}
+                                onClick={() => visitUpcomingEvent(item)}
+                            >
+                                <span
+                                    className={cn(
+                                        PILL_BASE,
+                                        pillClasses[item.tone] ??
+                                            pillClasses.muted,
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            'h-[6px] w-[6px] rounded-full',
+                                            dotClasses[item.tone] ??
+                                                dotClasses.muted,
+                                        )}
+                                    />
+                                    {item.dateLabel}
+                                </span>
+                                <div className="min-w-0 flex-1 overflow-hidden text-[13.5px] font-medium text-ellipsis whitespace-nowrap">
+                                    {item.title}
+                                    {item.recurring ? (
+                                        <span className="ml-[6px] text-[11px] font-normal text-bion-text-muted">
+                                            (recurring)
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </>

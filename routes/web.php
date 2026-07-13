@@ -1,11 +1,16 @@
 <?php
 
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentPdfDownloadController;
 use App\Http\Controllers\DocumentPdfGenerateController;
 use App\Http\Controllers\DocumentPdfStatusController;
 use App\Http\Controllers\DocumentPrintController;
+use App\Http\Controllers\EventDestroyController;
+use App\Http\Controllers\EventMoveController;
+use App\Http\Controllers\EventStoreController;
+use App\Http\Controllers\EventUpdateController;
 use App\Http\Controllers\InvoiceCreateController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\InvoiceShowController;
@@ -81,6 +86,17 @@ Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('calendar', CalendarController::class)->name('calendar.index');
+        Route::post('calendar/events', EventStoreController::class)->name('calendar.events.store');
+        Route::put('calendar/events/{event}', EventUpdateController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.update');
+        Route::patch('calendar/events/{event}/move', EventMoveController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.move');
+        Route::delete('calendar/events/{event}', EventDestroyController::class)
+            ->whereNumber('event')
+            ->name('calendar.events.destroy');
         Route::get('opportunities', OpportunitiesController::class)->name('opportunities.index');
         Route::get('opportunities/create', OpportunityCreateController::class)->name('opportunities.create');
         Route::post('opportunities', OpportunityStoreController::class)->name('opportunities.store');

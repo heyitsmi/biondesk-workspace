@@ -177,6 +177,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all calendar events for this team.
+     *
+     * @return HasMany<Event, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
+    }
+
+    /**
      * Get all profile library assets for this team.
      *
      * @return HasMany<ProfileAsset, $this>

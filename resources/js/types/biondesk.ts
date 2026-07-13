@@ -44,11 +44,26 @@ export type PipelineStage = {
     count?: number;
 };
 
+export type DashboardUpcomingEventKind =
+    'event' | 'invoice' | 'quote' | 'project' | 'opportunity';
+
+export type DashboardUpcomingEvent = {
+    id: string;
+    kind: DashboardUpcomingEventKind;
+    recordId: number;
+    title: string;
+    dateLabel: string;
+    dateSort: number;
+    tone: BiondeskTone;
+    recurring: boolean;
+};
+
 export type DashboardPageProps = {
     stats: DashboardStat[];
     priorityActions: DashboardPriorityAction[];
     recentOpportunities: DashboardOpportunity[];
     activityFeed: ActivityItem[];
+    upcomingEvents: DashboardUpcomingEvent[];
 };
 
 export type OpportunitySummary = {

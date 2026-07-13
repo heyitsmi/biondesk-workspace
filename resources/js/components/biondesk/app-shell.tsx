@@ -1,13 +1,13 @@
-import { Link, usePage, type InertiaLinkProps } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import {
-    dashboard,
-    home,
-    logout,
-} from '@/routes';
+import { dashboard, home, logout } from '@/routes';
+import { index as calendar } from '@/routes/calendar';
 import { index as contacts } from '@/routes/contacts';
 import { index as invoices } from '@/routes/invoices';
 import { index as opportunities } from '@/routes/opportunities';
@@ -17,13 +17,6 @@ import { index as projects } from '@/routes/projects';
 import { index as proposals } from '@/routes/proposals';
 import { index as quotations } from '@/routes/quotations';
 import { index as reminders } from '@/routes/reminders';
-import {
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-    type ReactNode,
-} from 'react';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -73,7 +66,12 @@ const commandItems: Array<{
     icon: string;
     highlighted?: boolean;
 }> = [
-    { section: 'Quick actions', label: 'New Opportunity', icon: 'i-plus', highlighted: true },
+    {
+        section: 'Quick actions',
+        label: 'New Opportunity',
+        icon: 'i-plus',
+        highlighted: true,
+    },
     { section: 'Quick actions', label: 'New Invoice', icon: 'i-file' },
     { section: 'Jump to', label: 'Opportunities', icon: 'i-kanban' },
     { section: 'Jump to', label: 'Projects', icon: 'i-briefcase' },
@@ -154,7 +152,9 @@ export default function BiondeskAppShell({
     const { appearance, updateAppearance } = useAppearance();
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const initials = useInitials();
-    const [desktopCollapsed, setDesktopCollapsed] = useState(!(sidebarOpen ?? true));
+    const [desktopCollapsed, setDesktopCollapsed] = useState(
+        !(sidebarOpen ?? true),
+    );
     const [mobileOpen, setMobileOpen] = useState(false);
     const [commandOpen, setCommandOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -188,7 +188,8 @@ export default function BiondeskAppShell({
             : Array.isArray(propsBag.contacts)
               ? String(propsBag.contacts.length)
               : '5';
-    const remindersSummary = propsBag.summary as { allCount?: number } | undefined;
+    const remindersSummary = propsBag.summary as
+        { allCount?: number } | undefined;
     const remindersCount =
         typeof remindersSummary?.allCount === 'number'
             ? String(remindersSummary.allCount)
@@ -205,29 +206,88 @@ export default function BiondeskAppShell({
         return [
             {
                 items: [
-                    { title: 'Dashboard', icon: 'i-grid', href: dashboard(currentTeam.slug) },
-                    { title: 'Opportunities', icon: 'i-kanban', href: opportunities(currentTeam.slug), badge: opportunityCount },
-                    { title: 'Projects', icon: 'i-briefcase', href: projects(currentTeam.slug), badge: projectCount },
+                    {
+                        title: 'Dashboard',
+                        icon: 'i-grid',
+                        href: dashboard(currentTeam.slug),
+                    },
+                    {
+                        title: 'Calendar',
+                        icon: 'i-calendar',
+                        href: calendar(currentTeam.slug),
+                    },
+                    {
+                        title: 'Opportunities',
+                        icon: 'i-kanban',
+                        href: opportunities(currentTeam.slug),
+                        badge: opportunityCount,
+                    },
+                    {
+                        title: 'Projects',
+                        icon: 'i-briefcase',
+                        href: projects(currentTeam.slug),
+                        badge: projectCount,
+                    },
                 ],
             },
             {
                 label: 'Documents',
                 items: [
-                    { title: 'Proposals', icon: 'i-file', href: proposals(currentTeam.slug), badge: proposalCount },
-                    { title: 'Quotations', icon: 'i-quote', href: quotations(currentTeam.slug), badge: quotationCount },
-                    { title: 'Invoices', icon: 'i-receipt', href: invoices(currentTeam.slug), badge: invoiceCount },
-                    { title: 'Contacts', icon: 'i-users', href: contacts(currentTeam.slug), badge: contactsCount },
+                    {
+                        title: 'Proposals',
+                        icon: 'i-file',
+                        href: proposals(currentTeam.slug),
+                        badge: proposalCount,
+                    },
+                    {
+                        title: 'Quotations',
+                        icon: 'i-quote',
+                        href: quotations(currentTeam.slug),
+                        badge: quotationCount,
+                    },
+                    {
+                        title: 'Invoices',
+                        icon: 'i-receipt',
+                        href: invoices(currentTeam.slug),
+                        badge: invoiceCount,
+                    },
+                    {
+                        title: 'Contacts',
+                        icon: 'i-users',
+                        href: contacts(currentTeam.slug),
+                        badge: contactsCount,
+                    },
                 ],
             },
             {
                 label: 'Workspace',
                 items: [
-                    { title: 'Reminders', icon: 'i-bell', href: reminders(currentTeam.slug), badge: remindersCount },
-                    { title: 'Profile Library', icon: 'i-layers', href: profileLibrary(currentTeam.slug), badge: profilesCount },
+                    {
+                        title: 'Reminders',
+                        icon: 'i-bell',
+                        href: reminders(currentTeam.slug),
+                        badge: remindersCount,
+                    },
+                    {
+                        title: 'Profile Library',
+                        icon: 'i-layers',
+                        href: profileLibrary(currentTeam.slug),
+                        badge: profilesCount,
+                    },
                 ],
             },
         ];
-    }, [currentTeam, opportunityCount, projectCount, proposalCount, invoiceCount, quotationCount, contactsCount, remindersCount, profilesCount]);
+    }, [
+        currentTeam,
+        opportunityCount,
+        projectCount,
+        proposalCount,
+        invoiceCount,
+        quotationCount,
+        contactsCount,
+        remindersCount,
+        profilesCount,
+    ]);
 
     useEffect(() => {
         const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -244,7 +304,10 @@ export default function BiondeskAppShell({
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent): void => {
-            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+            if (
+                (event.metaKey || event.ctrlKey) &&
+                event.key.toLowerCase() === 'k'
+            ) {
                 event.preventDefault();
                 setCommandOpen((current) => !current);
             }
@@ -294,8 +357,8 @@ export default function BiondeskAppShell({
             <aside
                 className={cn(
                     'group/sidebar relative flex shrink-0 flex-col border-r border-bion-border bg-bion-surface [transition:width_0.2s_ease]',
-                    '[&:not(.collapsed)]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] max-[760px]:w-[240px]',
-                    'max-[760px]:fixed max-[760px]:z-[60] max-[760px]:h-screen max-[760px]:-left-[240px]',
+                    'max-[760px]:w-[240px] min-[761px]:[&.collapsed]:w-[68px] [&:not(.collapsed)]:w-[240px]',
+                    'max-[760px]:fixed max-[760px]:-left-[240px] max-[760px]:z-[60] max-[760px]:h-screen',
                     'max-[760px]:[transition:left_0.2s_ease] max-[760px]:[&.mobile-open]:left-0!',
                     desktopCollapsed && 'collapsed',
                     mobileOpen && 'mobile-open',
@@ -303,7 +366,9 @@ export default function BiondeskAppShell({
             >
                 <div className="flex h-[60px] shrink-0 items-center gap-[10px] border-b border-bion-border px-[18px]">
                     <Link
-                        href={currentTeam ? dashboard(currentTeam.slug) : home()}
+                        href={
+                            currentTeam ? dashboard(currentTeam.slug) : home()
+                        }
                         className="flex items-center gap-[10px]"
                     >
                         <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] border border-bion-border bg-bion-surface-raised">
@@ -318,7 +383,9 @@ export default function BiondeskAppShell({
                 <button
                     type="button"
                     className="absolute top-[16px] -right-[14px] z-[35] flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-bion-border bg-bion-surface text-bion-text-muted shadow-bion-raised [transition:background_0.12s_ease,color_0.12s_ease,border-color_0.12s_ease] hover:border-bion-accent hover:text-bion-text max-[760px]:hidden"
-                    title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    title={
+                        desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
+                    }
                     onClick={toggleCollapsed}
                 >
                     <IconUse
@@ -332,7 +399,7 @@ export default function BiondeskAppShell({
                     {navSections.map((section, index) => (
                         <div key={section.label ?? `section-${index}`}>
                             {section.label ? (
-                                <div className="pt-[14px] px-[10px] pb-[6px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.06em] group-[.collapsed]/sidebar:hidden">
+                                <div className="px-[10px] pt-[14px] pb-[6px] text-[11px] [letter-spacing:0.06em] text-bion-text-muted uppercase group-[.collapsed]/sidebar:hidden">
                                     {section.label}
                                 </div>
                             ) : null}
@@ -341,7 +408,11 @@ export default function BiondeskAppShell({
                                 <SidebarNavLink
                                     key={item.title}
                                     item={item}
-                                    active={item.href ? isCurrentOrParentUrl(item.href) : false}
+                                    active={
+                                        item.href
+                                            ? isCurrentOrParentUrl(item.href)
+                                            : false
+                                    }
                                 />
                             ))}
                         </div>
@@ -352,10 +423,15 @@ export default function BiondeskAppShell({
                     <Link
                         href={profile()}
                         prefetch
-                        className={cn(NAV_ITEM_BASE, 'text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text')}
+                        className={cn(
+                            NAV_ITEM_BASE,
+                            'text-bion-text-muted hover:bg-bion-surface-raised hover:text-bion-text',
+                        )}
                     >
                         <IconUse icon="i-settings" />
-                        <span className="group-[.collapsed]/sidebar:hidden">Settings</span>
+                        <span className="group-[.collapsed]/sidebar:hidden">
+                            Settings
+                        </span>
                         <span className={TOOLTIP_CLS}>Settings</span>
                     </Link>
                 </div>
@@ -371,7 +447,9 @@ export default function BiondeskAppShell({
                         >
                             <IconUse icon="i-menu" />
                         </button>
-                        <span className="text-[13.5px] font-semibold text-bion-text">{currentPageTitle}</span>
+                        <span className="text-[13.5px] font-semibold text-bion-text">
+                            {currentPageTitle}
+                        </span>
                     </div>
 
                     <button
@@ -438,8 +516,8 @@ export default function BiondeskAppShell({
                             </button>
                             <div
                                 className={cn(
-                                    'absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 pointer-events-none shadow-bion-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease]',
-                                    '[&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!',
+                                    'pointer-events-none absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] [transform:translateY(-6px)_scale(0.98)] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 shadow-bion-raised [transition:opacity_0.14s_ease,transform_0.14s_ease]',
+                                    '[&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]! [&.open]:opacity-100!',
                                     notificationsOpen && 'open',
                                 )}
                             >
@@ -447,9 +525,16 @@ export default function BiondeskAppShell({
                                     Notifications
                                 </div>
                                 {notificationItems.map((item) => (
-                                    <div key={item.title} className="rounded-[7px] p-[10px] hover:bg-bion-bg">
-                                        <div className="mb-[2px] text-[12.5px] font-medium">{item.title}</div>
-                                        <div className="text-[11.5px] text-bion-text-muted">{item.time}</div>
+                                    <div
+                                        key={item.title}
+                                        className="rounded-[7px] p-[10px] hover:bg-bion-bg"
+                                    >
+                                        <div className="mb-[2px] text-[12.5px] font-medium">
+                                            {item.title}
+                                        </div>
+                                        <div className="text-[11.5px] text-bion-text-muted">
+                                            {item.time}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -476,8 +561,8 @@ export default function BiondeskAppShell({
                             </button>
                             <div
                                 className={cn(
-                                    'absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 pointer-events-none shadow-bion-raised [transform:translateY(-6px)_scale(0.98)] [transition:opacity_0.14s_ease,transform_0.14s_ease]',
-                                    '[&.open]:opacity-100! [&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]!',
+                                    'pointer-events-none absolute top-[calc(100%+8px)] right-0 z-50 w-[260px] [transform:translateY(-6px)_scale(0.98)] rounded-[10px] border border-bion-border bg-bion-surface-raised p-[6px] opacity-0 shadow-bion-raised [transition:opacity_0.14s_ease,transform_0.14s_ease]',
+                                    '[&.open]:pointer-events-auto! [&.open]:[transform:translateY(0)_scale(1)]! [&.open]:opacity-100!',
                                     userOpen && 'open',
                                 )}
                             >
@@ -515,8 +600,8 @@ export default function BiondeskAppShell({
 
             <div
                 className={cn(
-                    'group/modal fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-[12vh] opacity-0 pointer-events-none [transition:opacity_0.15s_ease]',
-                    '[&.open]:opacity-100! [&.open]:pointer-events-auto!',
+                    'group/modal pointer-events-none fixed inset-0 z-[100] flex items-start justify-center bg-black/50 pt-[12vh] opacity-0 [transition:opacity_0.15s_ease]',
+                    '[&.open]:pointer-events-auto! [&.open]:opacity-100!',
                     commandOpen && 'open',
                 )}
                 onClick={(event) => {
@@ -525,7 +610,7 @@ export default function BiondeskAppShell({
                     }
                 }}
             >
-                <div className="w-full max-w-[560px] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transform:translateY(-12px)_scale(0.98)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
+                <div className="w-full max-w-[560px] [transform:translateY(-12px)_scale(0.98)] rounded-[14px] border border-bion-border bg-bion-surface-raised shadow-[0_24px_60px_rgba(0,0,0,0.4)] [transition:transform_0.15s_ease] group-[.open]/modal:[transform:translateY(0)_scale(1)]">
                     <div className="flex items-center gap-[10px] border-b border-bion-border px-[16px] py-[14px] text-bion-text-muted">
                         <IconUse icon="i-search" />
                         <input
@@ -539,32 +624,34 @@ export default function BiondeskAppShell({
                         </span>
                     </div>
                     <div className="max-h-[320px] overflow-y-auto p-[8px]">
-                        {Array.from(new Set(commandItems.map((item) => item.section))).map(
-                            (section) => (
-                                <div key={section}>
-                                    <div className="px-[10px] pt-[10px] pb-[6px] text-[11px] text-bion-text-muted uppercase [letter-spacing:0.05em]">
-                                        {section}
-                                    </div>
-                                    {commandItems
-                                        .filter((item) => item.section === section)
-                                        .map((item) => (
-                                            <button
-                                                key={item.label}
-                                                type="button"
-                                                className={cn(
-                                                    'flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-bion-text hover:bg-bion-accent-soft! hover:text-bion-accent!',
-                                                    '[&.hi]:bg-bion-accent-soft! [&.hi]:text-bion-accent!',
-                                                    item.highlighted && 'hi',
-                                                )}
-                                                onClick={() => setCommandOpen(false)}
-                                            >
-                                                <IconUse icon={item.icon} />
-                                                {item.label}
-                                            </button>
-                                        ))}
+                        {Array.from(
+                            new Set(commandItems.map((item) => item.section)),
+                        ).map((section) => (
+                            <div key={section}>
+                                <div className="px-[10px] pt-[10px] pb-[6px] text-[11px] [letter-spacing:0.05em] text-bion-text-muted uppercase">
+                                    {section}
                                 </div>
-                            ),
-                        )}
+                                {commandItems
+                                    .filter((item) => item.section === section)
+                                    .map((item) => (
+                                        <button
+                                            key={item.label}
+                                            type="button"
+                                            className={cn(
+                                                'flex w-full items-center gap-[12px] rounded-[8px] p-[10px] text-left text-[13.5px] text-bion-text hover:bg-bion-accent-soft! hover:text-bion-accent!',
+                                                '[&.hi]:bg-bion-accent-soft! [&.hi]:text-bion-accent!',
+                                                item.highlighted && 'hi',
+                                            )}
+                                            onClick={() =>
+                                                setCommandOpen(false)
+                                            }
+                                        >
+                                            <IconUse icon={item.icon} />
+                                            {item.label}
+                                        </button>
+                                    ))}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -572,17 +659,13 @@ export default function BiondeskAppShell({
     );
 }
 
-function SidebarNavLink({
-    item,
-    active,
-}: {
-    item: NavItem;
-    active: boolean;
-}) {
+function SidebarNavLink({ item, active }: { item: NavItem; active: boolean }) {
     const content = (
         <>
             <IconUse icon={item.icon} />
-            <span className="group-[.collapsed]/sidebar:hidden">{item.title}</span>
+            <span className="group-[.collapsed]/sidebar:hidden">
+                {item.title}
+            </span>
             {item.badge ? (
                 <span className="ml-auto font-mono text-[11px] text-bion-text-muted group-[.collapsed]/sidebar:hidden">
                     {item.badge}
@@ -609,7 +692,10 @@ function SidebarNavLink({
     }
 
     return (
-        <button type="button" className={cn(NAV_ITEM_BASE, stateClasses, 'w-full text-left')}>
+        <button
+            type="button"
+            className={cn(NAV_ITEM_BASE, stateClasses, 'w-full text-left')}
+        >
             {content}
         </button>
     );
