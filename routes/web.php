@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Controllers\BionAiConversationDestroyController;
+use App\Http\Controllers\BionAiConversationIndexController;
+use App\Http\Controllers\BionAiConversationRenameController;
+use App\Http\Controllers\BionAiConversationStoreController;
+use App\Http\Controllers\BionAiMessageStatusController;
+use App\Http\Controllers\BionAiMessageStoreController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -86,6 +92,23 @@ Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('bion-ai', BionAiConversationIndexController::class)->name('bion-ai.index');
+        Route::get('bion-ai/{conversation}', BionAiConversationIndexController::class)
+            ->whereNumber('conversation')
+            ->name('bion-ai.show');
+        Route::post('bion-ai/conversations', BionAiConversationStoreController::class)->name('bion-ai.conversations.store');
+        Route::patch('bion-ai/conversations/{conversation}', BionAiConversationRenameController::class)
+            ->whereNumber('conversation')
+            ->name('bion-ai.conversations.update');
+        Route::delete('bion-ai/conversations/{conversation}', BionAiConversationDestroyController::class)
+            ->whereNumber('conversation')
+            ->name('bion-ai.conversations.destroy');
+        Route::post('bion-ai/conversations/{conversation}/messages', BionAiMessageStoreController::class)
+            ->whereNumber('conversation')
+            ->name('bion-ai.messages.store');
+        Route::get('bion-ai/conversations/{conversation}/messages/status', BionAiMessageStatusController::class)
+            ->whereNumber('conversation')
+            ->name('bion-ai.messages.status');
         Route::get('calendar', CalendarController::class)->name('calendar.index');
         Route::post('calendar/events', EventStoreController::class)->name('calendar.events.store');
         Route::put('calendar/events/{event}', EventUpdateController::class)

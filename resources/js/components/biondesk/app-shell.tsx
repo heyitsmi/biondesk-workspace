@@ -7,6 +7,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { dashboard, home, logout } from '@/routes';
+import { index as bionAi } from '@/routes/bion-ai';
 import { index as calendar } from '@/routes/calendar';
 import { index as contacts } from '@/routes/contacts';
 import { index as invoices } from '@/routes/invoices';
@@ -227,6 +228,11 @@ export default function BiondeskAppShell({
                         icon: 'i-briefcase',
                         href: projects(currentTeam.slug),
                         badge: projectCount,
+                    },
+                    {
+                        title: 'BionAI',
+                        icon: 'i-sparkles',
+                        href: bionAi(currentTeam.slug),
                     },
                 ],
             },

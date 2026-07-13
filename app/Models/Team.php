@@ -197,6 +197,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all BionAI conversations for this team.
+     *
+     * @return HasMany<BionAiConversation, $this>
+     */
+    public function bionAiConversations(): HasMany
+    {
+        return $this->hasMany(BionAiConversation::class);
+    }
+
+    /**
      * Get the lead form banner URL, or null when no banner has been uploaded.
      */
     public function leadFormBannerUrl(): ?string

@@ -43,6 +43,7 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 8. **Reminders** — aturan otomatis (mendekati jatuh tempo, sudah lewat jatuh tempo, follow-up quote yang belum direspon)
 9. **Profile Library** — portfolio, testimonial, dan snippet teks yang jadi bahan AI generation
 10. **PDF export** — proposal, quote, dan invoice bisa dibagikan lewat webview (interaktif, tempat klien accept dan lihat status) sekaligus lampiran PDF (buat diarsipkan, dilampirkan ke email)
+11. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
 
 ## Yang bukan tujuan Biondesk
 

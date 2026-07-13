@@ -34,6 +34,7 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 - Sebagai user, saya ingin punya link public lead form sendiri yang bisa disematkan di bio media sosial, supaya orang bisa langsung kirim inquiry tanpa perlu chat manual dulu
 - Sebagai user, saya ingin bisa kustomisasi tampilan lead form saya sendiri (banner, judul, deskripsi), supaya kesannya representasi brand saya, bukan form generic
 - Sebagai user, saya ingin mencatat permintaan atau revisi ad-hoc dari klien selama project berjalan, supaya tidak ada yang hilang di riwayat chat
+- Sebagai user, saya ingin bertanya ke asisten AI (BionAI) tentang kondisi workspace saya sendiri (task overdue, jadwal hari ini, invoice belum dibayar) dan mendapat jawaban dari data asli, sekaligus tetap bisa tanya hal umum di luar itu seperti chatbot biasa
 
 **Sebagai calon user eksternal (fase setelah versi awal stabil)**
 
@@ -56,6 +57,9 @@ Team (workspace kerja, dengan slug untuk routing)
                     └── ReminderJob
   └── ProfileAsset (portfolio, testimonial, snippet)
   └── Template
+  └── BionAiConversation (percakapan chat AI, per-user)
+        └── BionAiMessage
+  └── BionAiUsageLog (token usage & estimasi cost per turn, dasar untuk halaman AI usage Super Admin di masa depan)
 ```
 
 Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase closing deal) dan ke Project (untuk quote/invoice tambahan selama eksekusi, misalnya milestone atau perubahan scope).
@@ -105,6 +109,13 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 **Reminder & Email**
 - Given reminder rule aktif, when kondisi terpenuhi (mendekati jatuh tempo, lewat jatuh tempo, quote belum direspon), then reminder job terjadwal dan terkirim
 
+**BionAI**
+- Given user tanya hal umum di luar data workspace, when BionAI menjawab, then jawabannya seperti chatbot AI biasa, tanpa restriksi topik
+- Given user tanya soal kondisi kerjanya sendiri (task overdue, jadwal hari ini, invoice belum dibayar, ringkasan pipeline/project), when BionAI menjawab, then jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak
+- Given user kirim pesan, when BionAI sedang memproses jawaban (termasuk yang butuh beberapa kali tool-calling round-trip), then diproses lewat queued job dan di-polling dari frontend, bukan sinkron di request utama
+- Given user punya beberapa percakapan, then bisa switch antar percakapan lewat sidebar, rename judul percakapan, dan hapus percakapan
+- Given provider AI dipanggil, when respons diterima, then token usage (input/output) dan estimasi cost dicatat per percakapan dan per user, sebagai dasar halaman AI usage Super Admin di masa depan (lihat P1)
+
 ### P1 — nice to have
 
 - Subscription billing Biondesk sendiri (Free/Pro atau model lain) lewat gateway seperti Midtrans, **ditunda** sampai ada sinyal willingness-to-pay yang jelas dari user early access
@@ -114,6 +125,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Multi-user per team dengan role granular
 - Light/dark theme switcher, tersimpan per akun (bukan cuma per browser), default mengikuti preferensi OS
 - Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna
+- Halaman AI usage di Super Admin — lihat token usage dan estimasi cost per user platform-wide. Skema pencatatannya (`BionAiUsageLog`) sudah dibangun bersamaan dengan BionAI supaya halaman ini tidak butuh migration tambahan nanti, tapi UI Super Admin-nya sendiri ditunda
 
 ### P2 — future considerations
 
