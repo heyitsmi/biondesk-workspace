@@ -262,9 +262,104 @@ test('portal payload includes safe attachments thread messages and open request 
             ->component('client/portal')
             ->where('portal.stats.openRequests', 1)
             ->has('portal.requests', 2)
+            ->where('portal.requests.0.uuid', $openRequest->uuid)
+            ->where('portal.requests.0.projectId', $project->id)
             ->where('portal.requests.0.status', 'in_progress')
             ->has('portal.requests.0.attachments', 1)
             ->where('portal.requests.0.messages.0.body', 'Here is more detail.')
             ->has('portal.requests.0.messages.0.attachments', 1)
         );
+});
+
+test('client can open only their visible request detail by uuid', function () {
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create(['first_name' => 'Jane', 'last_name' => 'Doe']);
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create(['title' => 'Portal Website']);
+    $requestLog = RequestLog::factory()->for($project)->create([
+        'text' => 'Please update the hero copy.',
+        'visible_to_client' => true,
+        'status' => RequestLogStatus::Reviewing,
+    ]);
+
+    $this->get(route('client-portal.requests.show', [
+        'contact' => $contact->portal_token,
+        'project' => $project->id,
+        'requestLog' => $requestLog->uuid,
+    ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('client/request-log-show')
+            ->where('project.id', $project->id)
+            ->where('project.title', 'Portal Website')
+            ->where('requestLog.uuid', $requestLog->uuid)
+            ->where('requestLog.text', 'Please update the hero copy.')
+            ->where('requestLog.status', 'reviewing')
+        );
+});
+
+test('hidden internal and foreign client request details return not found', function () {
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create();
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    $hiddenRequest = RequestLog::factory()->for($project)->create([
+        'visible_to_client' => false,
+    ]);
+
+    $otherContact = Contact::factory()->for($team)->create();
+    $otherOpportunity = Opportunity::factory()->for($team)->for($otherContact)->create();
+    $otherProject = Project::factory()->for($team)->for($otherOpportunity)->create();
+    $foreignRequest = RequestLog::factory()->for($otherProject)->create([
+        'visible_to_client' => true,
+    ]);
+
+    $this->get(route('client-portal.requests.show', [
+        'contact' => $contact->portal_token,
+        'project' => $project->id,
+        'requestLog' => $hiddenRequest->uuid,
+    ]))->assertNotFound();
+
+    $this->get(route('client-portal.requests.show', [
+        'contact' => $contact->portal_token,
+        'project' => $otherProject->id,
+        'requestLog' => $foreignRequest->uuid,
+    ]))->assertNotFound();
+});
+
+test('client can reply with attachments from dedicated request detail page', function () {
+    Storage::fake('public');
+
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create();
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    $requestLog = RequestLog::factory()->for($project)->create([
+        'visible_to_client' => true,
+    ]);
+
+    $this->from(route('client-portal.requests.show', [
+        'contact' => $contact->portal_token,
+        'project' => $project->id,
+        'requestLog' => $requestLog->uuid,
+    ]))
+        ->post(route('client-portal.request-messages.store', [
+            'contact' => $contact->portal_token,
+            'project' => $project->id,
+            'requestLog' => $requestLog->id,
+        ]), [
+            'body' => 'Adding the requested screenshot.',
+            'attachments' => [UploadedFile::fake()->image('screenshot.png')],
+        ])
+        ->assertRedirect(route('client-portal.requests.show', [
+            'contact' => $contact->portal_token,
+            'project' => $project->id,
+            'requestLog' => $requestLog->uuid,
+        ]));
+
+    $message = RequestLogMessage::sole();
+
+    expect($message->author_type)->toBe(RequestLogMessageAuthorType::Client);
+    expect($message->body)->toBe('Adding the requested screenshot.');
+    expect($message->getMedia('attachments'))->toHaveCount(1);
 });

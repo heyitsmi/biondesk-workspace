@@ -916,6 +916,8 @@ export type PublicDocumentPageProps = {
 
 export type ClientPortalRequest = {
     id: number;
+    uuid: string;
+    projectId: number;
     text: string;
     sourceLabel: string;
     createdAt: string;
@@ -980,4 +982,12 @@ export type ClientPortal = {
 
 export type ClientPortalPageProps = {
     portal: ClientPortal;
+};
+
+export type ClientPortalRequestShowPageProps = {
+    portal: Pick<ClientPortal, 'teamName' | 'portalToken' | 'contact'>;
+    project: Pick<ClientPortalProject, 'id' | 'title' | 'statusLabel' | 'tone' | 'dueAt'>;
+    requestLog: ClientPortalRequest & {
+        projectTitle: string;
+    };
 };

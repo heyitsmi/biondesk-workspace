@@ -1,11 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import type { InertiaForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent, ReactNode } from 'react';
 import { IconSprite, IconUse } from '@/components/biondesk/icon-sprite';
 import { cn } from '@/lib/utils';
-import { store as storeClientRequestMessage } from '@/routes/client-portal/request-messages';
-import { store as storeClientRequest } from '@/routes/client-portal/requests';
+import { show as showClientRequest, store as storeClientRequest } from '@/routes/client-portal/requests';
 import type {
     BiondeskTone,
     ClientPortalDocument,
@@ -13,8 +11,6 @@ import type {
     ClientPortalProject,
     ClientPortalRequest,
     ClientPortalTask,
-    ProjectAttachment,
-    ProjectRequestMessage,
 } from '@/types';
 
 const PILL_BASE =
@@ -51,27 +47,14 @@ type RequestFormValues = {
     attachments: File[];
 };
 
-type ReplyFormValues = {
-    body: string;
-    attachments: File[];
-};
-
-type FormErrors = Partial<Record<'text' | 'body' | 'attachments', string>>;
+type FormErrors = Partial<Record<'text' | 'attachments', string>>;
 
 export default function ClientPortalPage({ portal }: ClientPortalPageProps) {
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
         portal.projects[0]?.id ?? null,
     );
-    const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
-        portal.requests[0]?.id ?? null,
-    );
-
     const requestForm = useForm<RequestFormValues>({
         text: '',
-        attachments: [],
-    });
-    const replyForm = useForm<ReplyFormValues>({
-        body: '',
         attachments: [],
     });
 
@@ -83,16 +66,7 @@ export default function ClientPortalPage({ portal }: ClientPortalPageProps) {
         [portal.projects, selectedProjectId],
     );
 
-    const selectedRequest = useMemo(
-        () =>
-            portal.requests.find((request) => request.id === selectedRequestId) ??
-            portal.requests[0] ??
-            null,
-        [portal.requests, selectedRequestId],
-    );
-
     const requestErrors = requestForm.errors as FormErrors;
-    const replyErrors = replyForm.errors as FormErrors;
 
     const submitRequest = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
@@ -113,37 +87,9 @@ export default function ClientPortalPage({ portal }: ClientPortalPageProps) {
         );
     };
 
-    const submitReply = (event: FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-
-        if (!selectedProject || !selectedRequest || replyForm.data.body.trim() === '') {
-            return;
-        }
-
-        replyForm.post(
-            storeClientRequestMessage({
-                contact: portal.portalToken,
-                project: selectedProject.id,
-                requestLog: selectedRequest.id,
-            }).url,
-            {
-                preserveScroll: true,
-                onSuccess: () => replyForm.reset(),
-            },
-        );
-    };
-
     const addRequestAttachments = (event: ChangeEvent<HTMLInputElement>): void => {
         requestForm.setData('attachments', [
             ...requestForm.data.attachments,
-            ...Array.from(event.target.files ?? []),
-        ]);
-        event.target.value = '';
-    };
-
-    const addReplyAttachments = (event: ChangeEvent<HTMLInputElement>): void => {
-        replyForm.setData('attachments', [
-            ...replyForm.data.attachments,
             ...Array.from(event.target.files ?? []),
         ]);
         event.target.value = '';
@@ -348,32 +294,13 @@ export default function ClientPortalPage({ portal }: ClientPortalPageProps) {
                                 <Panel title="Request Threads">
                                     {portal.requests.length > 0 ? (
                                         <div className="grid gap-[12px]">
-                                            <div className="grid gap-[8px]">
-                                                {portal.requests.map((request) => (
-                                                    <RequestThreadButton
-                                                        key={request.id}
-                                                        request={request}
-                                                        active={selectedRequest?.id === request.id}
-                                                        onSelect={() => setSelectedRequestId(request.id)}
-                                                    />
-                                                ))}
-                                            </div>
-
-                                            {selectedRequest ? (
-                                                <ThreadDetail
-                                                    request={selectedRequest}
-                                                    replyForm={replyForm}
-                                                    replyErrors={replyErrors}
-                                                    onSubmit={submitReply}
-                                                    onAddAttachments={addReplyAttachments}
-                                                    onRemoveAttachment={(index) =>
-                                                        replyForm.setData(
-                                                            'attachments',
-                                                            replyForm.data.attachments.filter((_, fileIndex) => fileIndex !== index),
-                                                        )
-                                                    }
+                                            {portal.requests.map((request) => (
+                                                <RequestThreadButton
+                                                    key={request.id}
+                                                    request={request}
+                                                    portalToken={portal.portalToken}
                                                 />
-                                            ) : null}
+                                            ))}
                                         </div>
                                     ) : (
                                         <EmptyState message="No client-visible requests yet." />
@@ -510,21 +437,21 @@ function DocumentRow({ document }: { document: ClientPortalDocument }) {
 
 function RequestThreadButton({
     request,
-    active,
-    onSelect,
+    portalToken,
 }: {
     request: ClientPortalRequest;
-    active: boolean;
-    onSelect: () => void;
+    portalToken: string;
 }) {
+    const href = showClientRequest({
+        contact: portalToken,
+        project: request.projectId,
+        requestLog: request.uuid,
+    }).url;
+
     return (
-        <button
-            type="button"
-            className={cn(
-                'rounded-[10px] border border-bion-border bg-bion-bg p-[12px] text-left hover:border-bion-accent',
-                active && 'border-bion-accent',
-            )}
-            onClick={onSelect}
+        <Link
+            href={href}
+            className="rounded-[10px] border border-bion-border bg-bion-bg p-[12px] text-left [transition:border-color_0.12s_ease,transform_0.12s_ease] hover:-translate-y-[1px] hover:border-bion-accent"
         >
             <div className="mb-[8px] flex items-center justify-between gap-[10px]">
                 <span className="min-w-0 truncate text-[12px] font-medium text-bion-text-muted">
@@ -537,129 +464,9 @@ function RequestThreadButton({
                 <span className="font-mono">{request.createdAt}</span>
                 {request.attachments.length > 0 ? <span>{request.attachments.length} files</span> : null}
                 {request.messages.length > 0 ? <span>{request.messages.length} replies</span> : null}
+                <span className="ml-auto font-semibold text-bion-accent">Open thread</span>
             </div>
-        </button>
-    );
-}
-
-function ThreadDetail({
-    request,
-    replyForm,
-    replyErrors,
-    onSubmit,
-    onAddAttachments,
-    onRemoveAttachment,
-}: {
-    request: ClientPortalRequest;
-    replyForm: InertiaForm<ReplyFormValues>;
-    replyErrors: FormErrors;
-    onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-    onAddAttachments: (event: ChangeEvent<HTMLInputElement>) => void;
-    onRemoveAttachment: (index: number) => void;
-}) {
-    return (
-        <div className="rounded-[10px] border border-bion-border bg-bion-bg p-[12px]">
-            <div className="mb-[12px] flex flex-wrap items-center justify-between gap-[8px]">
-                <div className="text-[12px] font-semibold">Thread</div>
-                <StatusPill label={request.statusLabel} tone={request.statusTone} />
-            </div>
-
-            <div className="mb-[12px] rounded-[9px] border border-bion-border bg-bion-surface p-[12px]">
-                <div className="mb-[8px] flex flex-wrap items-center justify-between gap-[8px] text-[12px] text-bion-text-muted">
-                    <span>{request.projectTitle}</span>
-                    <span className="font-mono">{request.createdAt}</span>
-                </div>
-                <p className="whitespace-pre-line text-[13px] leading-[1.6]">{request.text}</p>
-                <AttachmentLinks attachments={request.attachments} />
-            </div>
-
-            <div className="mb-[12px] grid gap-[10px]">
-                {request.messages.map((message) => (
-                    <MessageItem key={message.id} message={message} />
-                ))}
-                {request.messages.length === 0 ? (
-                    <div className="text-[12.5px] text-bion-text-muted">
-                        No replies yet.
-                    </div>
-                ) : null}
-            </div>
-
-            <form className="grid gap-[10px]" onSubmit={onSubmit}>
-                <div>
-                    <label className={FIELD_LABEL} htmlFor="reply-body">
-                        Reply
-                    </label>
-                    <textarea
-                        id="reply-body"
-                        rows={4}
-                        className={cn(FIELD_INPUT, 'resize-y leading-[1.6]')}
-                        placeholder="Add a follow-up or answer for the team."
-                        value={replyForm.data.body}
-                        onChange={(event) => replyForm.setData('body', event.target.value)}
-                    />
-                    <FieldError message={replyErrors.body} />
-                </div>
-                <FilePicker
-                    files={replyForm.data.attachments}
-                    onAdd={onAddAttachments}
-                    onRemove={onRemoveAttachment}
-                />
-                <FieldError message={replyErrors.attachments} />
-                {replyForm.progress ? (
-                    <ProgressBar value={replyForm.progress.percentage ?? 0} />
-                ) : null}
-                {replyForm.wasSuccessful ? (
-                    <div className="rounded-[8px] bg-bion-success-soft px-[12px] py-[9px] text-[12.5px] text-bion-success">
-                        Reply sent.
-                    </div>
-                ) : null}
-                <button type="submit" className={BTN_PRIMARY} disabled={replyForm.processing}>
-                    <IconUse icon="i-send" small={true} />
-                    {replyForm.processing ? 'Sending...' : 'Send Reply'}
-                </button>
-            </form>
-        </div>
-    );
-}
-
-function MessageItem({ message }: { message: ProjectRequestMessage }) {
-    return (
-        <div
-            className={cn(
-                'rounded-[9px] border border-bion-border p-[12px]',
-                message.authorType === 'client' ? 'bg-bion-surface' : 'bg-bion-accent-soft',
-            )}
-        >
-            <div className="mb-[8px] flex flex-wrap items-center justify-between gap-[8px] text-[12px] text-bion-text-muted">
-                <span>{message.authorLabel}</span>
-                <span className="font-mono">{message.createdAt}</span>
-            </div>
-            <p className="whitespace-pre-line text-[13px] leading-[1.6]">{message.body}</p>
-            <AttachmentLinks attachments={message.attachments} />
-        </div>
-    );
-}
-
-function AttachmentLinks({ attachments }: { attachments: ProjectAttachment[] }) {
-    if (attachments.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="mt-[10px] flex flex-col gap-[6px]">
-            {attachments.map((attachment, index) => (
-                <a
-                    key={`${attachment.name}-${index}`}
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-[7px] rounded-[7px] border border-bion-border bg-bion-surface px-[9px] py-[7px] text-[12px] hover:border-bion-accent"
-                >
-                    <IconUse icon="i-paperclip" small={true} />
-                    <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
-                </a>
-            ))}
-        </div>
+        </Link>
     );
 }
 
