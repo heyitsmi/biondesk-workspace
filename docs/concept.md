@@ -31,6 +31,7 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 - **AI proposal generation yang terhubung ke Profile Library**, bukan generic AI writer, hasilnya disesuaikan dengan skill, portfolio, dan testimonial milik user sendiri
 - **Client Portal ringan tanpa akun klien**, sehingga klien bisa melihat project, dokumen, dan request thread lewat satu secret link per contact tanpa user harus membuat akun tambahan untuk mereka
 - **AI request breakdown yang membandingkan request dengan task yang sudah ada**, termasuk semantic duplicate/related detection memakai embedding, supaya revisi panjang dari klien bisa dipecah jadi task tanpa menggandakan pekerjaan lama
+- **Workflow Automation berbasis template**, supaya follow-up internal seperti triage request, client reply, invoice overdue, dan quote unresponded bisa otomatis dibuat sebagai task/event/status update tanpa user membangun rule dari nol
 - **Fleksibel soal sumber lead dan metode pembayaran**, tidak diasumsikan selalu dari satu marketplace tertentu, dan tidak memaksa user memakai payment gateway Biondesk
 
 ## Pilar fitur utama
@@ -43,15 +44,17 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 6. **Invoice** — dibuat manual atau dari quote yang di-accept, dengan opsi otomatis ditawarkan begitu proposal accepted (user tetap yang memilih setiap saat, bukan otomatis penuh)
 7. **Payment tracking** — manual, freeform, mendukung banyak payment record per invoice (jadi kasus DP dan pelunasan bisa dicatat dalam satu invoice yang sama). Client membayar langsung ke user lewat payment link atau instruksi pembayaran milik user sendiri
 8. **Reminders** — aturan otomatis (mendekati jatuh tempo, sudah lewat jatuh tempo, follow-up quote yang belum direspon)
-9. **Profile Library** — portfolio, testimonial, dan snippet teks yang jadi bahan AI generation
-10. **PDF export** — proposal, quote, dan invoice bisa dibagikan lewat webview (interaktif, tempat klien accept dan lihat status) sekaligus lampiran PDF (buat diarsipkan, dilampirkan ke email)
-11. **Client Portal** — halaman publik token-based per Contact (`/c/{portal_token}`) untuk klien melihat project mereka, dokumen yang sudah dibagikan, request yang client-visible, dan membalas thread request dengan attachment tanpa login
-12. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
-13. **Insights / blog engine** — kanal konten publik untuk edukasi freelancer/agency dan akuisisi organik. Blog dan kategori dikelola dari Ops Portal, tampil dinamis di halaman publik `/blog` dan `/blog/{slug}`, bisa diisi manual atau dijadwalkan untuk generate artikel SEO/GEO/AEO beserta thumbnail menggunakan OpenAI API, serta masuk ke sitemap realtime untuk Search Console.
+9. **Workflow Automation** — rules engine kecil berbasis template untuk action internal yang aman: membuat task, membuat calendar event, mengubah status request/project, dan menambahkan activity log saat trigger umum terjadi. V1 tidak mencakup email automation, webhook, external integration, atau visual builder penuh
+10. **Profile Library** — portfolio, testimonial, dan snippet teks yang jadi bahan AI generation
+11. **PDF export** — proposal, quote, dan invoice bisa dibagikan lewat webview (interaktif, tempat klien accept dan lihat status) sekaligus lampiran PDF (buat diarsipkan, dilampirkan ke email)
+12. **Client Portal** — halaman publik token-based per Contact (`/c/{portal_token}`) untuk klien melihat project mereka, dokumen yang sudah dibagikan, request yang client-visible, dan membalas thread request dengan attachment tanpa login
+13. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
+14. **Insights / blog engine** — kanal konten publik untuk edukasi freelancer/agency dan akuisisi organik. Blog dan kategori dikelola dari Ops Portal, tampil dinamis di halaman publik `/blog` dan `/blog/{slug}`, bisa diisi manual atau dijadwalkan untuk generate artikel SEO/GEO/AEO beserta thumbnail menggunakan OpenAI API, serta masuk ke sitemap realtime untuk Search Console.
 
 ## Yang bukan tujuan Biondesk
 
 - Bukan payment processor. Biondesk tidak pernah memegang dana klien, murni pencatatan manual
+- Bukan Zapier/Make replacement. Workflow Automation v1 hanya template rules dan action internal Biondesk; tidak mengirim webhook, email campaign, atau integrasi eksternal
 - Bukan escrow, payment router, atau auto-reconciliation tool untuk pembayaran invoice klien
 - Bukan accounting software lengkap, tidak menggantikan software pembukuan resmi
 - Bukan marketplace pencari klien baru

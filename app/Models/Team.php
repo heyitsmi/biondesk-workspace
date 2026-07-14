@@ -207,6 +207,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all workflow automations for this team.
+     *
+     * @return HasMany<WorkflowAutomation, $this>
+     */
+    public function workflowAutomations(): HasMany
+    {
+        return $this->hasMany(WorkflowAutomation::class);
+    }
+
+    /**
      * Get the lead form banner URL, or null when no banner has been uploaded.
      */
     public function leadFormBannerUrl(): ?string

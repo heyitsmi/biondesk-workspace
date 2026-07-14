@@ -20,6 +20,7 @@ class SidebarCounts
      *     invoices: int,
      *     contacts: int,
      *     reminders: int,
+     *     automations: int,
      *     profileLibrary: int
      * }
      */
@@ -40,6 +41,7 @@ class SidebarCounts
             'reminders' => ReminderJob::query()
                 ->whereHas('document', fn (Builder $query) => $query->whereBelongsTo($team))
                 ->count(),
+            'automations' => $team->workflowAutomations()->count(),
             'profileLibrary' => $team->profileAssets()->count(),
         ];
     }

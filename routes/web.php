@@ -88,6 +88,8 @@ use App\Http\Controllers\TaskMoveController;
 use App\Http\Controllers\TaskStoreController;
 use App\Http\Controllers\TaskUpdateController;
 use App\Http\Controllers\Teams\TeamInvitationController;
+use App\Http\Controllers\WorkflowAutomationController;
+use App\Http\Controllers\WorkflowAutomationToggleController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
@@ -304,6 +306,21 @@ Route::prefix('app/{current_team}')
         Route::patch('reminders/{reminder}/dismiss', ReminderDismissController::class)
             ->whereNumber('reminder')
             ->name('reminders.dismiss');
+        Route::get('automations', [WorkflowAutomationController::class, 'index'])->name('automations.index');
+        Route::get('automations/create', [WorkflowAutomationController::class, 'create'])->name('automations.create');
+        Route::post('automations', [WorkflowAutomationController::class, 'store'])->name('automations.store');
+        Route::get('automations/{automation}/edit', [WorkflowAutomationController::class, 'edit'])
+            ->whereNumber('automation')
+            ->name('automations.edit');
+        Route::put('automations/{automation}', [WorkflowAutomationController::class, 'update'])
+            ->whereNumber('automation')
+            ->name('automations.update');
+        Route::patch('automations/{automation}/toggle', WorkflowAutomationToggleController::class)
+            ->whereNumber('automation')
+            ->name('automations.toggle');
+        Route::delete('automations/{automation}', [WorkflowAutomationController::class, 'destroy'])
+            ->whereNumber('automation')
+            ->name('automations.destroy');
         Route::controller(ProfileLibraryController::class)->group(function () {
             Route::get('profiles', 'index')->name('profiles.index');
             Route::get('profiles/create', 'create')->name('profiles.create');
