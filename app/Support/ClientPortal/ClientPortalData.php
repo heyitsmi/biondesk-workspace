@@ -55,6 +55,7 @@ class ClientPortalData
                 'documents' => $documents->map(fn (Document $document) => $this->documentArray($document))->all(),
                 'requests' => $requests->map(fn (RequestLog $requestLog) => [
                     ...$requestLog->toClientPortalArray(),
+                    'projectId' => $requestLog->project_id,
                     'projectTitle' => $requestLog->project->title,
                 ])->all(),
             ],

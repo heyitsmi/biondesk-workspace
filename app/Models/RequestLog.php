@@ -117,6 +117,8 @@ class RequestLog extends Model implements HasMedia
     {
         return [
             'id' => $this->id,
+            'uuid' => $this->uuid,
+            'projectId' => $this->project_id,
             'text' => $this->text,
             'sourceLabel' => $this->source->label(),
             'createdAt' => $this->created_at?->format('M j, Y') ?? '',

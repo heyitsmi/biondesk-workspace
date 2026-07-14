@@ -10,6 +10,7 @@ use App\Http\Controllers\BlogIndexController;
 use App\Http\Controllers\BlogShowController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientPortalController;
+use App\Http\Controllers\ClientPortalRequestLogShowController;
 use App\Http\Controllers\ClientPortalRequestMessageStoreController;
 use App\Http\Controllers\ClientPortalRequestStoreController;
 use App\Http\Controllers\ContactController;
@@ -102,6 +103,10 @@ Route::get('/c/{contact:portal_token}', ClientPortalController::class)->name('cl
 Route::post('/c/{contact:portal_token}/projects/{project}/requests', ClientPortalRequestStoreController::class)
     ->whereNumber('project')
     ->name('client-portal.requests.store');
+Route::get('/c/{contact:portal_token}/projects/{project}/requests/{requestLog}', ClientPortalRequestLogShowController::class)
+    ->whereNumber('project')
+    ->whereUuid('requestLog')
+    ->name('client-portal.requests.show');
 Route::post('/c/{contact:portal_token}/projects/{project}/requests/{requestLog}/messages', ClientPortalRequestMessageStoreController::class)
     ->whereNumber(['project', 'requestLog'])
     ->name('client-portal.request-messages.store');
