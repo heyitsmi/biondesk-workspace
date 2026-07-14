@@ -7,15 +7,19 @@ import { edit as projectEdit, index as projects, show as projectShow, update as 
 import {
     convertToTask as convertRequestLogToTask,
     destroy as destroyRequestLog,
+    show as showRequestLog,
     store as storeRequestLog,
     update as updateRequestLog,
 } from '@/routes/projects/request-logs';
+import { store as storeRequestLogMessage } from '@/routes/projects/request-logs/messages';
+import { update as updateRequestLogStatus } from '@/routes/projects/request-logs/status';
 import { destroy as destroyTask, move as moveTask, store as storeTask, update as updateTask } from '@/routes/projects/tasks';
 import type {
     BiondeskTone,
     ProjectAttachment,
     ProjectRequestClassification,
     ProjectRequestSource,
+    ProjectRequestStatus,
     ProjectShowPageProps,
     ProjectTaskStatus,
 } from '@/types';
@@ -71,9 +75,15 @@ type RequestDraft = {
     text: string;
     source: ProjectRequestSource;
     classification: ProjectRequestClassification;
+    status: ProjectRequestStatus;
     notes: string;
     existingAttachments: ProjectAttachment[];
     newAttachments: File[];
+};
+
+type ReplyDraft = {
+    body: string;
+    attachments: File[];
 };
 
 const toneClassMap: Record<BiondeskTone, string> = {
@@ -104,6 +114,14 @@ const requestClassMap: Record<ProjectRequestClassification, string> = {
     contradiction: 'bg-bion-danger-soft text-bion-danger',
 };
 
+const requestStatusLabelMap: Record<ProjectRequestStatus, string> = {
+    submitted: 'Submitted',
+    reviewing: 'Reviewing',
+    in_progress: 'In Progress',
+    resolved: 'Resolved',
+    declined: 'Declined',
+};
+
 const sourceIconMap: Record<ProjectRequestSource, string> = {
     WhatsApp: 'i-message-circle',
     Email: 'i-mail',
@@ -117,9 +135,15 @@ const emptyRequestDraft = (): RequestDraft => ({
     text: '',
     source: 'WhatsApp',
     classification: 'new',
+    status: 'submitted',
     notes: '',
     existingAttachments: [],
     newAttachments: [],
+});
+
+const emptyReplyDraft = (): ReplyDraft => ({
+    body: '',
+    attachments: [],
 });
 
 export default function ProjectShowPage({
@@ -143,6 +167,9 @@ export default function ProjectShowPage({
     const [reqFilter, setReqFilter] = useState<
         'all' | ProjectRequestClassification
     >('all');
+    const [reqStatusFilter, setReqStatusFilter] = useState<
+        'all' | ProjectRequestStatus
+    >('all');
     const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
     const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
     const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
@@ -150,6 +177,7 @@ export default function ProjectShowPage({
         null,
     );
     const [requestDraft, setRequestDraft] = useState<RequestDraft | null>(null);
+    const [replyDraft, setReplyDraft] = useState<ReplyDraft>(emptyReplyDraft());
     const [showExtractModal, setShowExtractModal] = useState(false);
     const [extractSource, setExtractSource] = useState<ExtractSource>('text');
     const [extractInput, setExtractInput] = useState('');
@@ -172,14 +200,24 @@ export default function ProjectShowPage({
         return project.requestLogs.filter((requestLog) => {
             const matchesFilter =
                 reqFilter === 'all' || requestLog.classification === reqFilter;
+            const matchesStatus =
+                reqStatusFilter === 'all' || requestLog.status === reqStatusFilter;
             const matchesQuery =
                 query === '' ||
                 requestLog.text.toLowerCase().includes(query) ||
                 requestLog.notes.toLowerCase().includes(query);
 
-            return matchesFilter && matchesQuery;
+            return matchesFilter && matchesStatus && matchesQuery;
         });
-    }, [project.requestLogs, reqFilter, reqSearch]);
+    }, [project.requestLogs, reqFilter, reqSearch, reqStatusFilter]);
+
+    const editingRequestLog = useMemo(
+        () =>
+            editingRequestId === null
+                ? null
+                : project.requestLogs.find((requestLog) => requestLog.id === editingRequestId) ?? null,
+        [editingRequestId, project.requestLogs],
+    );
 
     const saveDetails = (): void => {
         if (!currentTeam) {
@@ -359,15 +397,18 @@ export default function ProjectShowPage({
             text: requestLog.text,
             source: requestLog.source,
             classification: requestLog.classification,
+            status: requestLog.status,
             notes: requestLog.notes,
             existingAttachments: [...requestLog.attachments],
             newAttachments: [],
         });
+        setReplyDraft(emptyReplyDraft());
     };
 
     const closeRequestDetail = (): void => {
         setEditingRequestId(null);
         setRequestDraft(null);
+        setReplyDraft(emptyReplyDraft());
     };
 
     const saveRequestDetail = (): void => {
@@ -379,6 +420,7 @@ export default function ProjectShowPage({
             text: requestDraft.text.trim(),
             source: requestDraft.source,
             classification: requestDraft.classification,
+            status: requestDraft.status,
             notes: requestDraft.notes,
             attachments: requestDraft.newAttachments,
         };
@@ -396,6 +438,21 @@ export default function ProjectShowPage({
                 { preserveScroll: true, onSuccess: closeRequestDetail },
             );
         }
+    };
+
+    const changeRequestStatus = (
+        requestId: number,
+        status: ProjectRequestStatus,
+    ): void => {
+        if (!currentTeam) {
+            return;
+        }
+
+        router.patch(
+            updateRequestLogStatus({ current_team: currentTeam.slug, project: project.id, requestLog: requestId }).url,
+            { status },
+            { preserveScroll: true },
+        );
     };
 
     const dismissRequest = (requestId: number): void => {
@@ -443,6 +500,45 @@ export default function ProjectShowPage({
         });
 
         event.target.value = '';
+    };
+
+    const handleReplyAttachmentChange = (
+        event: ChangeEvent<HTMLInputElement>,
+    ): void => {
+        const files = Array.from(event.target.files ?? []);
+
+        if (files.length === 0) {
+            return;
+        }
+
+        setReplyDraft({
+            ...replyDraft,
+            attachments: [...replyDraft.attachments, ...files],
+        });
+
+        event.target.value = '';
+    };
+
+    const submitTeamReply = (): void => {
+        if (
+            editingRequestId === null ||
+            replyDraft.body.trim() === '' ||
+            !currentTeam
+        ) {
+            return;
+        }
+
+        router.post(
+            storeRequestLogMessage({ current_team: currentTeam.slug, project: project.id, requestLog: editingRequestId }).url,
+            {
+                body: replyDraft.body.trim(),
+                attachments: replyDraft.attachments,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => setReplyDraft(emptyReplyDraft()),
+            },
+        );
     };
 
     const openExtractModal = (): void => {
@@ -956,11 +1052,25 @@ export default function ProjectShowPage({
                     </div>
 
                     <div className={cn('min-h-0 flex-col', activeTab === 'reqlog' ? 'flex' : 'hidden')}>
-                        <div className="mb-[14px] shrink-0">
-                            <div className="mb-[12px] flex justify-end">
+                        <div className="mb-[16px] shrink-0">
+                            <div className="mb-[12px] flex items-center justify-between gap-[12px] max-[760px]:flex-col max-[760px]:items-stretch">
+                                <label className="flex min-w-0 flex-1 items-center gap-[8px] rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[8px] text-bion-text-muted">
+                                    <svg className={ICON_SM_CLS}>
+                                        <use href="#i-search" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-bion-text outline-none"
+                                        placeholder="Search requests, notes, or context..."
+                                        value={reqSearch}
+                                        onChange={(event) =>
+                                            setReqSearch(event.target.value)
+                                        }
+                                    />
+                                </label>
                                 <button
                                     type="button"
-                                    className={BTN_GHOST_SM}
+                                    className={cn(BTN_GHOST_SM, 'shrink-0 justify-center')}
                                     onClick={() => openRequestDetail(null)}
                                 >
                                     <svg className={ICON_SM_CLS}>
@@ -970,113 +1080,174 @@ export default function ProjectShowPage({
                                 </button>
                             </div>
 
-                            <label className="mb-[12px] flex items-center gap-[8px] rounded-[8px] border border-bion-border bg-bion-surface px-[12px] py-[8px] text-bion-text-muted">
-                                <svg className={ICON_SM_CLS}>
-                                    <use href="#i-search" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    className="flex-1 border-none bg-transparent text-[13px] text-bion-text outline-none"
-                                    placeholder="Search past requests by keyword, content..."
-                                    value={reqSearch}
-                                    onChange={(event) =>
-                                        setReqSearch(event.target.value)
-                                    }
-                                />
-                            </label>
+                            <div className="rounded-[10px] border border-bion-border bg-bion-surface p-[10px]">
+                                <div className="mb-[8px] flex flex-wrap gap-[8px]">
+                                    {(
+                                        [
+                                            ['all', 'All Requests'],
+                                            ['new', 'New'],
+                                            ['duplicate', 'Duplicate'],
+                                            ['related', 'Related'],
+                                            ['contradiction', 'Contradiction'],
+                                        ] as Array<
+                                            ['all' | ProjectRequestClassification, string]
+                                        >
+                                    ).map(([key, label]) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            className={cn(
+                                                'rounded-full border border-bion-border bg-bion-bg px-[12px] py-[5px] text-[12px] font-medium text-bion-text-muted',
+                                                reqFilter === key && 'border-bion-text! bg-bion-text! text-bion-bg!',
+                                            )}
+                                            onClick={() => setReqFilter(key)}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
 
-                            <div className="flex flex-wrap gap-[8px]">
-                                {(
-                                    [
-                                        ['all', 'All Requests'],
-                                        ['new', 'New'],
-                                        ['duplicate', 'Duplicate'],
-                                        ['related', 'Related'],
-                                        ['contradiction', 'Contradiction'],
-                                    ] as Array<
-                                        ['all' | ProjectRequestClassification, string]
-                                    >
-                                ).map(([key, label]) => (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        className={cn(
-                                            'rounded-full border border-bion-border bg-bion-surface px-[14px] py-[6px] text-[12.5px] font-medium text-bion-text-muted',
-                                            reqFilter === key && 'border-bion-text! bg-bion-text! text-bion-bg!',
-                                        )}
-                                        onClick={() => setReqFilter(key)}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
+                                <div className="flex flex-wrap gap-[8px]">
+                                    {(
+                                        [
+                                            ['all', 'All Statuses'],
+                                            ['submitted', 'Submitted'],
+                                            ['reviewing', 'Reviewing'],
+                                            ['in_progress', 'In Progress'],
+                                            ['resolved', 'Resolved'],
+                                            ['declined', 'Declined'],
+                                        ] as Array<['all' | ProjectRequestStatus, string]>
+                                    ).map(([key, label]) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            className={cn(
+                                                'rounded-full border border-bion-border bg-bion-bg px-[12px] py-[5px] text-[12px] font-medium text-bion-text-muted',
+                                                reqStatusFilter === key && 'border-bion-text! bg-bion-text! text-bion-bg!',
+                                            )}
+                                            onClick={() => setReqStatusFilter(key)}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-y-auto">
+                        <div className="min-h-0 flex-1 space-y-[10px] overflow-y-auto">
                             {filteredRequestLogs.length > 0 ? (
                                 filteredRequestLogs.map((requestLog) => (
                                     <div
                                         key={requestLog.id}
-                                        className="mb-[10px] flex cursor-pointer items-center gap-[16px] rounded-[10px] border border-bion-border bg-bion-surface p-[14px_16px] max-[760px]:flex-col max-[760px]:items-start"
+                                        className="grid cursor-pointer gap-[14px] rounded-[10px] border border-bion-border bg-bion-surface p-[14px] transition hover:border-bion-accent/60 hover:bg-bion-surface-raised min-[980px]:grid-cols-[minmax(0,1fr)_auto]"
                                         onClick={() =>
                                             openRequestDetail(requestLog.id)
                                         }
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <div className="mb-[6px] text-[13.5px] font-medium">
-                                                "{requestLog.text}"
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-[7px] text-[12px] text-bion-text-muted">
-                                                <svg className={ICON_SM_CLS}>
-                                                    <use
-                                                        href={`#${
-                                                            sourceIconMap[
-                                                                requestLog
-                                                                    .source
-                                                            ]
-                                                        }`}
+                                            <div className="mb-[10px] flex flex-wrap items-center gap-[7px]">
+                                                <span
+                                                    className={cn(
+                                                        'rounded-full px-[10px] py-[3px] text-[10.5px] font-bold uppercase [letter-spacing:0.03em]',
+                                                        requestClassMap[
+                                                            requestLog.classification
+                                                        ],
+                                                    )}
+                                                >
+                                                    {requestLog.classification}
+                                                </span>
+                                                <span className={toneClassMap[requestLog.statusTone]}>
+                                                    <span
+                                                        className={cn(
+                                                            'h-[6px] w-[6px] rounded-full',
+                                                            toneDotMap[requestLog.statusTone],
+                                                        )}
                                                     />
-                                                </svg>
-                                                {requestLog.source} ·{' '}
-                                                {requestLog.date}
+                                                    {requestLog.statusLabel}
+                                                </span>
+                                            </div>
+
+                                            <p className="mb-[10px] max-w-[820px] overflow-hidden text-[13.5px] font-medium leading-[1.55] text-bion-text [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4]">
+                                                {requestLog.text}
+                                            </p>
+
+                                            <div className="flex flex-wrap items-center gap-[7px] text-[12px] text-bion-text-muted">
+                                                <span className="inline-flex items-center gap-[6px] rounded-full border border-bion-border bg-bion-bg px-[9px] py-[4px]">
+                                                    <svg className={ICON_SM_CLS}>
+                                                        <use
+                                                            href={`#${
+                                                                sourceIconMap[
+                                                                    requestLog
+                                                                        .source
+                                                                ]
+                                                            }`}
+                                                        />
+                                                    </svg>
+                                                    {requestLog.source}
+                                                </span>
+                                                <span className="rounded-full border border-bion-border bg-bion-bg px-[9px] py-[4px] font-mono">
+                                                    {requestLog.date}
+                                                </span>
                                                 {requestLog.notes !== '' ? (
-                                                    <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                    <span className="inline-flex items-center gap-[5px] rounded-full border border-bion-border bg-bion-bg px-[9px] py-[4px]">
                                                         <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                             <use href="#i-align-left" />
                                                         </svg>
+                                                        Notes
                                                     </span>
                                                 ) : null}
                                                 {requestLog.attachments.length >
                                                 0 ? (
-                                                    <span className="flex items-center gap-[4px] text-[11px] text-bion-text-muted">
+                                                    <span className="inline-flex items-center gap-[5px] rounded-full border border-bion-border bg-bion-bg px-[9px] py-[4px]">
                                                         <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
                                                             <use href="#i-paperclip" />
                                                         </svg>
-                                                        {
-                                                            requestLog
-                                                                .attachments
-                                                                .length
-                                                        }
+                                                        {requestLog.attachments.length}
                                                     </span>
                                                 ) : null}
+                                                {requestLog.messages.length > 0 ? (
+                                                    <span className="inline-flex items-center gap-[5px] rounded-full border border-bion-border bg-bion-bg px-[9px] py-[4px]">
+                                                        <svg className="h-[13px] w-[13px] shrink-0 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
+                                                            <use href="#i-message-circle" />
+                                                        </svg>
+                                                        {requestLog.messages.length}
+                                                    </span>
+                                                ) : null}
+                                                <span className="text-[12px] font-semibold text-bion-accent">
+                                                    Open thread
+                                                </span>
                                             </div>
                                         </div>
-                                        <span
-                                            className={cn(
-                                                'shrink-0 rounded-full px-[10px] py-[3px] text-[10.5px] font-bold uppercase [letter-spacing:0.03em]',
-                                                requestClassMap[
-                                                    requestLog.classification
-                                                ],
-                                            )}
-                                        >
-                                            {requestLog.classification}
-                                        </span>
                                         <div
-                                            className="flex shrink-0 gap-[8px] max-[760px]:w-full max-[760px]:flex-wrap"
+                                            className="flex shrink-0 flex-wrap items-start gap-[8px] min-[980px]:w-[360px] min-[980px]:justify-end"
                                             onClick={(event) =>
                                                 event.stopPropagation()
                                             }
                                         >
+                                            <select
+                                                className="min-h-[34px] rounded-[8px] border border-bion-border bg-bion-surface px-[10px] py-[6px] text-[12.5px] font-semibold text-bion-text"
+                                                value={requestLog.status}
+                                                onChange={(event) =>
+                                                    changeRequestStatus(
+                                                        requestLog.id,
+                                                        event.target.value as ProjectRequestStatus,
+                                                    )
+                                                }
+                                            >
+                                                {(
+                                                    [
+                                                        'submitted',
+                                                        'reviewing',
+                                                        'in_progress',
+                                                        'resolved',
+                                                        'declined',
+                                                    ] as ProjectRequestStatus[]
+                                                ).map((status) => (
+                                                    <option key={status} value={status}>
+                                                        {requestStatusLabelMap[status]}
+                                                    </option>
+                                                ))}
+                                            </select>
                                             <button
                                                 type="button"
                                                 className={BTN_GHOST_SM}
@@ -1448,6 +1619,7 @@ export default function ProjectShowPage({
                                             'Email',
                                             'Telegram',
                                             'Phone call',
+                                            'Client portal',
                                             'Other',
                                         ] as ProjectRequestSource[]
                                     ).map((source) => (
@@ -1491,6 +1663,38 @@ export default function ProjectShowPage({
                                             value={classification}
                                         >
                                             {classification}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="mb-[18px] flex-1">
+                                <span className={FIELD_LABEL}>Status</span>
+                                <select
+                                    className={FIELD_INPUT}
+                                    value={requestDraft?.status ?? 'submitted'}
+                                    onChange={(event) =>
+                                        setRequestDraft((current) =>
+                                            current
+                                                ? {
+                                                      ...current,
+                                                      status: event.target.value as ProjectRequestStatus,
+                                                  }
+                                                : current,
+                                        )
+                                    }
+                                >
+                                    {(
+                                        [
+                                            'submitted',
+                                            'reviewing',
+                                            'in_progress',
+                                            'resolved',
+                                            'declined',
+                                        ] as ProjectRequestStatus[]
+                                    ).map((status) => (
+                                        <option key={status} value={status}>
+                                            {requestStatusLabelMap[status]}
                                         </option>
                                     ))}
                                 </select>
@@ -1588,6 +1792,138 @@ export default function ProjectShowPage({
                                 />
                             </label>
                         </div>
+
+                        {editingRequestLog ? (
+                            <div className="mb-[18px] border-t border-bion-border pt-[18px]">
+                                <div className="mb-[12px] flex items-center justify-between gap-[10px]">
+                                    <span className={FIELD_LABEL}>Client thread</span>
+                                    <span className={toneClassMap[editingRequestLog.statusTone]}>
+                                        <span
+                                            className={cn(
+                                                'h-[6px] w-[6px] rounded-full',
+                                                toneDotMap[editingRequestLog.statusTone],
+                                            )}
+                                        />
+                                        {editingRequestLog.statusLabel}
+                                    </span>
+                                </div>
+
+                                <div className="mb-[12px] flex flex-col gap-[10px]">
+                                    {editingRequestLog.messages.map((message) => (
+                                        <div
+                                            key={message.id}
+                                            className={cn(
+                                                'rounded-[9px] border border-bion-border p-[12px]',
+                                                message.authorType === 'team'
+                                                    ? 'bg-bion-accent-soft'
+                                                    : 'bg-bion-bg',
+                                            )}
+                                        >
+                                            <div className="mb-[7px] flex items-center justify-between gap-[8px] text-[12px] text-bion-text-muted">
+                                                <span>{message.authorLabel}</span>
+                                                <span className="font-mono">{message.createdAt}</span>
+                                            </div>
+                                            <p className="whitespace-pre-line text-[13px] leading-[1.6]">
+                                                {message.body}
+                                            </p>
+                                            {message.attachments.length > 0 ? (
+                                                <div className="mt-[10px] flex flex-col gap-[6px]">
+                                                    {message.attachments.map((attachment, index) => (
+                                                        <a
+                                                            key={`${attachment.name}-${index}`}
+                                                            href={attachment.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px] hover:border-bion-accent"
+                                                        >
+                                                            <svg className={ICON_SM_CLS}>
+                                                                <use href="#i-paperclip" />
+                                                            </svg>
+                                                            <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                    {editingRequestLog.messages.length === 0 ? (
+                                        <div className="text-[12.5px] text-bion-text-muted">
+                                            No replies yet.
+                                        </div>
+                                    ) : null}
+                                </div>
+
+                                <div className="rounded-[9px] border border-bion-border bg-bion-bg p-[12px]">
+                                    <span className={FIELD_LABEL}>Team reply</span>
+                                    <textarea
+                                        className={cn(FIELD_INPUT, 'mb-[10px] resize-y')}
+                                        rows={3}
+                                        value={replyDraft.body}
+                                        onChange={(event) =>
+                                            setReplyDraft((current) => ({
+                                                ...current,
+                                                body: event.target.value,
+                                            }))
+                                        }
+                                        placeholder="Write an update that the client can see."
+                                    />
+                                    <div className="mb-[10px] flex flex-col gap-[6px]">
+                                        {replyDraft.attachments.map((file, index) => (
+                                            <div
+                                                key={`${file.name}-${index}`}
+                                                className="flex items-center gap-[8px] rounded-[7px] border border-bion-border bg-bion-surface px-[10px] py-[7px] text-[12.5px]"
+                                            >
+                                                <svg className={ICON_SM_CLS}>
+                                                    <use href="#i-paperclip" />
+                                                </svg>
+                                                <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                                                <button
+                                                    type="button"
+                                                    className="text-bion-text-muted hover:text-bion-danger"
+                                                    onClick={() =>
+                                                        setReplyDraft((current) => ({
+                                                            ...current,
+                                                            attachments: current.attachments.filter(
+                                                                (_file, fileIndex) => fileIndex !== index,
+                                                            ),
+                                                        }))
+                                                    }
+                                                >
+                                                    <svg className={ICON_SM_CLS}>
+                                                        <use href="#i-x" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex flex-wrap gap-[8px]">
+                                        <label className="inline-flex cursor-pointer items-center gap-[7px] rounded-[8px] border border-bion-border bg-bion-surface px-[13px] py-[8px] text-[12.5px] font-semibold hover:bg-bion-surface-raised">
+                                            <svg className={ICON_SM_CLS}>
+                                                <use href="#i-paperclip" />
+                                            </svg>
+                                            Add attachment
+                                            <input
+                                                type="file"
+                                                multiple
+                                                className="hidden"
+                                                onChange={handleReplyAttachmentChange}
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className={BTN_PRIMARY}
+                                            onClick={submitTeamReply}
+                                            disabled={replyDraft.body.trim() === ''}
+                                        >
+                                            <svg className={ICON_SM_CLS}>
+                                                <use href="#i-send" />
+                                            </svg>
+                                            Send Reply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : null}
                     </div>
 
                     <div className={cn(MODAL_FOOT, 'justify-between')}>
@@ -1610,7 +1946,21 @@ export default function ProjectShowPage({
                                 : 'Dismiss request'}
                         </button>
 
-                        <div className="flex gap-[10px]">
+                        <div className="flex flex-wrap justify-end gap-[10px]">
+                            {currentTeam && editingRequestLog ? (
+                                <Link
+                                    href={
+                                        showRequestLog({
+                                            current_team: currentTeam.slug,
+                                            project: project.id,
+                                            requestLog: editingRequestLog.uuid,
+                                        }).url
+                                    }
+                                    className={BTN_GHOST}
+                                >
+                                    View full page
+                                </Link>
+                            ) : null}
                             <button
                                 type="button"
                                 className={BTN_GHOST}

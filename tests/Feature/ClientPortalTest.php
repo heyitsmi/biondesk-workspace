@@ -4,15 +4,20 @@ use App\Enums\DocumentStatus;
 use App\Enums\DocumentType;
 use App\Enums\ProjectStatus;
 use App\Enums\RequestLogClassification;
+use App\Enums\RequestLogMessageAuthorType;
 use App\Enums\RequestLogSource;
+use App\Enums\RequestLogStatus;
 use App\Enums\TaskStatus;
 use App\Models\Contact;
 use App\Models\Document;
 use App\Models\Opportunity;
 use App\Models\Project;
 use App\Models\RequestLog;
+use App\Models\RequestLogMessage;
 use App\Models\Task;
 use App\Models\Team;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('contacts receive a portal token and invalid portal tokens return not found', function () {
@@ -78,6 +83,7 @@ test('client portal only exposes scoped client-safe data', function () {
         'text' => 'Please revise the first section.',
         'source' => RequestLogSource::ClientPortal,
         'classification' => RequestLogClassification::New,
+        'status' => RequestLogStatus::Reviewing,
         'visible_to_client' => true,
     ]);
     RequestLog::factory()->for($project)->create([
@@ -109,10 +115,14 @@ test('client portal only exposes scoped client-safe data', function () {
             ->where('portal.documents.0.number', 'P-1001')
             ->has('portal.requests', 1)
             ->where('portal.requests.0.text', 'Please revise the first section.')
+            ->where('portal.requests.0.status', 'reviewing')
+            ->where('portal.requests.0.statusLabel', 'Reviewing')
         );
 });
 
-test('public request submission creates a client-visible request log', function () {
+test('public request submission creates a client-visible request log with attachments', function () {
+    Storage::fake('public');
+
     $team = Team::factory()->create();
     $contact = Contact::factory()->for($team)->create();
     $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
@@ -123,6 +133,10 @@ test('public request submission creates a client-visible request log', function 
         'project' => $project->id,
     ]), [
         'text' => 'Can we update the payment terms?',
+        'attachments' => [
+            UploadedFile::fake()->image('payment.png'),
+            UploadedFile::fake()->create('terms.pdf', 200, 'application/pdf'),
+        ],
     ])->assertRedirect();
 
     $requestLog = RequestLog::sole();
@@ -131,7 +145,9 @@ test('public request submission creates a client-visible request log', function 
     expect($requestLog->text)->toBe('Can we update the payment terms?');
     expect($requestLog->source)->toBe(RequestLogSource::ClientPortal);
     expect($requestLog->classification)->toBe(RequestLogClassification::New);
+    expect($requestLog->status)->toBe(RequestLogStatus::Submitted);
     expect($requestLog->visible_to_client)->toBeTrue();
+    expect($requestLog->getMedia('attachments'))->toHaveCount(2);
 });
 
 test('public request submission cannot target another contact project', function () {
@@ -149,4 +165,106 @@ test('public request submission cannot target another contact project', function
     ])->assertNotFound();
 
     expect(RequestLog::count())->toBe(0);
+});
+
+test('public request reply creates a client-authored thread message with attachments', function () {
+    Storage::fake('public');
+
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create();
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    $requestLog = RequestLog::factory()->for($project)->create([
+        'visible_to_client' => true,
+        'status' => RequestLogStatus::Submitted,
+    ]);
+
+    $this->post(route('client-portal.request-messages.store', [
+        'contact' => $contact->portal_token,
+        'project' => $project->id,
+        'requestLog' => $requestLog->id,
+    ]), [
+        'body' => 'Adding a screenshot for context.',
+        'attachments' => [UploadedFile::fake()->image('context.png')],
+    ])->assertRedirect();
+
+    $message = RequestLogMessage::sole();
+
+    expect($message->request_log_id)->toBe($requestLog->id);
+    expect($message->author_type)->toBe(RequestLogMessageAuthorType::Client);
+    expect($message->contact_id)->toBe($contact->id);
+    expect($message->body)->toBe('Adding a screenshot for context.');
+    expect($message->getMedia('attachments'))->toHaveCount(1);
+});
+
+test('public request reply cannot target hidden or foreign requests', function () {
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create();
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    $hiddenRequest = RequestLog::factory()->for($project)->create([
+        'visible_to_client' => false,
+    ]);
+
+    $otherContact = Contact::factory()->for($team)->create();
+    $otherOpportunity = Opportunity::factory()->for($team)->for($otherContact)->create();
+    $otherProject = Project::factory()->for($team)->for($otherOpportunity)->create();
+    $foreignRequest = RequestLog::factory()->for($otherProject)->create([
+        'visible_to_client' => true,
+    ]);
+
+    $this->post(route('client-portal.request-messages.store', [
+        'contact' => $contact->portal_token,
+        'project' => $project->id,
+        'requestLog' => $hiddenRequest->id,
+    ]), [
+        'body' => 'Should fail.',
+    ])->assertNotFound();
+
+    $this->post(route('client-portal.request-messages.store', [
+        'contact' => $contact->portal_token,
+        'project' => $otherProject->id,
+        'requestLog' => $foreignRequest->id,
+    ]), [
+        'body' => 'Should also fail.',
+    ])->assertNotFound();
+
+    expect(RequestLogMessage::count())->toBe(0);
+});
+
+test('portal payload includes safe attachments thread messages and open request stats', function () {
+    Storage::fake('public');
+
+    $team = Team::factory()->create();
+    $contact = Contact::factory()->for($team)->create(['first_name' => 'Jane', 'last_name' => 'Doe']);
+    $opportunity = Opportunity::factory()->for($team)->for($contact)->create();
+    $project = Project::factory()->for($team)->for($opportunity)->create();
+    RequestLog::factory()->for($project)->create([
+        'visible_to_client' => true,
+        'status' => RequestLogStatus::Resolved,
+    ]);
+    $openRequest = RequestLog::factory()->for($project)->create([
+        'text' => 'Please review this.',
+        'visible_to_client' => true,
+        'status' => RequestLogStatus::InProgress,
+    ]);
+    $openRequest->addMedia(UploadedFile::fake()->image('original.png'))->toMediaCollection('attachments');
+    $message = RequestLogMessage::factory()->for($openRequest)->create([
+        'author_type' => RequestLogMessageAuthorType::Client,
+        'contact_id' => $contact->id,
+        'body' => 'Here is more detail.',
+    ]);
+    $message->addMedia(UploadedFile::fake()->create('detail.pdf', 200, 'application/pdf'))->toMediaCollection('attachments');
+
+    $this->get(route('client-portal.show', ['contact' => $contact->portal_token]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('client/portal')
+            ->where('portal.stats.openRequests', 1)
+            ->has('portal.requests', 2)
+            ->where('portal.requests.0.status', 'in_progress')
+            ->has('portal.requests.0.attachments', 1)
+            ->where('portal.requests.0.messages.0.body', 'Here is more detail.')
+            ->has('portal.requests.0.messages.0.attachments', 1)
+        );
 });

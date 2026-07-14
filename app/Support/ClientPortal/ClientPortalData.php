@@ -47,7 +47,9 @@ class ClientPortalData
                         ->filter(fn (Project $project) => ! in_array($project->status, [ProjectStatus::Completed, ProjectStatus::Cancelled], true))
                         ->count(),
                     'documents' => $documents->count(),
-                    'openRequests' => $requests->count(),
+                    'openRequests' => $requests
+                        ->filter(fn (RequestLog $requestLog) => $requestLog->status->isOpen())
+                        ->count(),
                 ],
                 'projects' => $projects->map(fn (Project $project) => $this->projectArray($project))->all(),
                 'documents' => $documents->map(fn (Document $document) => $this->documentArray($document))->all(),
@@ -71,6 +73,7 @@ class ClientPortalData
                 'tasks' => fn ($query) => $query->orderBy('id'),
                 'requestLogs' => fn ($query) => $query
                     ->where('visible_to_client', true)
+                    ->with(['messages.user', 'messages.contact'])
                     ->latest(),
             ])
             ->latest()

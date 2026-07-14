@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateRequestLogRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 
 class RequestLogUpdateController extends Controller
 {
@@ -16,7 +17,7 @@ class RequestLogUpdateController extends Controller
         $projectModel = $team->projects()->findOrFail($project);
         $requestLogModel = $projectModel->requestLogs()->findOrFail($requestLog);
 
-        $requestLogModel->update($request->validated());
+        $requestLogModel->update(Arr::except($request->validated(), ['attachments']));
 
         foreach ($request->file('attachments', []) as $file) {
             $requestLogModel->addMedia($file)->toMediaCollection('attachments');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RequestLogClassification;
 use App\Enums\RequestLogSource;
+use App\Enums\RequestLogStatus;
 use App\Http\Requests\StoreClientPortalRequest;
 use App\Models\Contact;
 use App\Models\Project;
@@ -23,12 +24,17 @@ class ClientPortalRequestStoreController extends Controller
             ->whereHas('opportunity', fn (Builder $query) => $query->where('contact_id', $contact->id))
             ->firstOrFail();
 
-        $projectModel->requestLogs()->create([
+        $requestLog = $projectModel->requestLogs()->create([
             'text' => $request->validated('text'),
             'source' => RequestLogSource::ClientPortal,
             'classification' => RequestLogClassification::New,
+            'status' => RequestLogStatus::Submitted,
             'visible_to_client' => true,
         ]);
+
+        foreach ($request->file('attachments', []) as $file) {
+            $requestLog->addMedia($file)->toMediaCollection('attachments');
+        }
 
         $projectModel->logActivity('Client request submitted');
 
