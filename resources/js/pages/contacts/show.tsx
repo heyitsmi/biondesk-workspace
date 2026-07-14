@@ -69,6 +69,17 @@ export default function ContactShowPage({ contact }: ContactShowPageProps) {
                     </div>
 
                     <div className="flex gap-[10px] max-[760px]:w-full">
+                        <a
+                            href={contact.portalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={BTN_GHOST}
+                        >
+                            <svg className="h-[15px] w-[15px] fill-none stroke-current shrink-0 [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]">
+                                <use href="#i-arrow-up-right" />
+                            </svg>
+                            Client Portal
+                        </a>
                         <Link
                             href={contactEdit({
                                 current_team: currentTeam?.slug ?? '',

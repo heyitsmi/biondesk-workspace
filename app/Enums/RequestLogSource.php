@@ -8,6 +8,7 @@ enum RequestLogSource: string
     case Email = 'Email';
     case Telegram = 'Telegram';
     case PhoneCall = 'Phone call';
+    case ClientPortal = 'Client portal';
     case Other = 'Other';
 
     /**

@@ -160,7 +160,7 @@ export type ProjectRequestClassification =
     'new' | 'duplicate' | 'related' | 'contradiction';
 
 export type ProjectRequestSource =
-    'WhatsApp' | 'Email' | 'Telegram' | 'Phone call' | 'Other';
+    'WhatsApp' | 'Email' | 'Telegram' | 'Phone call' | 'Client portal' | 'Other';
 
 export type ProjectDetailRequestLog = {
     id: number;
@@ -335,6 +335,7 @@ export type ContactDetail = ContactListItem & {
     website: string;
     notes: string;
     billingAddress: string;
+    portalUrl: string;
     relatedProjects: ContactRelatedProject[];
     relatedInvoices: ContactRelatedInvoice[];
     notesAndFiles: ContactNoteFile[];
@@ -881,4 +882,67 @@ export type PublicDocument = {
 
 export type PublicDocumentPageProps = {
     document: PublicDocument;
+};
+
+export type ClientPortalRequest = {
+    id: number;
+    text: string;
+    sourceLabel: string;
+    createdAt: string;
+    projectTitle?: string;
+};
+
+export type ClientPortalTask = {
+    id: number;
+    title: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+};
+
+export type ClientPortalProject = {
+    id: number;
+    title: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    dueAt: string;
+    progress: number;
+    tasks: ClientPortalTask[];
+    requests: ClientPortalRequest[];
+};
+
+export type ClientPortalDocument = {
+    id: number;
+    kind: PublicDocumentKind;
+    kindLabel: string;
+    number: string;
+    title: string;
+    statusLabel: string;
+    tone: BiondeskTone;
+    amount: string;
+    issuedAt: string;
+    url: string;
+};
+
+export type ClientPortal = {
+    teamName: string;
+    portalToken: string;
+    contact: {
+        name: string;
+        fullName: string;
+        company: string | null;
+        initials: string;
+        email: string | null;
+    };
+    stats: {
+        activeProjects: number;
+        documents: number;
+        openRequests: number;
+    };
+    projects: ClientPortalProject[];
+    documents: ClientPortalDocument[];
+    requests: ClientPortalRequest[];
+};
+
+export type ClientPortalPageProps = {
+    portal: ClientPortal;
 };

@@ -9,6 +9,8 @@ use App\Http\Controllers\BionAiMessageStoreController;
 use App\Http\Controllers\BlogIndexController;
 use App\Http\Controllers\BlogShowController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\ClientPortalController;
+use App\Http\Controllers\ClientPortalRequestStoreController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentPdfDownloadController;
@@ -92,6 +94,10 @@ Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->
 Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');
 Route::get('/d/{document:public_token}/pdf/status', DocumentPdfStatusController::class)->name('documents.pdf.status');
 Route::get('/d/{document:public_token}/pdf/download', DocumentPdfDownloadController::class)->name('documents.pdf.download');
+Route::get('/c/{contact:portal_token}', ClientPortalController::class)->name('client-portal.show');
+Route::post('/c/{contact:portal_token}/projects/{project}/requests', ClientPortalRequestStoreController::class)
+    ->whereNumber('project')
+    ->name('client-portal.requests.store');
 
 Route::get('/blog', BlogIndexController::class)->name('blog.index');
 Route::get('/blog/{slug}', BlogShowController::class)->name('blog.show');

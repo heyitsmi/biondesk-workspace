@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Enums\ActivityEvent;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -17,6 +18,7 @@ use Spatie\Activitylog\Support\LogOptions;
 /**
  * @property int $id
  * @property int $team_id
+ * @property string|null $portal_token
  * @property ContactType $type
  * @property ContactStatus $status
  * @property string $first_name
@@ -40,6 +42,18 @@ class Contact extends Model
     use HasFactory;
 
     use LogsActivity;
+
+    /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Contact $contact): void {
+            $contact->portal_token ??= Str::random(32);
+        });
+    }
 
     /**
      * Get the team this contact belongs to.
@@ -67,6 +81,14 @@ class Contact extends Model
     public function code(): string
     {
         return 'CNT-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Get the public client portal URL for this contact.
+     */
+    public function portalUrl(): string
+    {
+        return url('/c/'.$this->portal_token);
     }
 
     /**
@@ -164,6 +186,7 @@ class Contact extends Model
             'website' => $this->website,
             'notes' => $this->notes,
             'billingAddress' => $this->billing_address,
+            'portalUrl' => $this->portalUrl(),
             'relatedProjects' => [],
             'relatedInvoices' => [],
             'notesAndFiles' => [],

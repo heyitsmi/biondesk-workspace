@@ -109,6 +109,7 @@ const sourceIconMap: Record<ProjectRequestSource, string> = {
     Email: 'i-mail',
     Telegram: 'i-send',
     'Phone call': 'i-phone',
+    'Client portal': 'i-message-circle',
     Other: 'i-mail',
 };
 
