@@ -34,6 +34,7 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 - Sebagai user, saya ingin punya link public lead form sendiri yang bisa disematkan di bio media sosial, supaya orang bisa langsung kirim inquiry tanpa perlu chat manual dulu
 - Sebagai user, saya ingin bisa kustomisasi tampilan lead form saya sendiri (banner, judul, deskripsi), supaya kesannya representasi brand saya, bukan form generic
 - Sebagai user, saya ingin mencatat permintaan atau revisi ad-hoc dari klien selama project berjalan, supaya tidak ada yang hilang di riwayat chat
+- Sebagai user, saya ingin bertanya ke asisten AI (BionAI) tentang kondisi workspace saya sendiri (task overdue, jadwal hari ini, invoice belum dibayar) dan mendapat jawaban dari data asli, sekaligus tetap bisa tanya hal umum di luar itu seperti chatbot biasa
 
 **Sebagai calon user eksternal (fase setelah versi awal stabil)**
 
@@ -56,7 +57,14 @@ Team (workspace kerja, dengan slug untuk routing)
                     └── ReminderJob
   └── ProfileAsset (portfolio, testimonial, snippet)
   └── Template
+  └── BionAiConversation (percakapan chat AI, per-user)
+        └── BionAiMessage
+  └── BionAiUsageLog (token usage & estimasi cost per turn, ditampilkan di Ops Portal)
+BlogCategory (kategori konten publik)
+  └── Blog (artikel Insights publik, thumbnail via media library, author User)
 ```
+
+User punya kolom `is_super_admin` (boolean, default false) yang menandai akun sebagai Biondesk staff — tidak team-scoped, dipakai untuk akses `/ops/*` (lihat bagian Ops Portal di P0).
 
 Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase closing deal) dan ke Project (untuk quote/invoice tambahan selama eksekusi, misalnya milestone atau perubahan scope).
 
@@ -105,6 +113,31 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 **Reminder & Email**
 - Given reminder rule aktif, when kondisi terpenuhi (mendekati jatuh tempo, lewat jatuh tempo, quote belum direspon), then reminder job terjadwal dan terkirim
 
+**BionAI**
+- Given user tanya hal umum di luar data workspace, when BionAI menjawab, then jawabannya seperti chatbot AI biasa, tanpa restriksi topik
+- Given user tanya soal kondisi kerjanya sendiri (task overdue, jadwal hari ini, invoice belum dibayar, ringkasan pipeline/project), when BionAI menjawab, then jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak
+- Given user kirim pesan, when BionAI sedang memproses jawaban (termasuk yang butuh beberapa kali tool-calling round-trip), then diproses lewat queued job dan di-polling dari frontend, bukan sinkron di request utama
+- Given user punya beberapa percakapan, then bisa switch antar percakapan lewat sidebar, rename judul percakapan, dan hapus percakapan
+- Given provider AI dipanggil, when respons diterima, then token usage (input/output) dan estimasi cost dicatat per percakapan dan per user, ditampilkan di Ops Portal
+
+**Ops Portal**
+- Given user punya `is_super_admin = true`, when login berhasil (password, 2FA, atau passkey), then diarahkan ke `/ops/dashboard`, bukan dashboard tim
+- Given user bukan super admin (termasuk guest), when akses route apapun di `/ops/*`, then ditolak — 403 untuk user biasa, redirect ke login untuk guest
+- Given super admin membuka `/ops/dashboard`, then tampil ringkasan total user, total tim, dan estimasi cost AI (bulan ini + sepanjang waktu)
+- Given super admin membuka `/ops/users`, then tampil daftar seluruh user platform (bukan cuma satu tim), read-only di v1
+- Given super admin membuka `/ops/ai-usage-logs`, then tampil seluruh `BionAiUsageLog` lintas tim dengan ringkasan total cost dan token
+- Given super admin membuka `/ops/activity-logs`, then tampil seluruh activity log lintas tim
+- Given daftar di halaman manapun di Ops Portal melebihi satu halaman, then dipaginasi (bukan dimuat semua sekaligus)
+
+**Insights / Blog**
+- Given super admin membuka `/ops/blog-categories`, then bisa membuat, mengedit, dan menghapus kategori blog yang dipakai untuk halaman Insights publik
+- Given super admin membuka `/ops/blogs`, then bisa membuat, mengedit, publish/unpublish, memberi kategori, mengisi metadata SEO, dan mengunggah thumbnail artikel
+- Given visitor membuka `/blog`, then tampil daftar artikel published dari database, dengan filter kategori dan featured article dari artikel terbaru
+- Given visitor membuka `/blog/{slug}`, then tampil detail artikel published beserta metadata SEO, thumbnail, author, related articles, table of contents, reading progress, dan share actions
+- Given blog berstatus draft/unpublished, when visitor membuka URL detailnya, then artikel tidak dapat diakses publik
+- Given scheduler `blog:generate` berjalan, when kategori dan author tersedia, then sistem generate artikel SEO/GEO/AEO dan thumbnail menggunakan OpenAI API, membuat slug unik, menyimpan thumbnail ke media library, publish artikel, dan mencatat pemakaian token/cost ke `BionAiUsageLog`
+- Given Search Console mengakses `/sitemap.xml` atau `/sitemap`, then sistem mengembalikan XML sitemap realtime berisi halaman publik utama dan semua blog published dengan `lastmod` dari `updated_at`
+
 ### P1 — nice to have
 
 - Subscription billing Biondesk sendiri (Free/Pro atau model lain) lewat gateway seperti Midtrans, **ditunda** sampai ada sinyal willingness-to-pay yang jelas dari user early access
@@ -113,7 +146,8 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Refinement reminder rules (custom template per rule)
 - Multi-user per team dengan role granular
 - Light/dark theme switcher, tersimpan per akun (bukan cuma per browser), default mengikuti preferensi OS
-- Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna
+- ~~Field tambahan di Opportunity: `win_probability` dan `expected_close_date`, untuk reporting pipeline yang lebih berguna~~ (Selesai diimplementasikan)
+- Promote/demote super admin lewat UI di `/ops/users` — saat ini cuma lewat `tinker`, cukup untuk kasus jarang nambah admin kedua
 
 ### P2 — future considerations
 
@@ -121,7 +155,7 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - BYO payment gateway penuh untuk invoice (kalau ada sinyal kuat dari user eksternal)
 - Self-serve onboarding publik penuh, termasuk billing dan lifecycle user yang lebih matang. Landing page pemasaran dasar sudah ada, tetapi bisa terus disempurnakan berdasarkan positioning early access
 - Request Log versi AI: extraction otomatis dari chat yang di-paste, dengan deteksi duplikat/kontradiksi pakai semantic search (pgvector + embedding). Ini upgrade signifikan dari Request Log manual di P0, worth dipertimbangkan serius sebagai diferensiator, tapi butuh infrastruktur tambahan (pgvector, API AI terpisah untuk extraction) yang belum jadi prioritas sekarang
-- Ops portal terpisah (subdomain sendiri) untuk kelola organisasi, user, dan subscription lintas tenant, relevan begitu ada banyak user eksternal yang perlu dikelola
+- Ops portal versi lanjutan (subdomain sendiri, role admin bertingkat lewat `spatie/laravel-permission`, kelola subscription lintas tenant) — versi ringan sudah jalan di P0 (`/ops/*` di domain yang sama, satu flag boolean `is_super_admin`), upgrade ini relevan begitu ada banyak staf Biondesk atau kebutuhan role admin yang lebih granular
 
 ## Arsitektur teknis
 
@@ -145,11 +179,16 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - `/` — landing page marketing, tanpa auth
 - `/p/{team}` — public lead form, tanpa auth
 - `/d/{document:public_token}` — proposal/quote/invoice yang dibagikan ke klien, tanpa auth
+- `/blog` dan `/blog/{slug}` — halaman Insights publik, tanpa auth, data dinamis dari tabel blog
+- `/sitemap.xml` dan `/sitemap` — sitemap XML realtime untuk crawler/Search Console
 - `/app/*` — seluruh halaman Inertia, wajib auth
+- `/ops/*` — Ops Portal untuk super admin, termasuk manajemen blog/kategori dan AI usage logs
 
 Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman publik per team, satu untuk dokumen per token.
 
 **Public lead form**: URL param string biasa (bukan implicit route model binding), diresolusi lewat `Team::findByLeadFormSlug()` yang mengecek kolom `lead_form_slug` (custom, opsional, unik global) lalu fallback ke `Team.slug`. Verifikasi Cloudflare Turnstile fail closed kalau secret key tidak ter-konfigurasi. Kustomisasi tampilan disimpan di kolom Team (`lead_form_title`, `lead_form_welcome_message`, `lead_form_background_theme`/`_color`, `lead_form_social_links` JSON, `lead_form_meta_title`/`_description`) plus tiga media library collection terpisah (`lead-form-banner`, `lead-form-background`, `lead-form-cover`, `lead-form-og-image`), semuanya dengan fallback masuk akal (nama team, pesan generic, judul/deskripsi form) kalau belum diisi.
+
+**Insights / Blog content engine**: Blog memakai tabel `blog_categories` dan `blogs`; thumbnail disimpan lewat Spatie Media Library collection `thumbnail`. Halaman publik blog memakai Inertia React seperti landing page, tetapi data selalu diambil dari database (`is_published = true`). Admin CRUD berada di Ops Portal supaya konten marketing dikelola oleh staf Biondesk, bukan team workspace biasa. Command `blog:generate` dijadwalkan dua kali seminggu (Senin dan Kamis pukul 08:00) untuk memilih kategori, meminta OpenAI membuat artikel panjang SEO/GEO/AEO dan prompt gambar, generate thumbnail `gpt-image-1`, menyimpan artikel published, dan mencatat usage log artikel serta thumbnail ke Ops AI Usage Logs.
 
 **Email**: Brevo untuk semua transactional email (reminder, notifikasi dokumen terkirim, notifikasi lead baru).
 
@@ -163,11 +202,13 @@ Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman pub
 - Seluruh fitur P0 berjalan stabil dan dipakai aktif dalam pemakaian sehari-hari dalam 2 minggu setelah rilis versi awal
 - Project dan Task management jadi bagian rutin dari alur kerja, bukan fitur yang jarang disentuh
 - Early access user memahami positioning produk: workflow workspace dengan invoice/payment tracking manual, bukan payment processor
+- Halaman Insights mulai terindeks lewat sitemap realtime dan menghasilkan sinyal organic discovery awal (impression/click Search Console) tanpa perlu update sitemap manual
 
 **Lagging indicators (setelah early access dibuka)**
 - Jumlah user eksternal yang benar-benar mencoba (bukan cuma daftar)
 - Feedback soal apakah pain point yang jadi dasar produk ini juga dirasakan freelancer/agency lain dengan cara yang sama
 - Sinyal willingness-to-pay sebelum subscription billing dibangun atau diaktifkan
+- Artikel Insights yang dibuat manual atau otomatis mulai membawa visitor berkualitas ke landing page dan pendaftaran early access
 
 ## Open questions
 

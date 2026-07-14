@@ -25,6 +25,7 @@ class UpdateOpportunityRequest extends FormRequest
         $this->merge([
             'contact_id' => $this->input('contact_id', $this->input('contactId')),
             'amount_value' => $this->input('amount_value', $this->input('amountValue')) ?: 0,
+            'win_probability' => $this->input('win_probability', $this->input('winProbability')),
             'close_date' => $this->input('close_date', $this->input('closeDate')) ?: null,
         ]);
     }
@@ -45,6 +46,7 @@ class UpdateOpportunityRequest extends FormRequest
                 Rule::exists('contacts', 'id')->where('team_id', $teamId),
             ],
             'amount_value' => ['nullable', 'integer', 'min:0'],
+            'win_probability' => ['nullable', 'integer', 'min:0', 'max:100'],
             'stage' => ['required', Rule::enum(OpportunityStage::class)],
             'close_date' => ['nullable', 'date'],
             'priority' => ['required', Rule::enum(OpportunityPriority::class)],

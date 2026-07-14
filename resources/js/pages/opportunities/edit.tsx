@@ -45,6 +45,7 @@ export default function OpportunityEditPage({
             title: opportunity.title,
             contactId: opportunity.contactId,
             amountValue: opportunity.amountValue,
+            winProbability: opportunity.winProbability,
             stage: opportunity.stage,
             closeDate: opportunity.closeDate,
             priority: opportunity.priority,
@@ -258,7 +259,7 @@ export default function OpportunityEditPage({
                                         </div>
                                     </div>
 
-                                    <div className="col-span-full grid grid-cols-3 gap-[20px] max-[760px]:grid-cols-1">
+                                    <div className="col-span-full grid grid-cols-2 gap-[20px] max-[760px]:grid-cols-1">
                                         <div className="flex flex-col gap-[8px]">
                                             <label className={FIELD_LABEL}>
                                                 Pipeline Stage{' '}
@@ -303,6 +304,40 @@ export default function OpportunityEditPage({
                                                     )
                                                 }
                                             />
+                                        </div>
+
+                                        <div className="flex flex-col gap-[8px]">
+                                            <label className={FIELD_LABEL}>
+                                                Win Probability (%)
+                                            </label>
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="number"
+                                                    className={cn(
+                                                        FIELD_INPUT,
+                                                        'pr-[32px]',
+                                                    )}
+                                                    placeholder="0 - 100"
+                                                    min={0}
+                                                    max={100}
+                                                    step="1"
+                                                    value={data.winProbability}
+                                                    onChange={(event) =>
+                                                        setData(
+                                                            'winProbability',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <span className="absolute right-[14px] text-bion-text-muted">
+                                                    %
+                                                </span>
+                                            </div>
+                                            {errors.winProbability ? (
+                                                <span className="text-[12px] text-bion-danger">
+                                                    {errors.winProbability}
+                                                </span>
+                                            ) : null}
                                         </div>
 
                                         <div className="flex flex-col gap-[8px]">

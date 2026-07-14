@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detail | Biondesk</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bion-bg: #F6F7F9;
+            --color-bion-surface: #FFFFFF;
+            --color-bion-raised: #F0F2F5;
+            --color-bion-border: #E4E6EB;
+            --color-bion-text: #12161F;
+            --color-bion-muted: #6B7280;
+            --color-bion-accent: #C77F1F;
+            --color-bion-accentText: #FFFFFF;
+            --color-bion-success: #1F8A5F;
+            --color-bion-danger: #D6383D;
+            --font-sans: 'Instrument Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --shadow-glow: 0 0 50px -10px rgba(199, 127, 31, 0.25);
+            --shadow-raised: 0 12px 40px rgba(0, 0, 0, 0.1);
+            --shadow-app: 0 24px 80px -12px rgba(0, 0, 0, 0.15);
+            --background-image-radial-glow: radial-gradient(circle at 50% 0%, rgba(199, 127, 31, 0.08) 0%, transparent 60%);
+        }
+    </style>
+
+    <style>
+        body {
+            background-color: #F6F7F9;
+            color: #12161F;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Minimal Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #F6F7F9; }
+        ::-webkit-scrollbar-thumb { background: #E4E6EB; border-radius: 4px; }
+
+        .fluid-transition {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+
+        /* Prose styles for blog content */
+        .prose h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--color-bion-text);
+        }
+        .prose h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-bion-text);
+        }
+        .prose p {
+            margin-top: 1.25rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.75;
+            color: var(--color-bion-muted);
+            font-size: 1.125rem;
+        }
+        .prose a {
+            color: var(--color-bion-accent);
+            text-decoration: underline;
+            text-decoration-color: transparent;
+            transition: text-decoration-color 0.2s;
+        }
+        .prose a:hover {
+            text-decoration-color: var(--color-bion-accent);
+        }
+        .prose blockquote {
+            border-left: 4px solid var(--color-bion-accent);
+            padding-left: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            font-style: italic;
+            color: var(--color-bion-text);
+            font-size: 1.25rem;
+        }
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-top: 1.25rem;
+            margin-bottom: 1.25rem;
+            color: var(--color-bion-muted);
+            font-size: 1.125rem;
+        }
+        .prose li {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="font-sans relative bg-bion-bg selection:bg-bion-accent selection:text-bion-accentText">
+
+    <!-- Header -->
+    <div class="fixed top-0 w-full z-50 bg-bion-bg/80 backdrop-blur-xl border-b border-bion-border">
+        <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="landing-page-light.html" class="flex items-center gap-3">
+                    <div class="w-6 h-6 bg-bion-surface border border-bion-border rounded-md flex items-center justify-center">
+                        <div class="w-1.5 h-1.5 bg-bion-accent rounded-full"></div>
+                    </div>
+                    <span class="font-semibold text-sm tracking-wide text-bion-text">Biondesk</span>
+                </a>
+            </div>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="blog.html" class="text-xs font-semibold text-bion-text fluid-transition">Blog</a>
+                <a href="landing-page-light.html#platform" class="text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Platform</a>
+                <a href="landing-page-light.html#pricing" class="text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Pricing</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="#" class="hidden sm:block text-xs font-medium text-bion-muted hover:text-bion-text fluid-transition">Sign in</a>
+                <a href="#" class="px-4 py-1.5 rounded bg-bion-text text-bion-bg text-xs font-semibold hover:bg-bion-muted fluid-transition">
+                    Get Access
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Article Header -->
+    <header class="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden border-b border-bion-border bg-bion-surface">
+        <div class="absolute top-0 w-full h-full bg-radial-glow pointer-events-none opacity-50"></div>
+
+        <div class="max-w-3xl mx-auto px-6 relative z-10 text-center">
+            <a href="blog.html" class="inline-flex items-center gap-2 text-xs font-medium text-bion-muted hover:text-bion-text mb-8 transition-colors fade-up">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i> Back to Blog
+            </a>
+
+            <div class="flex items-center justify-center gap-3 mb-6 fade-up delay-100">
+                <span class="px-3 py-1 rounded-full border border-bion-border bg-bion-bg text-[10px] font-bold uppercase tracking-wider text-bion-accent">Workflow</span>
+                <span class="w-1 h-1 rounded-full bg-bion-border"></span>
+                <span class="text-xs text-bion-muted">July 12, 2026</span>
+                <span class="w-1 h-1 rounded-full bg-bion-border"></span>
+                <span class="text-xs text-bion-muted">5 min read</span>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-bion-text mb-8 leading-[1.1] fade-up delay-200">
+                Why we stopped using four different apps to manage one client
+            </h1>
+
+            <div class="flex items-center justify-center gap-4 fade-up delay-200">
+                <div class="w-10 h-10 rounded-full bg-bion-raised border border-bion-border"></div>
+                <div class="text-left text-sm">
+                    <div class="font-medium text-bion-text">Hilmi Hidayat</div>
+                    <div class="text-bion-muted text-xs">Founder, Biondesk</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative bg-bion-bg py-16 md:py-24">
+        <div class="max-w-3xl mx-auto px-6">
+
+            <!-- Featured Image -->
+            <div class="w-full aspect-[2/1] bg-bion-surface border border-bion-border rounded-2xl mb-16 shadow-sm overflow-hidden relative fade-up">
+                <!-- Abstract placeholder -->
+                <div class="absolute inset-0 bg-bion-bg flex items-center justify-center">
+                    <div class="w-64 h-64 rounded-full border-4 border-bion-accent/20 absolute -top-10 -left-10"></div>
+                    <div class="w-96 h-96 rounded-full border-2 border-bion-accent/10 absolute -bottom-20 -right-10"></div>
+                    <i data-lucide="layers" class="w-24 h-24 text-bion-accent/40 relative z-10"></i>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <article class="prose fade-up delay-100">
+                <p>
+                    The hidden cost of context switching is killing independent agencies. We analyzed the average workflow from lead to final invoice, and the results explain exactly why burnout happens before the creative work even begins.
+                </p>
+                <p>
+                    If you run a service business today, your tech stack probably looks something like this:
+                </p>
+                <ul>
+                    <li>Typeform or Tally for intake</li>
+                    <li>Notion or Google Docs for proposals</li>
+                    <li>Trello, Asana, or Linear for project management</li>
+                    <li>Stripe, Wave, or Quickbooks for invoicing</li>
+                </ul>
+
+                <h2>The Fragmentation Problem</h2>
+                <p>
+                    On their own, each of these tools is excellent. The problem arises when you have to string them together to manage a single human being. A client isn't a task, an invoice, or a form submission—they are an ongoing relationship.
+                </p>
+                <p>
+                    When a client asks, "Hey, what's the status of the new landing page, and did my last payment go through?", where do you look? You check your project management tool for the status, your email for any recent unstructured feedback, and your billing software for the payment.
+                </p>
+
+                <blockquote>
+                    "You are not selling hours. You are selling outcomes. But your software forces you to manage hours and disconnected tasks."
+                </blockquote>
+
+                <h2>Building a Centralized Source of Truth</h2>
+                <p>
+                    This is why we built <a href="landing-page-light.html">Biondesk</a>. We realized that for a freelancer or a small agency, the pipeline, the project, and the payment are all just different states of the same entity: the Opportunity.
+                </p>
+                <p>
+                    Instead of moving data between tools, the data should stay in one place while its <em>status</em> evolves. An inquiry becomes a proposal. A proposal, once signed, becomes a project. A completed milestone becomes an invoice.
+                </p>
+
+                <h3>How it changes the daily workflow</h3>
+                <p>
+                    When you wake up and log in, you shouldn't have to check four apps to figure out what to do. You need a single dashboard that says:
+                </p>
+                <ul>
+                    <li>You have 2 new inquiries to review.</li>
+                    <li>You have 1 proposal waiting on a signature.</li>
+                    <li>You have 3 active project milestones due this week.</li>
+                    <li>You have 1 invoice that is 3 days overdue.</li>
+                </ul>
+                <p>
+                    By consolidating these into a single command center, the administrative overhead drops by roughly 60%. More importantly, the mental friction—the anxiety of wondering if you missed something—disappears completely.
+                </p>
+
+                <p>
+                    The future of independent work isn't about having more tools. It's about having the right ones. It's about taking back control of your workflow so you can focus on the work itself.
+                </p>
+            </article>
+
+            <!-- Share and Tags -->
+            <div class="mt-16 pt-8 border-t border-bion-border flex flex-col md:flex-row items-center justify-between gap-6 fade-up">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold">Share this article</span>
+                    <button class="w-8 h-8 rounded-full border border-bion-border bg-bion-surface flex items-center justify-center text-bion-muted hover:text-bion-text hover:border-bion-muted transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></button>
+                    <button class="w-8 h-8 rounded-full border border-bion-border bg-bion-surface flex items-center justify-center text-bion-muted hover:text-bion-text hover:border-bion-muted transition-colors"><i data-lucide="linkedin" class="w-4 h-4"></i></button>
+                    <button class="w-8 h-8 rounded-full border border-bion-border bg-bion-surface flex items-center justify-center text-bion-muted hover:text-bion-text hover:border-bion-muted transition-colors"><i data-lucide="link-2" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Related Articles -->
+    <section class="py-24 bg-bion-surface border-t border-bion-border">
+        <div class="max-w-5xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-10 text-center fade-up">Read next</h2>
+
+            <div class="grid md:grid-cols-2 gap-6 fade-up delay-100">
+                <!-- Post -->
+                <a href="#" class="group flex flex-col rounded-xl border border-bion-border bg-bion-bg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div class="p-6 flex flex-col flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-bion-text">Client Management</span>
+                            <span class="w-1 h-1 rounded-full bg-bion-border"></span>
+                            <span class="text-[11px] text-bion-muted">June 28, 2026</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3 group-hover:text-bion-accent transition-colors">How to handle late payments without ruining the relationship</h3>
+                        <div class="mt-auto flex items-center gap-2 pt-4 border-t border-bion-border/50">
+                            <span class="text-xs font-medium text-bion-text">Read more</span>
+                            <i data-lucide="arrow-right" class="w-3 h-3 transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Post -->
+                <a href="#" class="group flex flex-col rounded-xl border border-bion-border bg-bion-bg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div class="p-6 flex flex-col flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-bion-text">Workflow</span>
+                            <span class="w-1 h-1 rounded-full bg-bion-border"></span>
+                            <span class="text-[11px] text-bion-muted">June 15, 2026</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3 group-hover:text-bion-accent transition-colors">Transitioning from Hourly to Value-Based Pricing</h3>
+                        <div class="mt-auto flex items-center gap-2 pt-4 border-t border-bion-border/50">
+                            <span class="text-xs font-medium text-bion-text">Read more</span>
+                            <i data-lucide="arrow-right" class="w-3 h-3 transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-bion-border bg-bion-surface py-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-5 h-5 bg-bion-surface border border-bion-border shadow-sm rounded flex items-center justify-center">
+                    <div class="w-1 h-1 bg-bion-accent rounded-full"></div>
+                </div>
+                <span class="text-xs font-semibold text-bion-text">Biondesk</span>
+            </div>
+            <div class="flex gap-6 text-xs font-medium text-bion-muted">
+                <a href="#" class="hover:text-bion-text transition-colors">Changelog</a>
+                <a href="#" class="hover:text-bion-text transition-colors">Twitter</a>
+                <a href="#" class="hover:text-bion-text transition-colors">Terms</a>
+            </div>
+            <div class="text-[10px] text-bion-muted font-mono">
+                System OK — &copy; <span id="year"></span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            fadeObserver.observe(el);
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, Check, Globe, Menu, ReceiptText, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, Check, Globe, ReceiptText, X } from 'lucide-react';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import FrontendNavbar from '@/components/frontend-navbar';
 import { dashboard, login, register } from '@/routes';
 
 const landingStyles = `
@@ -142,14 +143,6 @@ const faqs = [
     },
 ] as const;
 
-const navItems = [
-    { href: '#platform', label: 'Platform' },
-    { href: '#workflow', label: 'Workflow' },
-    { href: '#fit', label: 'Fit' },
-    { href: '#faq', label: 'FAQ' },
-    { href: '#early-access', label: 'Early Access' },
-] as const;
-
 const siteUrl = 'https://biondesk.com';
 const seoTitle = 'Biondesk | Workflow Workspace for Freelancers and Agencies';
 const seoDescription =
@@ -218,10 +211,9 @@ const structuredData = {
 } as const;
 
 export default function Welcome() {
-    const { auth, currentTeam } = usePage().props;
+    const { auth, currentTeam } = usePage<any>().props;
     const workspaceHref = currentTeam ? dashboard(currentTeam.slug) : login();
     const primaryCtaHref = auth.user ? workspaceHref : register();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const year = new Date().getFullYear();
 
     useEffect(() => {
@@ -430,114 +422,7 @@ export default function Welcome() {
             <style>{landingStyles}</style>
 
             <div className="landing-scrollbar min-h-screen scroll-smooth bg-bion-bg font-sans text-bion-text selection:bg-bion-accent selection:text-bion-accent-text">
-                <header className="fixed top-0 z-50 w-full border-b border-bion-border/50 bg-bion-bg/60 backdrop-blur-xl">
-                    <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-                        <div className="flex items-center gap-3">
-                            <div className="flex size-6 items-center justify-center rounded-md border border-bion-border bg-bion-surface">
-                                <div className="size-1.5 rounded-full bg-bion-accent" />
-                            </div>
-                            <span className="text-sm font-semibold tracking-wide text-bion-text">
-                                Biondesk
-                            </span>
-                        </div>
-
-                        <nav className="hidden items-center gap-6 md:flex">
-                            {navItems.map((item) => (
-                                <a
-                                    key={item.href}
-                                    href={item.href}
-                                    className="fluid-transition text-xs font-medium text-bion-text-muted hover:text-bion-text"
-                                >
-                                    {item.label}
-                                </a>
-                            ))}
-                        </nav>
-
-                        <div className="flex items-center gap-4">
-                            {!auth.user ? (
-                                <Link
-                                    href={login()}
-                                    className="fluid-transition hidden text-xs font-medium text-bion-text-muted hover:text-bion-text sm:block"
-                                >
-                                    Sign in
-                                </Link>
-                            ) : null}
-
-                            <Link
-                                href={primaryCtaHref}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="fluid-transition inline-flex items-center rounded bg-bion-text px-4 py-1.5 text-xs font-semibold text-bion-bg hover:bg-bion-text-muted"
-                            >
-                                {auth.user
-                                    ? 'Open Workspace'
-                                    : 'Join Early Access'}
-                            </Link>
-
-                            <button
-                                type="button"
-                                className="fluid-transition inline-flex size-9 items-center justify-center rounded border border-bion-border bg-bion-surface text-bion-text-muted hover:text-bion-text md:hidden"
-                                aria-controls="mobile-landing-menu"
-                                aria-expanded={isMobileMenuOpen}
-                                aria-label={
-                                    isMobileMenuOpen
-                                        ? 'Close navigation menu'
-                                        : 'Open navigation menu'
-                                }
-                                onClick={() =>
-                                    setIsMobileMenuOpen((isOpen) => !isOpen)
-                                }
-                            >
-                                {isMobileMenuOpen ? (
-                                    <X className="size-4" />
-                                ) : (
-                                    <Menu className="size-4" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div
-                        id="mobile-landing-menu"
-                        className={`border-t border-bion-border/50 bg-bion-bg/95 px-6 py-4 shadow-bion-raised backdrop-blur-xl md:hidden ${
-                            isMobileMenuOpen ? 'block' : 'hidden'
-                        }`}
-                    >
-                        <nav className="flex flex-col gap-1">
-                            {navItems.map((item) => (
-                                <a
-                                    key={item.href}
-                                    href={item.href}
-                                    className="fluid-transition rounded-lg px-3 py-3 text-sm font-medium text-bion-text-muted hover:bg-bion-surface hover:text-bion-text"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    {item.label}
-                                </a>
-                            ))}
-                        </nav>
-
-                        <div className="mt-4 grid gap-3 border-t border-bion-border pt-4">
-                            {!auth.user ? (
-                                <Link
-                                    href={login()}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="fluid-transition rounded-lg border border-bion-border px-4 py-3 text-center text-sm font-semibold text-bion-text hover:bg-bion-surface"
-                                >
-                                    Sign in
-                                </Link>
-                            ) : null}
-
-                            <Link
-                                href={primaryCtaHref}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="fluid-transition rounded-lg bg-bion-accent px-4 py-3 text-center text-sm font-semibold text-bion-accent-text shadow-bion-glow hover:opacity-90"
-                            >
-                                {auth.user
-                                    ? 'Open workspace'
-                                    : 'Join early access'}
-                            </Link>
-                        </div>
-                    </div>
-                </header>
+                <FrontendNavbar />
 
                 <main className="relative flex flex-col items-center overflow-hidden pt-32 pb-20 md:pt-40 md:pb-32">
                     <div className="pointer-events-none absolute top-0 h-[600px] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(199,127,31,0.08)_0%,transparent_60%)]" />

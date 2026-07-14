@@ -80,6 +80,7 @@ export type OpportunityItem = {
     source: string;
     amount: string;
     amountValue: number;
+    winProbability: number | null;
     stage: string;
     stageLabel: string;
     tone: BiondeskTone;
@@ -105,6 +106,7 @@ export type OpportunityFormValues = {
     title: string;
     contactId: number | '';
     amountValue: string;
+    winProbability: string;
     stage: string;
     closeDate: string;
     priority: 'low' | 'medium' | 'high';
