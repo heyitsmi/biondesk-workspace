@@ -22,9 +22,16 @@ class OpenAIService
 
     public function __construct()
     {
-        $this->apiKey = config('services.openai.api_key', env('OPENAI_API_KEY'));
+        $this->apiKey = config('services.openai.api_key');
     }
 
+    /**
+     * The model is instructed to always include every key, but the response
+     * is unvalidated LLM-generated JSON, so `image_prompt` is typed optional
+     * to keep the caller's defensive fallback honest.
+     *
+     * @return array{title: string, meta_title: string, meta_description: string, description: string, content: string, image_prompt?: string}
+     */
     public function generateArticle(string $categoryName): array
     {
         $prompt = "You are an expert SEO content strategist and a professional human content writer for a B2B SaaS named Biondesk. Biondesk is a comprehensive workspace for freelancers and small agencies (managing leads, projects, tasks, proposals, invoices, and payments).

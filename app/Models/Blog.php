@@ -36,11 +36,17 @@ class Blog extends Model implements HasMedia
             ->singleFile();
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * @return BelongsTo<BlogCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(BlogCategory::class, 'category_id');

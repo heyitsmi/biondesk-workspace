@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Ops;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\BlogCategory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class BlogController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $blogs = Blog::with(['category', 'author'])->latest()->paginate(10);
 
@@ -20,7 +22,7 @@ class BlogController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): Response
     {
         $categories = BlogCategory::all();
 
@@ -29,7 +31,7 @@ class BlogController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -54,7 +56,7 @@ class BlogController extends Controller
         return redirect()->route('ops.blogs.index')->with('success', 'Blog created.');
     }
 
-    public function edit(Blog $blog)
+    public function edit(Blog $blog): Response
     {
         $categories = BlogCategory::all();
 
@@ -64,7 +66,7 @@ class BlogController extends Controller
         ]);
     }
 
-    public function update(Request $request, Blog $blog)
+    public function update(Request $request, Blog $blog): RedirectResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -88,7 +90,7 @@ class BlogController extends Controller
         return redirect()->route('ops.blogs.index')->with('success', 'Blog updated.');
     }
 
-    public function destroy(Blog $blog)
+    public function destroy(Blog $blog): RedirectResponse
     {
         $blog->delete();
 

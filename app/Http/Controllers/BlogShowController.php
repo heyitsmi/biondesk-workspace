@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Blog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class BlogShowController extends Controller
 {
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request, string $slug)
+    public function __invoke(Request $request, string $slug): Response
     {
         $blog = Blog::with(['category', 'author'])
             ->where('slug', $slug)
