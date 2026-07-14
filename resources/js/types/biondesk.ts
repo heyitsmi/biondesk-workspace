@@ -162,20 +162,50 @@ export type ProjectRequestClassification =
 export type ProjectRequestSource =
     'WhatsApp' | 'Email' | 'Telegram' | 'Phone call' | 'Client portal' | 'Other';
 
+export type ProjectRequestStatus =
+    'submitted' | 'reviewing' | 'in_progress' | 'resolved' | 'declined';
+
+export type ProjectRequestMessage = {
+    id: number;
+    authorType: 'client' | 'team';
+    authorLabel: string;
+    body: string;
+    createdAt: string;
+    attachments: ProjectAttachment[];
+};
+
 export type ProjectDetailRequestLog = {
     id: number;
+    uuid: string;
     text: string;
     source: ProjectRequestSource;
     date: string;
     classification: ProjectRequestClassification;
+    status: ProjectRequestStatus;
+    statusLabel: string;
+    statusTone: BiondeskTone;
     notes: string;
     attachments: ProjectAttachment[];
+    messages: ProjectRequestMessage[];
 };
 
 export type ProjectActivityEntry = {
     text: string;
     time: string;
     tone: BiondeskTone;
+};
+
+export type RequestLogDetailProject = {
+    id: number;
+    title: string;
+    client: string;
+    stageLabel: string;
+    tone: BiondeskTone;
+};
+
+export type RequestLogDetailPageProps = {
+    project: RequestLogDetailProject;
+    requestLog: ProjectDetailRequestLog;
 };
 
 export type ProjectItem = {
@@ -889,6 +919,11 @@ export type ClientPortalRequest = {
     text: string;
     sourceLabel: string;
     createdAt: string;
+    status: ProjectRequestStatus;
+    statusLabel: string;
+    statusTone: BiondeskTone;
+    attachments: ProjectAttachment[];
+    messages: ProjectRequestMessage[];
     projectTitle?: string;
 };
 

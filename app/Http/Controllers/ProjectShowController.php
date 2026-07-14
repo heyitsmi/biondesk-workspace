@@ -20,7 +20,7 @@ class ProjectShowController extends Controller
     ): Response {
         $team = $request->user()->currentTeam;
         $model = $team->projects()
-            ->with(['opportunity.contact', 'tasks', 'requestLogs'])
+            ->with(['opportunity.contact', 'tasks', 'requestLogs.messages.user', 'requestLogs.messages.contact'])
             ->findOrFail($project);
 
         return Inertia::render('projects/show', [

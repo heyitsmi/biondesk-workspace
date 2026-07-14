@@ -10,6 +10,7 @@ use App\Http\Controllers\BlogIndexController;
 use App\Http\Controllers\BlogShowController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientPortalController;
+use App\Http\Controllers\ClientPortalRequestMessageStoreController;
 use App\Http\Controllers\ClientPortalRequestStoreController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -73,6 +74,9 @@ use App\Http\Controllers\ReminderDismissController;
 use App\Http\Controllers\RemindersController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
 use App\Http\Controllers\RequestLogDestroyController;
+use App\Http\Controllers\RequestLogMessageStoreController;
+use App\Http\Controllers\RequestLogShowController;
+use App\Http\Controllers\RequestLogStatusUpdateController;
 use App\Http\Controllers\RequestLogStoreController;
 use App\Http\Controllers\RequestLogUpdateController;
 use App\Http\Controllers\SitemapController;
@@ -98,6 +102,9 @@ Route::get('/c/{contact:portal_token}', ClientPortalController::class)->name('cl
 Route::post('/c/{contact:portal_token}/projects/{project}/requests', ClientPortalRequestStoreController::class)
     ->whereNumber('project')
     ->name('client-portal.requests.store');
+Route::post('/c/{contact:portal_token}/projects/{project}/requests/{requestLog}/messages', ClientPortalRequestMessageStoreController::class)
+    ->whereNumber(['project', 'requestLog'])
+    ->name('client-portal.request-messages.store');
 
 Route::get('/blog', BlogIndexController::class)->name('blog.index');
 Route::get('/blog/{slug}', BlogShowController::class)->name('blog.show');
@@ -182,9 +189,19 @@ Route::prefix('app/{current_team}')
         Route::post('projects/{project}/request-logs', RequestLogStoreController::class)
             ->whereNumber('project')
             ->name('projects.request-logs.store');
+        Route::get('projects/{project}/request-logs/{requestLog}', RequestLogShowController::class)
+            ->whereNumber('project')
+            ->whereUuid('requestLog')
+            ->name('projects.request-logs.show');
         Route::put('projects/{project}/request-logs/{requestLog}', RequestLogUpdateController::class)
             ->whereNumber(['project', 'requestLog'])
             ->name('projects.request-logs.update');
+        Route::patch('projects/{project}/request-logs/{requestLog}/status', RequestLogStatusUpdateController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.status.update');
+        Route::post('projects/{project}/request-logs/{requestLog}/messages', RequestLogMessageStoreController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.messages.store');
         Route::delete('projects/{project}/request-logs/{requestLog}', RequestLogDestroyController::class)
             ->whereNumber(['project', 'requestLog'])
             ->name('projects.request-logs.destroy');

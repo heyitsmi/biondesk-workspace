@@ -2,13 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\RequestLogClassification;
-use App\Enums\RequestLogSource;
-use App\Enums\RequestLogStatus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateRequestLogRequest extends FormRequest
+class StoreClientPortalRequestMessage extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,11 +22,7 @@ class UpdateRequestLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'text' => ['required', 'string'],
-            'source' => ['required', Rule::enum(RequestLogSource::class)],
-            'classification' => ['required', Rule::enum(RequestLogClassification::class)],
-            'status' => ['required', Rule::enum(RequestLogStatus::class)],
-            'notes' => ['nullable', 'string'],
+            'body' => ['required', 'string', 'max:5000'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'],
         ];

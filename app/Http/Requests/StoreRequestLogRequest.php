@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\RequestLogClassification;
 use App\Enums\RequestLogSource;
+use App\Enums\RequestLogStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,7 @@ class StoreRequestLogRequest extends FormRequest
             'text' => ['required', 'string'],
             'source' => ['nullable', Rule::enum(RequestLogSource::class)],
             'classification' => ['nullable', Rule::enum(RequestLogClassification::class)],
+            'status' => ['nullable', Rule::enum(RequestLogStatus::class)],
             'notes' => ['nullable', 'string'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'],

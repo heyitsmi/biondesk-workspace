@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\RequestLogClassification;
 use App\Enums\RequestLogSource;
+use App\Enums\RequestLogStatus;
 use App\Http\Requests\StoreRequestLogRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 
 class RequestLogStoreController extends Controller
 {
@@ -20,8 +22,9 @@ class RequestLogStoreController extends Controller
         $data = $request->validated();
         $data['source'] ??= RequestLogSource::Email->value;
         $data['classification'] ??= RequestLogClassification::New->value;
+        $data['status'] ??= RequestLogStatus::Submitted->value;
 
-        $requestLog = $projectModel->requestLogs()->create($data);
+        $requestLog = $projectModel->requestLogs()->create(Arr::except($data, ['attachments']));
 
         foreach ($request->file('attachments', []) as $file) {
             $requestLog->addMedia($file)->toMediaCollection('attachments');

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\RequestLogClassification;
 use App\Enums\RequestLogSource;
+use App\Enums\RequestLogStatus;
 use App\Models\Project;
 use App\Models\RequestLog;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,6 +26,7 @@ class RequestLogFactory extends Factory
             'text' => fake()->sentence(10),
             'source' => fake()->randomElement(RequestLogSource::cases()),
             'classification' => fake()->randomElement(RequestLogClassification::cases()),
+            'status' => fake()->randomElement(RequestLogStatus::cases()),
             'notes' => fake()->optional()->sentence(),
         ];
     }
