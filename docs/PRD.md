@@ -60,6 +60,8 @@ Team (workspace kerja, dengan slug untuk routing)
   └── BionAiConversation (percakapan chat AI, per-user)
         └── BionAiMessage
   └── BionAiUsageLog (token usage & estimasi cost per turn, ditampilkan di Ops Portal)
+BlogCategory (kategori konten publik)
+  └── Blog (artikel Insights publik, thumbnail via media library, author User)
 ```
 
 User punya kolom `is_super_admin` (boolean, default false) yang menandai akun sebagai Biondesk staff — tidak team-scoped, dipakai untuk akses `/ops/*` (lihat bagian Ops Portal di P0).
@@ -127,6 +129,15 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Given super admin membuka `/ops/activity-logs`, then tampil seluruh activity log lintas tim
 - Given daftar di halaman manapun di Ops Portal melebihi satu halaman, then dipaginasi (bukan dimuat semua sekaligus)
 
+**Insights / Blog**
+- Given super admin membuka `/ops/blog-categories`, then bisa membuat, mengedit, dan menghapus kategori blog yang dipakai untuk halaman Insights publik
+- Given super admin membuka `/ops/blogs`, then bisa membuat, mengedit, publish/unpublish, memberi kategori, mengisi metadata SEO, dan mengunggah thumbnail artikel
+- Given visitor membuka `/blog`, then tampil daftar artikel published dari database, dengan filter kategori dan featured article dari artikel terbaru
+- Given visitor membuka `/blog/{slug}`, then tampil detail artikel published beserta metadata SEO, thumbnail, author, related articles, table of contents, reading progress, dan share actions
+- Given blog berstatus draft/unpublished, when visitor membuka URL detailnya, then artikel tidak dapat diakses publik
+- Given scheduler `blog:generate` berjalan, when kategori dan author tersedia, then sistem generate artikel SEO/GEO/AEO dan thumbnail menggunakan OpenAI API, membuat slug unik, menyimpan thumbnail ke media library, publish artikel, dan mencatat pemakaian token/cost ke `BionAiUsageLog`
+- Given Search Console mengakses `/sitemap.xml` atau `/sitemap`, then sistem mengembalikan XML sitemap realtime berisi halaman publik utama dan semua blog published dengan `lastmod` dari `updated_at`
+
 ### P1 — nice to have
 
 - Subscription billing Biondesk sendiri (Free/Pro atau model lain) lewat gateway seperti Midtrans, **ditunda** sampai ada sinyal willingness-to-pay yang jelas dari user early access
@@ -168,11 +179,16 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - `/` — landing page marketing, tanpa auth
 - `/p/{team}` — public lead form, tanpa auth
 - `/d/{document:public_token}` — proposal/quote/invoice yang dibagikan ke klien, tanpa auth
+- `/blog` dan `/blog/{slug}` — halaman Insights publik, tanpa auth, data dinamis dari tabel blog
+- `/sitemap.xml` dan `/sitemap` — sitemap XML realtime untuk crawler/Search Console
 - `/app/*` — seluruh halaman Inertia, wajib auth
+- `/ops/*` — Ops Portal untuk super admin, termasuk manajemen blog/kategori dan AI usage logs
 
 Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman publik per team, satu untuk dokumen per token.
 
 **Public lead form**: URL param string biasa (bukan implicit route model binding), diresolusi lewat `Team::findByLeadFormSlug()` yang mengecek kolom `lead_form_slug` (custom, opsional, unik global) lalu fallback ke `Team.slug`. Verifikasi Cloudflare Turnstile fail closed kalau secret key tidak ter-konfigurasi. Kustomisasi tampilan disimpan di kolom Team (`lead_form_title`, `lead_form_welcome_message`, `lead_form_background_theme`/`_color`, `lead_form_social_links` JSON, `lead_form_meta_title`/`_description`) plus tiga media library collection terpisah (`lead-form-banner`, `lead-form-background`, `lead-form-cover`, `lead-form-og-image`), semuanya dengan fallback masuk akal (nama team, pesan generic, judul/deskripsi form) kalau belum diisi.
+
+**Insights / Blog content engine**: Blog memakai tabel `blog_categories` dan `blogs`; thumbnail disimpan lewat Spatie Media Library collection `thumbnail`. Halaman publik blog memakai Inertia React seperti landing page, tetapi data selalu diambil dari database (`is_published = true`). Admin CRUD berada di Ops Portal supaya konten marketing dikelola oleh staf Biondesk, bukan team workspace biasa. Command `blog:generate` dijadwalkan dua kali seminggu (Senin dan Kamis pukul 08:00) untuk memilih kategori, meminta OpenAI membuat artikel panjang SEO/GEO/AEO dan prompt gambar, generate thumbnail `gpt-image-1`, menyimpan artikel published, dan mencatat usage log artikel serta thumbnail ke Ops AI Usage Logs.
 
 **Email**: Brevo untuk semua transactional email (reminder, notifikasi dokumen terkirim, notifikasi lead baru).
 
@@ -186,11 +202,13 @@ Prefix `/p/` dan `/d/` sengaja dipisah biar tidak ambigu, satu untuk halaman pub
 - Seluruh fitur P0 berjalan stabil dan dipakai aktif dalam pemakaian sehari-hari dalam 2 minggu setelah rilis versi awal
 - Project dan Task management jadi bagian rutin dari alur kerja, bukan fitur yang jarang disentuh
 - Early access user memahami positioning produk: workflow workspace dengan invoice/payment tracking manual, bukan payment processor
+- Halaman Insights mulai terindeks lewat sitemap realtime dan menghasilkan sinyal organic discovery awal (impression/click Search Console) tanpa perlu update sitemap manual
 
 **Lagging indicators (setelah early access dibuka)**
 - Jumlah user eksternal yang benar-benar mencoba (bukan cuma daftar)
 - Feedback soal apakah pain point yang jadi dasar produk ini juga dirasakan freelancer/agency lain dengan cara yang sama
 - Sinyal willingness-to-pay sebelum subscription billing dibangun atau diaktifkan
+- Artikel Insights yang dibuat manual atau otomatis mulai membawa visitor berkualitas ke landing page dan pendaftaran early access
 
 ## Open questions
 

@@ -44,6 +44,7 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 9. **Profile Library** — portfolio, testimonial, dan snippet teks yang jadi bahan AI generation
 10. **PDF export** — proposal, quote, dan invoice bisa dibagikan lewat webview (interaktif, tempat klien accept dan lihat status) sekaligus lampiran PDF (buat diarsipkan, dilampirkan ke email)
 11. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
+12. **Insights / blog engine** — kanal konten publik untuk edukasi freelancer/agency dan akuisisi organik. Blog dan kategori dikelola dari Ops Portal, tampil dinamis di halaman publik `/blog` dan `/blog/{slug}`, bisa diisi manual atau dijadwalkan untuk generate artikel SEO/GEO/AEO beserta thumbnail menggunakan OpenAI API, serta masuk ke sitemap realtime untuk Search Console.
 
 ## Yang bukan tujuan Biondesk
 
@@ -52,6 +53,7 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 - Bukan accounting software lengkap, tidak menggantikan software pembukuan resmi
 - Bukan marketplace pencari klien baru
 - Bukan tool yang terkunci ke satu platform freelance tertentu
+- Bukan CMS generik penuh. Fitur blog Biondesk difokuskan untuk content marketing Biondesk sendiri (Insights), bukan untuk menggantikan WordPress/Webflow sebagai website builder multi-tenant.
 
 ## Monetisasi
 

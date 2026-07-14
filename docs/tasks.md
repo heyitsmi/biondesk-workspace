@@ -264,6 +264,26 @@ Pembaruan yang dilakukan setelah seluruh Fase 1-12 selesai (merupakan item P1 di
 - [x] 13.1 **Pipeline Forecasting**: Menambahkan kolom `win_probability` (0-100) di database untuk entitas `Opportunity`, beserta validasi backend dan field input di frontend (`create.tsx` dan `edit.tsx`).
 - [x] 13.2 Memperbarui kalkulasi `DashboardSummary` untuk menampilkan *Weighted Pipeline Value* pada stat *Pipeline Value* (menghitung jumlah (amount_value * win_probability) dari setiap opportunity yang masih open).
 
+## Fase 14 — Insights / Blog & Content Engine
+
+Modul marketing publik untuk akuisisi organik, dikerjakan setelah Ops Portal tersedia supaya manajemen konten tetap berada di zona staf Biondesk, bukan workspace team user. Scope ini mencakup CRUD blog/kategori, halaman publik dinamis, generator konten terjadwal, dan sitemap realtime untuk Search Console.
+
+- [x] 14.1 Migration + model `BlogCategory` dan `Blog` (author `User`, kategori nullable, slug unik, metadata SEO, `is_published`, thumbnail lewat Spatie Media Library collection `thumbnail`)
+- [x] 14.2 Seeder kategori blog awal (`BlogCategorySeeder`) dan registrasi ke `DatabaseSeeder`
+- [x] 14.3 Ops Portal: `BlogCategoryController` + halaman `ops/blog-categories` untuk CRUD kategori, termasuk validasi slug unik dan UI create/edit
+- [x] 14.4 Ops Portal: `BlogController` + halaman `ops/blogs` untuk CRUD artikel, publish/unpublish, kategori, meta title/description, content HTML, dan thumbnail upload
+- [x] 14.5 Komponen editor konten (`rich-text-editor.tsx`) dan komponen UI pendukung (`textarea`, `table`, `alert-dialog`) untuk kebutuhan halaman ops blog
+- [x] 14.6 Halaman publik `/blog` (`BlogIndexController` + `resources/js/pages/blog/index.tsx`) menampilkan data dinamis dari artikel published, featured article, filter kategori, author, tanggal, excerpt, dan thumbnail
+- [x] 14.7 Halaman publik `/blog/{slug}` (`BlogShowController` + `resources/js/pages/blog/show.tsx`) menampilkan artikel published saja, metadata SEO, thumbnail, author, related articles, table of contents, reading progress, dan share actions
+- [x] 14.8 Navbar marketing diekstrak ke `frontend-navbar.tsx` dan dipakai konsisten di landing page, blog index, dan blog detail; menu `Insights` mengarah ke `/blog`
+- [x] 14.9 `OpenAIService` untuk generator artikel + thumbnail: `generateArticle()` memakai Chat Completions JSON output untuk artikel SEO/GEO/AEO, `generateImage()` memakai `gpt-image-1`, dan menyimpan usage response terakhir
+- [x] 14.10 Command `blog:generate`: pilih kategori acak, generate artikel, generate thumbnail, buat slug unik, publish blog, simpan thumbnail via media library, hapus file temp, dan catat dua `BionAiUsageLog` (artikel + thumbnail) dengan estimasi cost micros
+- [x] 14.11 Scheduler `blog:generate` dijalankan Senin dan Kamis pukul 08:00 lewat `routes/console.php`
+- [x] 14.12 Sitemap realtime: `SitemapController` + route `/sitemap.xml` dan `/sitemap`, berisi home, blog index, dan semua blog published dengan `lastmod` dari `updated_at`
+- [x] 14.13 Pest test: `BlogTest` mencakup halaman blog dan usage log generator; `SitemapTest` mencakup XML sitemap, route shortcut, artikel published masuk, draft tidak masuk
+
+**Fase 14 selesai**: Blog sengaja diperlakukan sebagai kanal konten Biondesk sendiri ("Insights"), bukan CMS multi-tenant untuk user. Admin berada di `/ops/*` dan protected oleh `EnsureSuperAdmin`. Generator konten memakai OpenAI langsung karena use case-nya spesifik OpenAI (`gpt-image-1` untuk thumbnail), sementara BionAI dan proposal generation tetap memakai abstraksi masing-masing yang sudah ada. Semua pemakaian AI dari generator blog dicatat ke `bion_ai_usage_logs`, sehingga Ops AI Usage Logs tetap menjadi satu tempat untuk melihat biaya AI lintas fitur. Sitemap tidak disimpan ke file statis; response XML dibuat realtime dari database supaya Search Console selalu melihat artikel published terbaru tanpa job tambahan.
+
 ---
 
 ## Keputusan yang sudah diambil

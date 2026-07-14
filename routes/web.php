@@ -6,6 +6,8 @@ use App\Http\Controllers\BionAiConversationRenameController;
 use App\Http\Controllers\BionAiConversationStoreController;
 use App\Http\Controllers\BionAiMessageStatusController;
 use App\Http\Controllers\BionAiMessageStoreController;
+use App\Http\Controllers\BlogIndexController;
+use App\Http\Controllers\BlogShowController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -71,6 +73,7 @@ use App\Http\Controllers\RequestLogConvertToTaskController;
 use App\Http\Controllers\RequestLogDestroyController;
 use App\Http\Controllers\RequestLogStoreController;
 use App\Http\Controllers\RequestLogUpdateController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TaskDestroyController;
 use App\Http\Controllers\TaskMoveController;
 use App\Http\Controllers\TaskStoreController;
@@ -80,6 +83,8 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingPageController::class)->name('home');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap.xml');
+Route::get('/sitemap', SitemapController::class)->name('sitemap');
 Route::get('/p/{team}', PublicLeadFormController::class)->name('public-lead-form');
 Route::post('/p/{team}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
 Route::get('/d/{document:public_token}', PublicDocumentController::class)->name('public-document');
@@ -87,6 +92,9 @@ Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->
 Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');
 Route::get('/d/{document:public_token}/pdf/status', DocumentPdfStatusController::class)->name('documents.pdf.status');
 Route::get('/d/{document:public_token}/pdf/download', DocumentPdfDownloadController::class)->name('documents.pdf.download');
+
+Route::get('/blog', BlogIndexController::class)->name('blog.index');
+Route::get('/blog/{slug}', BlogShowController::class)->name('blog.show');
 
 Route::prefix('app/{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])

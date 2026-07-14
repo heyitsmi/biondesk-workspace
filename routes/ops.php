@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Ops\BlogCategoryController;
+use App\Http\Controllers\Ops\BlogController;
 use App\Http\Controllers\OpsActivityLogIndexController;
 use App\Http\Controllers\OpsAiUsageLogIndexController;
 use App\Http\Controllers\OpsDashboardController;
@@ -15,4 +17,6 @@ Route::prefix('ops')
         Route::get('users', OpsUserIndexController::class)->name('users.index');
         Route::get('ai-usage-logs', OpsAiUsageLogIndexController::class)->name('ai-usage-logs.index');
         Route::get('activity-logs', OpsActivityLogIndexController::class)->name('activity-logs.index');
+        Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
+        Route::resource('blogs', BlogController::class)->except(['show']);
     });

@@ -10,6 +10,8 @@ import { dashboard as opsDashboard } from '@/routes/ops';
 import { index as opsActivityLogs } from '@/routes/ops/activity-logs';
 import { index as opsAiUsageLogs } from '@/routes/ops/ai-usage-logs';
 import { index as opsUsers } from '@/routes/ops/users';
+import { index as opsBlogs } from '@/routes/ops/blogs';
+import { index as opsBlogCategories } from '@/routes/ops/blog-categories';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -20,6 +22,8 @@ type Props = {
 const NAV_ITEMS = [
     { title: 'Dashboard', icon: 'i-grid', href: opsDashboard().url },
     { title: 'Users', icon: 'i-users', href: opsUsers().url },
+    { title: 'Blogs', icon: 'i-file', href: opsBlogs().url },
+    { title: 'Blog Categories', icon: 'i-layers', href: opsBlogCategories().url },
     { title: 'AI Usage Logs', icon: 'i-sparkles', href: opsAiUsageLogs().url },
     { title: 'Activity Logs', icon: 'i-clock', href: opsActivityLogs().url },
 ] as const;
