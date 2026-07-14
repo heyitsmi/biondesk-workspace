@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Enums\RequestLogClassification;
 use App\Enums\RequestLogSource;
 use App\Enums\RequestLogStatus;
+use App\Enums\WorkflowAutomationTrigger;
 use App\Http\Requests\StoreClientPortalRequest;
+use App\Jobs\RunWorkflowAutomation;
 use App\Models\Contact;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,6 +39,13 @@ class ClientPortalRequestStoreController extends Controller
         }
 
         $projectModel->logActivity('Client request submitted');
+        RunWorkflowAutomation::dispatch(
+            $projectModel->team_id,
+            WorkflowAutomationTrigger::ClientRequestSubmitted->value,
+            $requestLog::class,
+            $requestLog->id,
+            ['status' => $requestLog->status->value],
+        );
 
         return back();
     }

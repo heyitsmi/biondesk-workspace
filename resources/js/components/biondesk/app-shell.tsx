@@ -8,6 +8,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { dashboard, home, logout } from '@/routes';
+import { index as automations } from '@/routes/automations';
 import { index as bionAi } from '@/routes/bion-ai';
 import { index as calendar } from '@/routes/calendar';
 import { index as contacts } from '@/routes/contacts';
@@ -53,6 +54,7 @@ type SidebarCounts = {
     invoices: number;
     contacts: number;
     reminders: number;
+    automations: number;
     profileLibrary: number;
 };
 
@@ -204,6 +206,12 @@ export default function BiondeskAppShell({
                         icon: 'i-bell',
                         href: reminders(currentTeam.slug),
                         badge: countBadge(sidebarCounts?.reminders),
+                    },
+                    {
+                        title: 'Automations',
+                        icon: 'i-sparkles',
+                        href: automations(currentTeam.slug),
+                        badge: countBadge(sidebarCounts?.automations),
                     },
                     {
                         title: 'Profile Library',

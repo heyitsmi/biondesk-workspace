@@ -31,6 +31,7 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 - Sebagai user, saya ingin mencatat pembayaran secara manual dengan metode apapun (transfer bank, Stripe link, PayPal link, Midtrans link pribadi, tunai), termasuk pembayaran bertahap dalam satu invoice yang sama
 - Sebagai user, saya ingin menambahkan payment link atau instruksi bank milik saya sendiri ke invoice, supaya klien membayar langsung ke saya tanpa Biondesk menjadi perantara pembayaran
 - Sebagai user, saya ingin reminder otomatis terkirim untuk invoice yang mendekati atau lewat jatuh tempo, tanpa saya perlu ingat manual
+- Sebagai user, saya ingin mengaktifkan automation berbasis template untuk kejadian umum seperti request klien baru, client reply, project menunggu klien, invoice overdue, dan quote belum direspon, supaya pekerjaan follow-up internal tidak perlu dibuat manual berulang
 - Sebagai user, saya ingin punya link public lead form sendiri yang bisa disematkan di bio media sosial, supaya orang bisa langsung kirim inquiry tanpa perlu chat manual dulu
 - Sebagai user, saya ingin bisa kustomisasi tampilan lead form saya sendiri (banner, judul, deskripsi), supaya kesannya representasi brand saya, bukan form generic
 - Sebagai user, saya ingin mencatat permintaan atau revisi ad-hoc dari klien selama project berjalan, supaya tidak ada yang hilang di riwayat chat
@@ -69,6 +70,8 @@ Team (workspace kerja, dengan slug untuk routing)
   └── BionAiConversation (percakapan chat AI, per-user)
         └── BionAiMessage
   └── BionAiUsageLog (token usage & estimasi cost per turn, ditampilkan di Ops Portal)
+  └── WorkflowAutomation (template rules internal, scoped team)
+        └── WorkflowAutomationRun (run history + idempotency log)
 BlogCategory (kategori konten publik)
   └── Blog (artikel Insights publik, thumbnail via media library, author User)
 EmbeddingIndexEntry (semantic index untuk task/request matching, scoped team/project)
@@ -135,6 +138,15 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 **Reminder & Email**
 - Given reminder rule aktif, when kondisi terpenuhi (mendekati jatuh tempo, lewat jatuh tempo, quote belum direspon), then reminder job terjadwal dan terkirim
 
+**Workflow Automation**
+- Given user membuka menu Automations, then tampil daftar automation aktif/nonaktif, template automation, dan recent run history untuk team aktif
+- Given user membuat automation, then user memilih template yang sudah disediakan, mengatur rule sederhana, dan memilih action internal yang aman; tidak ada visual builder penuh, natural-language builder, email action, webhook, atau integrasi eksternal di V1
+- Given automation tidak aktif, when trigger terjadi, then automation tidak dijalankan dan tidak membuat task/event/status update
+- Given client submit request atau membalas request thread, when automation terkait aktif, then sistem bisa membuat task triage/follow-up, mengubah status request, atau mencatat run log sesuai template
+- Given status request/project berubah, when automation terkait aktif dan condition status cocok, then sistem bisa menjalankan action internal seperti update status lain, create calendar event, atau add activity log
+- Given invoice overdue, invoice due soon, atau quote unresponded dievaluasi scheduler harian, then automation berbasis dokumen dijalankan secara idempotent dan tidak membuat task/event duplikat untuk subject yang sama
+- Given action automation gagal/terlewati/sukses, then `WorkflowAutomationRun` mencatat status run, pesan, context, subject, dan idempotency key untuk audit ringan
+
 **BionAI**
 - Given user tanya hal umum di luar data workspace, when BionAI menjawab, then jawabannya seperti chatbot AI biasa, tanpa restriksi topik
 - Given user tanya soal kondisi kerjanya sendiri (task overdue, jadwal hari ini, invoice belum dibayar, ringkasan pipeline/project), when BionAI menjawab, then jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak
@@ -197,6 +209,8 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 **AI provider**: pakai Laravel AI SDK, provider (OpenAI, Anthropic, DeepSeek) switchable lewat config, tidak perlu ubah kode di setiap fungsi AI.
 
 **AI request breakdown & embeddings**: Request Log detail internal memakai OpenAI structured output untuk menghasilkan classification (`new`, `related`, `duplicate`, `contradiction`), confidence, summary, related/duplicate task IDs, warnings, dan proposed tasks. Sebelum context dikirim ke LLM, sistem membuat semantic candidate list dari task existing memakai OpenAI Embeddings (`text-embedding-3-small`) dan pgvector (`embedding_index_entries`) supaya model hanya membandingkan kandidat paling relevan. Embedding memakai `OPENAI_EMBEDDING_API_KEY` jika tersedia, fallback ke `OPENAI_API_KEY`, dan setiap embedding/chat usage dicatat ke `BionAiUsageLog`.
+
+**Workflow automation engine**: Workflow Automation V1 memakai template rules dan internal actions only. Rules disimpan per team di `workflow_automations`, run history di `workflow_automation_runs`, dan execution memakai idempotency key berbasis automation + trigger + subject + status context supaya repeated trigger tidak membuat task/event duplikat. Event-driven trigger dari client request/reply dan status change dijalankan lewat queued `RunWorkflowAutomation`; scheduled trigger invoice/quote dijalankan oleh command `workflow-automations:run-due` daily dengan `withoutOverlapping()`. V1 sengaja belum punya email automation, webhook, external integration, atau builder bebas.
 
 **PDF generation**: job queued (`ShouldQueue`), hasil disimpan lewat media library, di-generate dari route print khusus (halaman polos tanpa tombol aksi interaktif) yang terpisah dari halaman share utama.
 

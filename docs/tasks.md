@@ -13,6 +13,7 @@ Yang sudah berjalan:
 - Public document share memakai token `/d/{document:public_token}`.
 - Client Portal token-based per Contact (`/c/{contact:portal_token}`), request threads, attachment, dedicated request detail, dan client-visible scoping.
 - AI Request Log breakdown dengan structured output, semantic duplicate/related detection memakai OpenAI embeddings + pgvector, dan idempotent task creation dari hasil AI.
+- Workflow Automation V1: template-based rules, internal actions only, trigger dari client request/reply, perubahan status request/project, dan scheduler invoice/quote, lengkap dengan idempotent run history.
 - PDF generation via queued job dan Spatie Browsershot.
 - Payment tracking invoice bersifat manual. Client membayar langsung ke user lewat payment link atau instruksi pembayaran milik user; Biondesk tidak memproses, menahan, routing, escrow, atau reconcile otomatis pembayaran client.
 
@@ -304,6 +305,25 @@ Modul kolaborasi klien, dikerjakan di atas Project/Request Log yang sudah ada. T
 - [x] 15.12 Pest/verification: `ClientPortalTest`, `RequestLogManagementTest`, `RequestLogAiBreakdownTest`, `EmbeddingIndexTest`; targeted ESLint untuk page/type terkait; `npm run build`; migration pgvector diverifikasi di Postgres lokal
 
 **Fase 15 selesai**: Client Portal sengaja tetap unauthenticated dan token-only di versi ini — tidak ada client account, OTP, session, atau approval workflow penuh. Semua scoping portal divalidasi server-side lewat contact token → opportunity contact → project/request, dan portal hanya mengirim data client-safe (tidak ada notes internal). Request Log kini punya dua lapisan: internal workspace tetap bisa menyimpan notes/source/classification/status, sementara thread message bersifat client-visible by design. AI breakdown tidak pernah auto-create task; model hanya memberi preview terstruktur, user memilih task, dan endpoint task creation dibuat idempotent untuk menghindari double input. Embedding dipakai sebagai retrieval/candidate layer, bukan sebagai keputusan final — LLM structured output tetap menentukan classification dan proposed task setelah melihat kandidat teratas.
+
+## Fase 16 — Workflow Automation V1
+
+Rules engine kecil untuk mengurangi pekerjaan follow-up internal berulang, dikerjakan setelah Client Portal dan request workflow stabil. Scope V1 sengaja dibatasi ke template rules + internal actions only; tidak ada email automation, webhook, external integration, visual builder penuh, atau AI natural-language builder.
+
+- [x] 16.1 Migration + model `WorkflowAutomation` dan `WorkflowAutomationRun`, scoped ke `Team`, dengan `trigger`, `conditions`, `actions`, `is_active`, `last_run_at`, status run, context, subject, dan `idempotency_key`
+- [x] 16.2 Enum `WorkflowAutomationTrigger`, `WorkflowAutomationAction`, dan `WorkflowAutomationRunStatus` untuk menjaga trigger/action/status tetap type-safe tanpa native database enum
+- [x] 16.3 Template V1: new client request → create triage task, client replied → create follow-up task, request submitted → set status Reviewing, project waiting on client → create calendar event, invoice overdue → create follow-up task, quote unresponded → create follow-up task, project completed → add activity log note
+- [x] 16.4 `WorkflowAutomationRunner` menjalankan automation aktif per team/trigger/subject, memvalidasi subject ownership, mengecek condition sederhana, menjalankan action internal, dan mencatat success/skipped/failed run
+- [x] 16.5 Idempotency: automation yang sama tidak membuat task/event duplikat untuk subject yang sama; `create_task` juga memakai `firstOrCreate` berdasarkan project/request/title
+- [x] 16.6 `RunWorkflowAutomation` queued job untuk trigger event-driven dengan `WithoutOverlapping`, dipanggil dari client request submitted, client request replied, request status changed, dan project status changed
+- [x] 16.7 Command scheduled `workflow-automations:run-due` untuk trigger dokumen berbasis waktu (`invoice_due_soon`, `invoice_overdue`, `quote_unresponded`), dijalankan daily lewat scheduler dengan `withoutOverlapping()`
+- [x] 16.8 UI `/app/{team}/automations`: menu Automations di sidebar Workspace, metrics active/inactive/recent runs, active rules, template cards, enable/pause, edit/delete, dan recent run history
+- [x] 16.9 Halaman create/edit template-based: pilih template, preview "When X, do Y", active toggle, validasi trigger/action/status, lalu simpan rule ke team aktif
+- [x] 16.10 Sidebar counter `automations` ditambahkan agar menu Workspace tetap menampilkan jumlah automation aktif
+- [x] 16.11 Pest test: `WorkflowAutomationTest` mencakup scoped index/CRUD/toggle/delete, invalid trigger/action/status, inactive automation, idempotent request/reply task creation, status update action, calendar event action, scheduled invoice/quote trigger, run logs success/skipped/failed, dan foreign team subject rejection
+- [x] 16.12 Verification: Pint dirty PHP files, targeted Pest untuk WorkflowAutomation + ClientPortal/RequestLog/Project/Document/SidebarCounter, targeted ESLint automation pages/types/sidebar, `npm run build`, dan `git diff --check`
+
+**Fase 16 selesai**: Workflow Automation V1 adalah productivity layer internal, bukan platform automation eksternal. Semua trigger/action tetap team-scoped dan subject-scoped; inactive rule tidak menghasilkan run; failed/skipped/success dicatat di `workflow_automation_runs` untuk audit ringan. Action yang tersedia sengaja terbatas ke operasi internal yang sudah ada di Biondesk: create task, create calendar event, update request status, update project status, dan add activity log. Scheduler dokumen memakai query status/date yang sama semangatnya dengan Reminder, tetapi tidak menggantikan Reminder email yang sudah ada.
 
 ---
 

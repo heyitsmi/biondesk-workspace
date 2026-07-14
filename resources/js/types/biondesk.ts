@@ -1019,3 +1019,67 @@ export type RequestLogAiBreakdown = {
     warnings: string[];
     semantic_matches: RequestLogAiSemanticMatch[];
 };
+
+export type WorkflowAutomationAction = {
+    type:
+        | 'create_task'
+        | 'create_calendar_event'
+        | 'update_request_status'
+        | 'update_project_status'
+        | 'add_activity_log';
+    title?: string;
+    description?: string;
+    status?: string;
+    tags?: string[];
+    delay_days?: number;
+    message?: string;
+    tone?: string;
+};
+
+export type WorkflowAutomationTemplate = {
+    key: string;
+    name: string;
+    description: string;
+    trigger: string;
+    triggerLabel: string;
+    conditions: Record<string, unknown>;
+    actions: WorkflowAutomationAction[];
+    summary: string;
+};
+
+export type WorkflowAutomationItem = {
+    id: number;
+    name: string;
+    template: string;
+    trigger: string;
+    triggerLabel: string;
+    conditions: Record<string, unknown>;
+    actions: WorkflowAutomationAction[];
+    isActive: boolean;
+    lastRunAt: string;
+    createdAt: string;
+};
+
+export type WorkflowAutomationRun = {
+    id: number;
+    automationName: string;
+    trigger: string;
+    triggerLabel: string;
+    status: 'success' | 'skipped' | 'failed';
+    statusLabel: string;
+    statusTone: BiondeskTone;
+    message: string;
+    ranAt: string;
+};
+
+export type WorkflowAutomationsPageProps = {
+    automations: WorkflowAutomationItem[];
+    templates: WorkflowAutomationTemplate[];
+    recentRuns: WorkflowAutomationRun[];
+};
+
+export type WorkflowAutomationFormPageProps = {
+    mode: 'create' | 'edit';
+    automation: WorkflowAutomationItem | null;
+    templates: WorkflowAutomationTemplate[];
+};

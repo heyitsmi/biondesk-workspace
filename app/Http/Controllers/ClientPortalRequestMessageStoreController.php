@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\RequestLogMessageAuthorType;
+use App\Enums\WorkflowAutomationTrigger;
 use App\Http\Requests\StoreClientPortalRequestMessage;
+use App\Jobs\RunWorkflowAutomation;
 use App\Models\Contact;
 use App\Models\Project;
 use App\Models\RequestLog;
@@ -40,6 +42,13 @@ class ClientPortalRequestMessageStoreController extends Controller
         }
 
         $projectModel->logActivity('Client replied to request');
+        RunWorkflowAutomation::dispatch(
+            $projectModel->team_id,
+            WorkflowAutomationTrigger::ClientRequestReplied->value,
+            $message::class,
+            $message->id,
+            ['status' => $requestLogModel->status->value],
+        );
 
         return back();
     }
