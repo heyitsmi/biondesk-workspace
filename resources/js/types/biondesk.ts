@@ -991,3 +991,21 @@ export type ClientPortalRequestShowPageProps = {
         projectTitle: string;
     };
 };
+
+export type RequestLogAiProposedTask = {
+    title: string;
+    description: string;
+    status: ProjectTaskStatus;
+    tags: string[];
+    source_reason: string;
+};
+
+export type RequestLogAiBreakdown = {
+    classification: ProjectRequestClassification;
+    confidence: number;
+    summary: string;
+    related_task_ids: number[];
+    duplicate_task_ids: number[];
+    proposed_tasks: RequestLogAiProposedTask[];
+    warnings: string[];
+};
