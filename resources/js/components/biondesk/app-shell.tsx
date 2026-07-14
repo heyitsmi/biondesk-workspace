@@ -21,6 +21,8 @@ import { index as proposals } from '@/routes/proposals';
 import { index as quotations } from '@/routes/quotations';
 import { index as reminders } from '@/routes/reminders';
 import type { BreadcrumbItem } from '@/types';
+import type { Auth } from '@/types/auth';
+import type { Team } from '@/types/teams';
 
 type Props = {
     children: ReactNode;
@@ -41,6 +43,24 @@ type NavItem = {
 type NavSection = {
     label?: string;
     items: NavItem[];
+};
+
+type SidebarCounts = {
+    opportunities: number;
+    projects: number;
+    proposals: number;
+    quotations: number;
+    invoices: number;
+    contacts: number;
+    reminders: number;
+    profileLibrary: number;
+};
+
+type AppShellPageProps = {
+    auth: Auth;
+    currentTeam: Team | null;
+    sidebarOpen?: boolean;
+    sidebarCounts: SidebarCounts | null;
 };
 
 const TOOLTIP_CLS = cn(
@@ -82,12 +102,15 @@ const notificationItems = [
     { title: 'Payment received for INV-0041', time: '2 days ago' },
 ] as const;
 
+const countBadge = (count: number | undefined): string =>
+    (count ?? 0).toLocaleString('en-US');
+
 export default function BiondeskAppShell({
     children,
     breadcrumbs = [],
     mainClassName = DEFAULT_MAIN_CLS,
 }: Props) {
-    const page = usePage();
+    const page = usePage<AppShellPageProps>();
     const { auth, currentTeam, sidebarOpen } = page.props;
     const { appearance, updateAppearance } = useAppearance();
     const { isCurrentOrParentUrl } = useCurrentUrl();
@@ -105,38 +128,7 @@ export default function BiondeskAppShell({
     const currentPageTitle =
         breadcrumbs[breadcrumbs.length - 1]?.title ?? 'Workspace';
 
-    const propsBag = page.props as Record<string, unknown>;
-    const opportunityCount = Array.isArray(propsBag.opportunities)
-        ? String(propsBag.opportunities.length)
-        : '6';
-    const projectCount = Array.isArray(propsBag.projects)
-        ? String(propsBag.projects.length)
-        : '4';
-    const proposalCount = Array.isArray(propsBag.documents)
-        ? String(propsBag.documents.length)
-        : '2';
-    const invoiceCount = Array.isArray(propsBag.invoices)
-        ? String(propsBag.invoices.length)
-        : '4';
-    const quotationCount = Array.isArray(propsBag.quotations)
-        ? String(propsBag.quotations.length)
-        : '4';
-    const contactsCount =
-        typeof propsBag.contactsCount === 'number' ||
-        typeof propsBag.contactsCount === 'string'
-            ? String(propsBag.contactsCount)
-            : Array.isArray(propsBag.contacts)
-              ? String(propsBag.contacts.length)
-              : '5';
-    const remindersSummary = propsBag.summary as
-        { allCount?: number } | undefined;
-    const remindersCount =
-        typeof remindersSummary?.allCount === 'number'
-            ? String(remindersSummary.allCount)
-            : '8';
-    const profilesCount = Array.isArray(propsBag.profiles)
-        ? String(propsBag.profiles.length)
-        : '5';
+    const sidebarCounts = page.props.sidebarCounts;
 
     const navSections = useMemo<NavSection[]>(() => {
         if (!currentTeam) {
@@ -160,13 +152,13 @@ export default function BiondeskAppShell({
                         title: 'Opportunities',
                         icon: 'i-kanban',
                         href: opportunities(currentTeam.slug),
-                        badge: opportunityCount,
+                        badge: countBadge(sidebarCounts?.opportunities),
                     },
                     {
                         title: 'Projects',
                         icon: 'i-briefcase',
                         href: projects(currentTeam.slug),
-                        badge: projectCount,
+                        badge: countBadge(sidebarCounts?.projects),
                     },
                     {
                         title: 'BionAI',
@@ -182,25 +174,25 @@ export default function BiondeskAppShell({
                         title: 'Proposals',
                         icon: 'i-file',
                         href: proposals(currentTeam.slug),
-                        badge: proposalCount,
+                        badge: countBadge(sidebarCounts?.proposals),
                     },
                     {
                         title: 'Quotations',
                         icon: 'i-quote',
                         href: quotations(currentTeam.slug),
-                        badge: quotationCount,
+                        badge: countBadge(sidebarCounts?.quotations),
                     },
                     {
                         title: 'Invoices',
                         icon: 'i-receipt',
                         href: invoices(currentTeam.slug),
-                        badge: invoiceCount,
+                        badge: countBadge(sidebarCounts?.invoices),
                     },
                     {
                         title: 'Contacts',
                         icon: 'i-users',
                         href: contacts(currentTeam.slug),
-                        badge: contactsCount,
+                        badge: countBadge(sidebarCounts?.contacts),
                     },
                 ],
             },
@@ -211,28 +203,18 @@ export default function BiondeskAppShell({
                         title: 'Reminders',
                         icon: 'i-bell',
                         href: reminders(currentTeam.slug),
-                        badge: remindersCount,
+                        badge: countBadge(sidebarCounts?.reminders),
                     },
                     {
                         title: 'Profile Library',
                         icon: 'i-layers',
                         href: profileLibrary(currentTeam.slug),
-                        badge: profilesCount,
+                        badge: countBadge(sidebarCounts?.profileLibrary),
                     },
                 ],
             },
         ];
-    }, [
-        currentTeam,
-        opportunityCount,
-        projectCount,
-        proposalCount,
-        invoiceCount,
-        quotationCount,
-        contactsCount,
-        remindersCount,
-        profilesCount,
-    ]);
+    }, [currentTeam, sidebarCounts]);
 
     useEffect(() => {
         const previousHtmlOverflow = document.documentElement.style.overflow;

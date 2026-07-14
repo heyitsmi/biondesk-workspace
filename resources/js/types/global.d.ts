@@ -1,6 +1,17 @@
 import type { Auth } from '@/types/auth';
 import type { Team } from '@/types/teams';
 
+type SidebarCounts = {
+    opportunities: number;
+    projects: number;
+    proposals: number;
+    quotations: number;
+    invoices: number;
+    contacts: number;
+    reminders: number;
+    profileLibrary: number;
+};
+
 declare module 'react' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interface InputHTMLAttributes<T> {
@@ -14,6 +25,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            sidebarCounts: SidebarCounts | null;
             currentTeam: Team | null;
             teams: Team[];
             [key: string]: unknown;
