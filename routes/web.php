@@ -73,6 +73,8 @@ use App\Http\Controllers\RecurringInvoiceStoreController;
 use App\Http\Controllers\RecurringInvoiceUpdateController;
 use App\Http\Controllers\ReminderDismissController;
 use App\Http\Controllers\RemindersController;
+use App\Http\Controllers\RequestLogAiBreakdownController;
+use App\Http\Controllers\RequestLogAiTaskStoreController;
 use App\Http\Controllers\RequestLogConvertToTaskController;
 use App\Http\Controllers\RequestLogDestroyController;
 use App\Http\Controllers\RequestLogMessageStoreController;
@@ -207,6 +209,12 @@ Route::prefix('app/{current_team}')
         Route::post('projects/{project}/request-logs/{requestLog}/messages', RequestLogMessageStoreController::class)
             ->whereNumber(['project', 'requestLog'])
             ->name('projects.request-logs.messages.store');
+        Route::post('projects/{project}/request-logs/{requestLog}/ai-breakdown', RequestLogAiBreakdownController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.ai-breakdown');
+        Route::post('projects/{project}/request-logs/{requestLog}/ai-tasks', RequestLogAiTaskStoreController::class)
+            ->whereNumber(['project', 'requestLog'])
+            ->name('projects.request-logs.ai-tasks.store');
         Route::delete('projects/{project}/request-logs/{requestLog}', RequestLogDestroyController::class)
             ->whereNumber(['project', 'requestLog'])
             ->name('projects.request-logs.destroy');

@@ -1,12 +1,17 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, useHttp, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { show as projectShow } from '@/routes/projects';
+import { aiBreakdown } from '@/routes/projects/request-logs';
+import { store as storeAiTasks } from '@/routes/projects/request-logs/ai-tasks';
 import { store as storeRequestLogMessage } from '@/routes/projects/request-logs/messages';
 import type {
     BiondeskTone,
     ProjectAttachment,
     ProjectRequestMessage,
+    RequestLogAiBreakdown,
+    RequestLogAiProposedTask,
     RequestLogDetailPageProps,
 } from '@/types';
 
@@ -54,6 +59,11 @@ type ReplyFormValues = {
 
 type ReplyFormErrors = Partial<Record<'body' | 'attachments', string>>;
 
+type AiBreakdownResponse = {
+    breakdown?: RequestLogAiBreakdown;
+    error?: string;
+};
+
 function AttachmentList({ attachments }: { attachments: ProjectAttachment[] }) {
     if (attachments.length === 0) {
         return (
@@ -79,6 +89,30 @@ function AttachmentList({ attachments }: { attachments: ProjectAttachment[] }) {
                     <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
                 </a>
             ))}
+        </div>
+    );
+}
+
+function AiMetric({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="rounded-[10px] border border-bion-border bg-bion-bg p-[14px]">
+            <div className={FIELD_LABEL}>{label}</div>
+            <div className="font-mono text-[20px] font-semibold text-bion-text">{value}</div>
+        </div>
+    );
+}
+
+function IdList({ label, ids }: { label: string; ids: number[] }) {
+    return (
+        <div className="rounded-[10px] border border-bion-border bg-bion-bg p-[14px]">
+            <div className={FIELD_LABEL}>{label}</div>
+            <div className="flex flex-wrap gap-[6px]">
+                {ids.map((id) => (
+                    <span key={id} className="rounded-full bg-bion-surface-raised px-[8px] py-[3px] font-mono text-[11.5px] text-bion-text-muted">
+                        #{id}
+                    </span>
+                ))}
+            </div>
         </div>
     );
 }
@@ -112,6 +146,11 @@ export default function RequestLogShowPage({
     requestLog,
 }: RequestLogDetailPageProps) {
     const { currentTeam } = usePage().props;
+    const [aiResult, setAiResult] = useState<RequestLogAiBreakdown | null>(null);
+    const [aiError, setAiError] = useState<string | null>(null);
+    const [selectedAiTaskIndexes, setSelectedAiTaskIndexes] = useState<number[]>([]);
+    const [creatingAiTasks, setCreatingAiTasks] = useState(false);
+    const aiHttp = useHttp<Record<string, never>, AiBreakdownResponse>({});
     const replyForm = useForm<ReplyFormValues>({
         body: '',
         attachments: [],
@@ -152,6 +191,78 @@ export default function RequestLogShowPage({
             {
                 preserveScroll: true,
                 onSuccess: () => replyForm.reset(),
+            },
+        );
+    };
+
+    const generateAiBreakdown = (): void => {
+        if (!currentTeam || aiHttp.processing) {
+            return;
+        }
+
+        setAiError(null);
+
+        void aiHttp.post(
+            aiBreakdown({
+                current_team: currentTeam.slug,
+                project: project.id,
+                requestLog: requestLog.id,
+            }).url,
+            {
+                onSuccess: (response) => {
+                    if (response.error || !response.breakdown) {
+                        setAiResult(null);
+                        setSelectedAiTaskIndexes([]);
+                        setAiError(response.error ?? 'AI could not return a usable task breakdown.');
+
+                        return;
+                    }
+
+                    setAiResult(response.breakdown);
+                    setSelectedAiTaskIndexes(response.breakdown.proposed_tasks.map((_task, index) => index));
+                },
+                onHttpException: () => {
+                    setAiResult(null);
+                    setSelectedAiTaskIndexes([]);
+                    setAiError('AI breakdown failed. Please try again.');
+                },
+                onNetworkError: () => {
+                    setAiResult(null);
+                    setSelectedAiTaskIndexes([]);
+                    setAiError('Network error while generating the AI breakdown.');
+                },
+            },
+        );
+    };
+
+    const selectedAiTasks = (): RequestLogAiProposedTask[] =>
+        aiResult?.proposed_tasks.filter((_task, index) => selectedAiTaskIndexes.includes(index)) ?? [];
+
+    const toggleAiTask = (index: number): void => {
+        setSelectedAiTaskIndexes((current) =>
+            current.includes(index)
+                ? current.filter((taskIndex) => taskIndex !== index)
+                : [...current, index],
+        );
+    };
+
+    const createSelectedAiTasks = (): void => {
+        if (!currentTeam || selectedAiTasks().length === 0 || creatingAiTasks) {
+            return;
+        }
+
+        setCreatingAiTasks(true);
+
+        router.post(
+            storeAiTasks({
+                current_team: currentTeam.slug,
+                project: project.id,
+                requestLog: requestLog.id,
+            }).url,
+            { tasks: selectedAiTasks() },
+            {
+                preserveScroll: true,
+                onFinish: () => setCreatingAiTasks(false),
             },
         );
     };
@@ -335,9 +446,131 @@ export default function RequestLogShowPage({
                                     </form>
                                 </div>
                             </section>
+
+                            <section className="overflow-hidden rounded-[12px] border border-bion-border bg-bion-surface">
+                                <div className="flex flex-wrap items-center justify-between gap-[12px] border-b border-bion-border px-[18px] py-[14px]">
+                                    <div>
+                                        <h2 className="text-[15px] font-semibold text-bion-text">AI Task Breakdown</h2>
+                                        <p className="mt-[3px] text-[12.5px] text-bion-text-muted">
+                                            Compare this request with existing project tasks before creating anything.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={BTN_PRIMARY}
+                                        disabled={aiHttp.processing}
+                                        onClick={generateAiBreakdown}
+                                    >
+                                        <svg className={ICON_SM_CLS}>
+                                            <use href="#i-sparkles" />
+                                        </svg>
+                                        {aiHttp.processing ? 'Analyzing...' : 'Break down with AI'}
+                                    </button>
+                                </div>
+
+                                <div className="p-[18px]">
+                                    {aiError ? (
+                                        <div className="mb-[14px] rounded-[9px] bg-bion-danger-soft px-[12px] py-[10px] text-[13px] text-bion-danger">
+                                            {aiError}
+                                        </div>
+                                    ) : null}
+
+                                    {aiResult ? (
+                                        <div className="grid gap-[14px]">
+                                            <div className="grid gap-[12px] md:grid-cols-3">
+                                                <AiMetric label="Classification" value={aiResult.classification} />
+                                                <AiMetric label="Confidence" value={`${Math.round(aiResult.confidence * 100)}%`} />
+                                                <AiMetric label="Suggested Tasks" value={String(aiResult.proposed_tasks.length)} />
+                                            </div>
+
+                                            <div className="rounded-[10px] border border-bion-border bg-bion-bg p-[14px]">
+                                                <div className={FIELD_LABEL}>Summary</div>
+                                                <p className="text-[13.5px] leading-[1.65] text-bion-text">{aiResult.summary}</p>
+                                            </div>
+
+                                            {aiResult.related_task_ids.length > 0 || aiResult.duplicate_task_ids.length > 0 ? (
+                                                <div className="grid gap-[10px] md:grid-cols-2">
+                                                    <IdList label="Related task IDs" ids={aiResult.related_task_ids} />
+                                                    <IdList label="Duplicate task IDs" ids={aiResult.duplicate_task_ids} />
+                                                </div>
+                                            ) : null}
+
+                                            {aiResult.warnings.length > 0 ? (
+                                                <div className="rounded-[10px] border border-bion-border bg-bion-danger-soft p-[14px]">
+                                                    <div className={FIELD_LABEL}>Warnings</div>
+                                                    <ul className="grid gap-[6px] text-[13px] text-bion-danger">
+                                                        {aiResult.warnings.map((warning, index) => (
+                                                            <li key={`${warning}-${index}`}>{warning}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ) : null}
+
+                                            {aiResult.proposed_tasks.length > 0 ? (
+                                                <div className="grid gap-[10px]">
+                                                    {aiResult.proposed_tasks.map((task, index) => (
+                                                        <label
+                                                            key={`${task.title}-${index}`}
+                                                            className="flex gap-[12px] rounded-[10px] border border-bion-border bg-bion-bg p-[14px]"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                className="mt-[3px] h-[16px] w-[16px] accent-bion-accent"
+                                                                checked={selectedAiTaskIndexes.includes(index)}
+                                                                onChange={() => toggleAiTask(index)}
+                                                            />
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="mb-[5px] flex flex-wrap items-center gap-[8px]">
+                                                                    <span className="font-semibold text-bion-text">{task.title}</span>
+                                                                    <span className="rounded-full border border-bion-border px-[8px] py-[2px] text-[11px] text-bion-text-muted">
+                                                                        {task.status.replaceAll('_', ' ')}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="mb-[8px] whitespace-pre-line text-[13px] leading-[1.6] text-bion-text-muted">
+                                                                    {task.description}
+                                                                </p>
+                                                                <div className="mb-[8px] flex flex-wrap gap-[6px]">
+                                                                    {task.tags.map((tag) => (
+                                                                        <span key={tag} className="rounded-full bg-bion-surface-raised px-[8px] py-[2px] text-[11px] text-bion-text-muted">
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="text-[12.5px] text-bion-text-muted">
+                                                                    {task.source_reason}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    ))}
+
+                                                    <button
+                                                        type="button"
+                                                        className={cn(BTN_PRIMARY, 'w-fit')}
+                                                        disabled={selectedAiTaskIndexes.length === 0 || creatingAiTasks}
+                                                        onClick={createSelectedAiTasks}
+                                                    >
+                                                        <svg className={ICON_SM_CLS}>
+                                                            <use href="#i-check" />
+                                                        </svg>
+                                                        {creatingAiTasks ? 'Creating...' : 'Create selected tasks'}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="rounded-[10px] border border-dashed border-bion-border bg-bion-bg p-[14px] text-[13px] text-bion-text-muted">
+                                                    No new tasks suggested for this classification.
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-[10px] border border-dashed border-bion-border bg-bion-bg p-[14px] text-[13px] text-bion-text-muted">
+                                            Run AI breakdown to get a reviewed preview before creating tasks.
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
                         </main>
 
-                        <aside className="h-fit rounded-[12px] border border-bion-border bg-bion-surface p-[16px]">
+                        <aside className="h-fit self-start rounded-[12px] border border-bion-border bg-bion-surface p-[16px] lg:sticky lg:top-[84px]">
                             <h2 className="mb-[14px] text-[14px] font-semibold text-bion-text">Request Metadata</h2>
                             <dl className="flex flex-col gap-[13px]">
                                 <div>

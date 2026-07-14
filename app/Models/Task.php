@@ -14,12 +14,13 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 /**
  * @property int $id
  * @property int $project_id
+ * @property int|null $request_log_id
  * @property string $title
  * @property TaskStatus $status
  * @property string|null $description
  * @property list<string>|null $tags
  */
-#[Fillable(['project_id', 'title', 'status', 'description', 'tags'])]
+#[Fillable(['project_id', 'request_log_id', 'title', 'status', 'description', 'tags'])]
 class Task extends Model implements HasMedia
 {
     /** @use HasFactory<TaskFactory> */
@@ -33,6 +34,16 @@ class Task extends Model implements HasMedia
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the request log this task was generated from, if any.
+     *
+     * @return BelongsTo<RequestLog, $this>
+     */
+    public function requestLog(): BelongsTo
+    {
+        return $this->belongsTo(RequestLog::class);
     }
 
     /**

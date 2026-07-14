@@ -63,6 +63,16 @@ class RequestLog extends Model implements HasMedia
     }
 
     /**
+     * Get tasks explicitly created from this request log.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    /**
      * Get the attachments for this request log.
      *
      * @return array<int, array{name: string, url: string}>
@@ -95,6 +105,7 @@ class RequestLog extends Model implements HasMedia
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
+            'projectId' => $this->project_id,
             'text' => $this->text,
             'source' => $this->source->value,
             'date' => $this->created_at?->diffForHumans() ?? '',
