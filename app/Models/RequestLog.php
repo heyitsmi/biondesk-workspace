@@ -19,8 +19,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property RequestLogSource $source
  * @property RequestLogClassification $classification
  * @property string|null $notes
+ * @property bool $visible_to_client
  */
-#[Fillable(['project_id', 'text', 'source', 'classification', 'notes'])]
+#[Fillable(['project_id', 'text', 'source', 'classification', 'notes', 'visible_to_client'])]
 class RequestLog extends Model implements HasMedia
 {
     /** @use HasFactory<RequestLogFactory> */
@@ -78,6 +79,21 @@ class RequestLog extends Model implements HasMedia
     }
 
     /**
+     * Get the safe array shape used on the public client portal.
+     *
+     * @return array<string, mixed>
+     */
+    public function toClientPortalArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'text' => $this->text,
+            'sourceLabel' => $this->source->label(),
+            'createdAt' => $this->created_at?->format('M j, Y') ?? '',
+        ];
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -87,6 +103,7 @@ class RequestLog extends Model implements HasMedia
         return [
             'source' => RequestLogSource::class,
             'classification' => RequestLogClassification::class,
+            'visible_to_client' => 'boolean',
         ];
     }
 }
