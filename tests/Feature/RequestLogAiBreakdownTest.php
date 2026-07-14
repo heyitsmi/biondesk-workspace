@@ -25,7 +25,10 @@ function fakeOpenAiBreakdown(array $breakdown): void
 {
     config([
         'services.openai.api_key' => 'test-key',
+        'services.openai.embedding_api_key' => 'test-key',
         'services.openai.model' => 'gpt-4o-mini',
+        'services.openai.embedding_model' => 'text-embedding-3-small',
+        'services.openai.embedding_dimensions' => 3,
     ]);
 
     Http::fake([
@@ -41,6 +44,19 @@ function fakeOpenAiBreakdown(array $breakdown): void
             'usage' => [
                 'prompt_tokens' => 1200,
                 'completion_tokens' => 300,
+            ],
+        ]),
+        'https://api.openai.com/v1/embeddings' => Http::response([
+            'data' => [
+                [
+                    'embedding' => [1.0, 0.0, 0.0],
+                    'index' => 0,
+                ],
+            ],
+            'model' => 'text-embedding-3-small',
+            'usage' => [
+                'prompt_tokens' => 12,
+                'total_tokens' => 12,
             ],
         ]),
     ]);
@@ -125,7 +141,10 @@ test('fake duplicate ai response returns no proposed tasks and logs usage', func
         ->assertJsonPath('breakdown.duplicate_task_ids.0', $existingTask->id)
         ->assertJsonPath('breakdown.proposed_tasks', []);
 
-    $usageLog = BionAiUsageLog::sole();
+    $usageLog = BionAiUsageLog::query()
+        ->where('model', 'gpt-4o-mini')
+        ->sole();
+
     expect($usageLog->team_id)->toBe($team->id);
     expect($usageLog->user_id)->toBe($user->id);
     expect($usageLog->provider)->toBe('openai');
@@ -167,7 +186,8 @@ test('fake related ai response returns only missing proposed tasks', function ()
         ->assertOk()
         ->assertJsonPath('breakdown.classification', 'related')
         ->assertJsonPath('breakdown.related_task_ids.0', $existingTask->id)
-        ->assertJsonPath('breakdown.proposed_tasks.0.title', 'Add map rotation control');
+        ->assertJsonPath('breakdown.proposed_tasks.0.title', 'Add map rotation control')
+        ->assertJsonPath('breakdown.semantic_matches.0.id', $existingTask->id);
 });
 
 test('invalid ai schema is handled as an error without creating tasks', function () {
@@ -212,7 +232,11 @@ test('selected task creation creates only selected tasks and preserves request r
                 ],
             ],
         ])
-        ->assertRedirect();
+        ->assertRedirect()
+        ->assertInertiaFlash('toast', [
+            'type' => 'success',
+            'message' => '1 task created from AI breakdown.',
+        ]);
 
     $task = Task::sole();
 
@@ -220,4 +244,43 @@ test('selected task creation creates only selected tasks and preserves request r
     expect($task->title)->toBe('Add approval status badge');
     expect($task->tags)->toBe(['Portal', 'UI']);
     expect($project->activitiesAsSubject()->where('description', 'AI breakdown tasks created from request log')->exists())->toBeTrue();
+});
+
+test('selected task creation is idempotent for repeated submissions', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $project = aiBreakdownProject($team);
+    $requestLog = RequestLog::factory()->for($project)->create();
+    $payload = [
+        'tasks' => [
+            [
+                'title' => 'Prevent duplicate AI task creation',
+                'description' => 'Disable duplicate task creation when the AI action is clicked repeatedly.',
+                'status' => 'todo',
+                'tags' => ['AI', 'Tasks'],
+                'source_reason' => 'Repeated clicks should not create duplicate work.',
+            ],
+        ],
+    ];
+    $route = route('projects.request-logs.ai-tasks.store', [
+        'current_team' => $team->slug,
+        'project' => $project->id,
+        'requestLog' => $requestLog->id,
+    ]);
+
+    $this->actingAs($user)->post($route, $payload)->assertRedirect();
+
+    $this->actingAs($user)
+        ->post($route, $payload)
+        ->assertRedirect()
+        ->assertInertiaFlash('toast', [
+            'type' => 'success',
+            'message' => 'Selected AI tasks were already created.',
+        ]);
+
+    expect(Task::query()
+        ->where('request_log_id', $requestLog->id)
+        ->where('title', 'Prevent duplicate AI task creation')
+        ->count()
+    )->toBe(1);
 });

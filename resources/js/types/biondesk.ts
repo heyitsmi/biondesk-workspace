@@ -1000,6 +1000,15 @@ export type RequestLogAiProposedTask = {
     source_reason: string;
 };
 
+export type RequestLogAiSemanticMatch = {
+    id: number;
+    title: string;
+    status: ProjectTaskStatus;
+    description: string;
+    tags: string[];
+    similarity: number;
+};
+
 export type RequestLogAiBreakdown = {
     classification: ProjectRequestClassification;
     confidence: number;
@@ -1008,4 +1017,5 @@ export type RequestLogAiBreakdown = {
     duplicate_task_ids: number[];
     proposed_tasks: RequestLogAiProposedTask[];
     warnings: string[];
+    semantic_matches: RequestLogAiSemanticMatch[];
 };

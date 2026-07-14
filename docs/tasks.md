@@ -8,9 +8,11 @@ Dokumen ini awalnya dibuat sebagai breakdown eksekusi untuk mengubah halaman stu
 
 Yang sudah berjalan:
 - Fondasi auth (Fortify: login, register, 2FA, passkey, password confirmation) dan Team/Membership/TeamInvitation.
-- Data model utama: Contact, Opportunity, Project, Task, RequestLog, Document, DocumentItem, Payment, ReminderJob, ProfileAsset.
+- Data model utama: Contact, Opportunity, Project, Task, RequestLog, RequestLogMessage, Document, DocumentItem, Payment, ReminderJob, ProfileAsset.
 - Public lead form dengan Turnstile fail-closed dan notifikasi email.
 - Public document share memakai token `/d/{document:public_token}`.
+- Client Portal token-based per Contact (`/c/{contact:portal_token}`), request threads, attachment, dedicated request detail, dan client-visible scoping.
+- AI Request Log breakdown dengan structured output, semantic duplicate/related detection memakai OpenAI embeddings + pgvector, dan idempotent task creation dari hasil AI.
 - PDF generation via queued job dan Spatie Browsershot.
 - Payment tracking invoice bersifat manual. Client membayar langsung ke user lewat payment link atau instruksi pembayaran milik user; Biondesk tidak memproses, menahan, routing, escrow, atau reconcile otomatis pembayaran client.
 
@@ -283,6 +285,25 @@ Modul marketing publik untuk akuisisi organik, dikerjakan setelah Ops Portal ter
 - [x] 14.13 Pest test: `BlogTest` mencakup halaman blog dan usage log generator; `SitemapTest` mencakup XML sitemap, route shortcut, artikel published masuk, draft tidak masuk
 
 **Fase 14 selesai**: Blog sengaja diperlakukan sebagai kanal konten Biondesk sendiri ("Insights"), bukan CMS multi-tenant untuk user. Admin berada di `/ops/*` dan protected oleh `EnsureSuperAdmin`. Generator konten memakai OpenAI langsung karena use case-nya spesifik OpenAI (`gpt-image-1` untuk thumbnail), sementara BionAI dan proposal generation tetap memakai abstraksi masing-masing yang sudah ada. Semua pemakaian AI dari generator blog dicatat ke `bion_ai_usage_logs`, sehingga Ops AI Usage Logs tetap menjadi satu tempat untuk melihat biaya AI lintas fitur. Sitemap tidak disimpan ke file statis; response XML dibuat realtime dari database supaya Search Console selalu melihat artikel published terbaru tanpa job tambahan.
+
+## Fase 15 — Client Portal & AI Request Collaboration
+
+Modul kolaborasi klien, dikerjakan di atas Project/Request Log yang sudah ada. Tujuannya memberi client satu link rahasia per Contact untuk melihat project/dokumen/request yang aman dibagikan, sekaligus menaikkan Request Log dari catatan internal menjadi collaboration thread dan sumber task breakdown berbantuan AI.
+
+- [x] 15.1 `contacts.portal_token` — token stabil seperti `Document.public_token`, dibuat otomatis untuk Contact existing dan baru, dipakai untuk URL Client Portal
+- [x] 15.2 Public routes token-only: `GET /c/{contact:portal_token}`, `POST /c/{contact:portal_token}/projects/{project}/requests`, `POST /c/{contact:portal_token}/projects/{project}/requests/{requestLog}/messages`, dan dedicated detail `GET /c/{contact:portal_token}/projects/{project}/requests/{requestLog:uuid}`
+- [x] 15.3 Client-safe request visibility: `request_logs.visible_to_client`, `RequestLogSource::ClientPortal`, `RequestLogStatus` (`submitted`, `reviewing`, `in_progress`, `resolved`, `declined`), dan default internal request tetap hidden dari portal
+- [x] 15.4 `request_log_messages` + model `RequestLogMessage` dengan author `client`/`team`, nullable `user_id`/`contact_id`, body, timestamps, dan media library collection `attachments`
+- [x] 15.5 Portal UI: `client/portal` dan `client/request-log-show`, layout publik app-style tanpa authenticated app shell, project list, documents, request cards short preview, request detail, reply form, upload progress, dan attachment list
+- [x] 15.6 Internal Request Log upgrade: status selector/filter, source `Client portal`, thread reply composer di modal/detail page, dedicated internal request log detail by UUID, sticky request metadata card, dan link "View full page" dari modal
+- [x] 15.7 AI task breakdown V1.3: endpoint `projects.request-logs.ai-breakdown` memakai OpenAI structured output strict JSON schema, menghasilkan classification/confidence/summary/related IDs/duplicate IDs/proposed tasks/warnings; task dibuat lewat endpoint kedua `projects.request-logs.ai-tasks.store` hanya setelah user memilih task yang mau dibuat
+- [x] 15.8 Idempotent AI task creation: tombol Create selected tasks dikunci instan di frontend dengan ref lock, backend memakai `firstOrCreate` berdasarkan project/request/title agar repeated click/retry tidak membuat task duplikat, dan toast success/duplicate state dikirim lewat Inertia flash
+- [x] 15.9 Embedding index V1.4: `embedding_index_entries` dengan pgvector `vector(1536)` di Postgres dan JSON fallback untuk SQLite test, `OpenAIEmbeddingService`, `EmbeddingTextBuilder`, `EmbeddingIndexService`, `RequestLogSemanticMatcher`, job `RefreshEmbeddingIndexEntry`, dan command `embedding-index:backfill`
+- [x] 15.10 AI breakdown sekarang memakai semantic top matches dari task existing sebelum memanggil LLM, menampilkan `Semantic matches` di panel internal, tetap fallback ke all project tasks kalau embedding gagal, dan seluruh usage embedding/chat dicatat ke `BionAiUsageLog`
+- [x] 15.11 Config khusus embedding: `OPENAI_EMBEDDING_API_KEY` (fallback `OPENAI_API_KEY`), `OPENAI_EMBEDDING_MODEL=text-embedding-3-small`, `OPENAI_EMBEDDING_DIMENSIONS=1536`, plus pricing entry untuk estimasi cost embedding
+- [x] 15.12 Pest/verification: `ClientPortalTest`, `RequestLogManagementTest`, `RequestLogAiBreakdownTest`, `EmbeddingIndexTest`; targeted ESLint untuk page/type terkait; `npm run build`; migration pgvector diverifikasi di Postgres lokal
+
+**Fase 15 selesai**: Client Portal sengaja tetap unauthenticated dan token-only di versi ini — tidak ada client account, OTP, session, atau approval workflow penuh. Semua scoping portal divalidasi server-side lewat contact token → opportunity contact → project/request, dan portal hanya mengirim data client-safe (tidak ada notes internal). Request Log kini punya dua lapisan: internal workspace tetap bisa menyimpan notes/source/classification/status, sementara thread message bersifat client-visible by design. AI breakdown tidak pernah auto-create task; model hanya memberi preview terstruktur, user memilih task, dan endpoint task creation dibuat idempotent untuk menghindari double input. Embedding dipakai sebagai retrieval/candidate layer, bukan sebagai keputusan final — LLM structured output tetap menentukan classification dan proposed task setelah melihat kandidat teratas.
 
 ---
 

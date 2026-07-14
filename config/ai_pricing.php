@@ -15,6 +15,7 @@
 return [
     'openai' => [
         'gpt-4o-mini' => ['input' => 0.15, 'output' => 0.60],
+        'text-embedding-3-small' => ['input' => 0.02, 'output' => 0.00],
         'default' => ['input' => 0.50, 'output' => 1.50],
     ],
 

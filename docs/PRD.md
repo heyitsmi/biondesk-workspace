@@ -34,7 +34,15 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 - Sebagai user, saya ingin punya link public lead form sendiri yang bisa disematkan di bio media sosial, supaya orang bisa langsung kirim inquiry tanpa perlu chat manual dulu
 - Sebagai user, saya ingin bisa kustomisasi tampilan lead form saya sendiri (banner, judul, deskripsi), supaya kesannya representasi brand saya, bukan form generic
 - Sebagai user, saya ingin mencatat permintaan atau revisi ad-hoc dari klien selama project berjalan, supaya tidak ada yang hilang di riwayat chat
+- Sebagai user, saya ingin membagikan portal khusus ke setiap contact, supaya klien bisa melihat project/dokumen/request mereka tanpa saya harus membuat akun client untuk mereka
+- Sebagai user, saya ingin request panjang dari klien bisa dipecah AI menjadi task yang sudah dibandingkan dengan task existing, supaya tidak membuat task duplikat atau keluar dari konteks request
 - Sebagai user, saya ingin bertanya ke asisten AI (BionAI) tentang kondisi workspace saya sendiri (task overdue, jadwal hari ini, invoice belum dibayar) dan mendapat jawaban dari data asli, sekaligus tetap bisa tanya hal umum di luar itu seperti chatbot biasa
+
+**Sebagai client/contact**
+
+- Sebagai klien, saya ingin membuka satu link portal rahasia, supaya bisa melihat project saya, dokumen yang dibagikan, dan request/revisi yang sedang berjalan tanpa login
+- Sebagai klien, saya ingin submit request baru dan membalas request thread dengan attachment, supaya feedback saya tersimpan di workspace user dan tidak hilang di chat terpisah
+- Sebagai klien, saya hanya ingin melihat request yang memang ditandai client-visible, supaya catatan internal tim user tidak bocor ke portal
 
 **Sebagai calon user eksternal (fase setelah versi awal stabil)**
 
@@ -46,11 +54,12 @@ Freelancer dan agency kecil yang bekerja lintas platform (marketplace, referral,
 
 ```
 Team (workspace kerja, dengan slug untuk routing)
-  └── Contact (lead / client)
+  └── Contact (lead / client, portal_token untuk Client Portal)
         └── Opportunity   (stage: inbox, drafting, sent, negotiation, won, lost)
               └── Project      (status: not_started, in_progress, waiting_on_client, in_review, completed, cancelled)
-                    ├── Task        (status: todo, in_progress, done)
-                    └── RequestLog  (permintaan/revisi ad-hoc dari klien)
+                    ├── Task        (status: backlog/todo/in_progress/in_review/done, bisa terhubung ke RequestLog)
+                    └── RequestLog  (permintaan/revisi ad-hoc, source/classification/status/visible_to_client)
+                          └── RequestLogMessage (client/team replies + attachment)
               └── Document     (type: proposal, quote, invoice)
                     ├── DocumentItem (line items)
                     ├── Payment      (manual, banyak record per document)
@@ -62,6 +71,7 @@ Team (workspace kerja, dengan slug untuk routing)
   └── BionAiUsageLog (token usage & estimasi cost per turn, ditampilkan di Ops Portal)
 BlogCategory (kategori konten publik)
   └── Blog (artikel Insights publik, thumbnail via media library, author User)
+EmbeddingIndexEntry (semantic index untuk task/request matching, scoped team/project)
 ```
 
 User punya kolom `is_super_admin` (boolean, default false) yang menandai akun sebagai Biondesk staff — tidak team-scoped, dipakai untuk akses `/ops/*` (lihat bagian Ops Portal di P0).
@@ -93,6 +103,18 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Given user drag project card ke kolom status lain, when drop terjadi, then status dan urutan (`sort_order`) ter-update tanpa reload halaman penuh
 - Given project ada, when user tambah task, then task tersimpan terhubung ke project tersebut dengan status default "todo"
 - Given project sedang berjalan, when klien minta revisi atau ada permintaan ad-hoc, then user bisa catat sebagai Request Log yang terhubung ke project tersebut, terpisah dari Task
+- Given Request Log dibuat dari Client Portal, then source tersimpan sebagai `Client portal`, `visible_to_client = true`, dan status default `submitted`
+- Given Request Log bersifat internal, then tidak tampil di Client Portal kecuali `visible_to_client = true`
+- Given user membuka halaman detail Request Log internal, then user bisa membalas thread sebagai team, mengubah status request, melihat metadata request, dan menjalankan AI breakdown
+- Given AI breakdown dijalankan dari Request Log, then sistem memakai structured output, membandingkan request dengan task existing, menampilkan semantic matches, suggested classification, related/duplicate task IDs, warnings, dan proposed tasks
+- Given user klik Create selected tasks dari hasil AI breakdown, then task hanya dibuat setelah explicit confirmation, mencatat relasi `request_log_id`, menampilkan toast success, dan repeated submission tidak membuat task duplikat untuk request/title yang sama
+
+**Client Portal**
+- Given user membuka halaman contact detail, then tersedia link Client Portal token-based untuk contact tersebut
+- Given client membuka `/c/{contact:portal_token}`, then tampil portal publik tanpa login dengan layout app-style, project milik contact, dokumen non-draft yang dibagikan, request client-visible, dan form submit request
+- Given client membuka request detail `/c/{contact:portal_token}/projects/{project}/requests/{requestLog:uuid}`, then tampil original request, status, attachment, thread replies, dan reply form dengan multiple attachment
+- Given client mencoba membuka project/request milik contact lain, hidden/internal request, atau token invalid, then request ditolak 404
+- Given client submit request/reply, then ownership divalidasi server-side lewat contact token → opportunity contact → project/request, dan attachment mengikuti aturan max 10MB/file
 
 **Proposal, Quote, Invoice**
 - Given user isi brief (job post atau ringkasan diskusi), when generate proposal, then AI menghasilkan draft yang menyesuaikan Profile Library user, bukan generic template
@@ -154,7 +176,8 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 - Company-level grouping di atas Contact, untuk agency yang punya beberapa contact person dalam satu perusahaan klien
 - BYO payment gateway penuh untuk invoice (kalau ada sinyal kuat dari user eksternal)
 - Self-serve onboarding publik penuh, termasuk billing dan lifecycle user yang lebih matang. Landing page pemasaran dasar sudah ada, tetapi bisa terus disempurnakan berdasarkan positioning early access
-- Request Log versi AI: extraction otomatis dari chat yang di-paste, dengan deteksi duplikat/kontradiksi pakai semantic search (pgvector + embedding). Ini upgrade signifikan dari Request Log manual di P0, worth dipertimbangkan serius sebagai diferensiator, tapi butuh infrastruktur tambahan (pgvector, API AI terpisah untuk extraction) yang belum jadi prioritas sekarang
+- Request Log versi AI extraction dari chat yang di-paste atau upload transkrip lengkap. Semantic duplicate/related detection untuk breakdown task sudah tersedia lewat pgvector + OpenAI embeddings; upgrade berikutnya adalah extraction otomatis dari raw chat/log panjang menjadi beberapa request thread yang rapi
+- Client Portal lanjutan: approval flow, per-request due date, notification email, client account/OTP, dan document approval langsung dari portal
 - Ops portal versi lanjutan (subdomain sendiri, role admin bertingkat lewat `spatie/laravel-permission`, kelola subscription lintas tenant) — versi ringan sudah jalan di P0 (`/ops/*` di domain yang sama, satu flag boolean `is_super_admin`), upgrade ini relevan begitu ada banyak staf Biondesk atau kebutuhan role admin yang lebih granular
 
 ## Arsitektur teknis
@@ -173,12 +196,15 @@ Document punya dua kemungkinan relasi: ke Opportunity (untuk proposal di fase cl
 
 **AI provider**: pakai Laravel AI SDK, provider (OpenAI, Anthropic, DeepSeek) switchable lewat config, tidak perlu ubah kode di setiap fungsi AI.
 
+**AI request breakdown & embeddings**: Request Log detail internal memakai OpenAI structured output untuk menghasilkan classification (`new`, `related`, `duplicate`, `contradiction`), confidence, summary, related/duplicate task IDs, warnings, dan proposed tasks. Sebelum context dikirim ke LLM, sistem membuat semantic candidate list dari task existing memakai OpenAI Embeddings (`text-embedding-3-small`) dan pgvector (`embedding_index_entries`) supaya model hanya membandingkan kandidat paling relevan. Embedding memakai `OPENAI_EMBEDDING_API_KEY` jika tersedia, fallback ke `OPENAI_API_KEY`, dan setiap embedding/chat usage dicatat ke `BionAiUsageLog`.
+
 **PDF generation**: job queued (`ShouldQueue`), hasil disimpan lewat media library, di-generate dari route print khusus (halaman polos tanpa tombol aksi interaktif) yang terpisah dari halaman share utama.
 
 **Struktur route (monolith, satu domain)**: root domain (`biondesk.com`) melayani tiga zona lewat route group, bukan subdomain terpisah:
 - `/` — landing page marketing, tanpa auth
 - `/p/{team}` — public lead form, tanpa auth
 - `/d/{document:public_token}` — proposal/quote/invoice yang dibagikan ke klien, tanpa auth
+- `/c/{contact:portal_token}` — Client Portal publik per contact, tanpa auth, token-only
 - `/blog` dan `/blog/{slug}` — halaman Insights publik, tanpa auth, data dinamis dari tabel blog
 - `/sitemap.xml` dan `/sitemap` — sitemap XML realtime untuk crawler/Search Console
 - `/app/*` — seluruh halaman Inertia, wajib auth
