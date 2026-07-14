@@ -29,13 +29,15 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 - **Dirancang dari pengalaman langsung menjalankan bisnis freelance**, bukan cuma asumsi dari riset pasar
 - **Project dan task management yang setara dengan sales dan billing**, bukan fitur tempelan, ini yang sering jadi kelemahan kompetitor sejenis
 - **AI proposal generation yang terhubung ke Profile Library**, bukan generic AI writer, hasilnya disesuaikan dengan skill, portfolio, dan testimonial milik user sendiri
+- **Client Portal ringan tanpa akun klien**, sehingga klien bisa melihat project, dokumen, dan request thread lewat satu secret link per contact tanpa user harus membuat akun tambahan untuk mereka
+- **AI request breakdown yang membandingkan request dengan task yang sudah ada**, termasuk semantic duplicate/related detection memakai embedding, supaya revisi panjang dari klien bisa dipecah jadi task tanpa menggandakan pekerjaan lama
 - **Fleksibel soal sumber lead dan metode pembayaran**, tidak diasumsikan selalu dari satu marketplace tertentu, dan tidak memaksa user memakai payment gateway Biondesk
 
 ## Pilar fitur utama
 
 1. **Contact management** — lead dan client dalam satu tempat, bisa dikonversi dari lead ke client
 2. **Opportunity (lead pipeline)** — Kanban board dengan stage inbox, drafting, sent, negotiation, won, lost. Sumber lead bebas diisi (tidak dikunci ke daftar platform tertentu). Setiap user punya public lead form sendiri (`biondesk.com/p/nama-team`, atau `/p/custom-link` kalau di-custom) yang bisa disematkan di bio media sosial, submission masuk otomatis sebagai Opportunity baru. Halaman lead form ini bisa dikustomisasi lewat Settings — link custom, banner/logo, cover image, warna/gambar latar, judul, pesan sambutan, daftar layanan, toggle upload lampiran, link media sosial (ditampilkan sebagai ikon), dan meta tag SEO (title/description/OG image) — dengan live preview, dan fallback masuk akal (nama team, pesan generic) kalau belum di-custom
-3. **Project dan Task management** — fitur inti, bukan tambahan. Project punya pipeline sendiri (not started, in progress, waiting on client, in review, completed, cancelled), tampilan table dan Kanban board, dengan Task di dalamnya. Setiap project juga punya Request Log, tempat mencatat permintaan atau revisi ad-hoc dari klien selama pengerjaan berlangsung
+3. **Project, Task, dan Request management** — fitur inti, bukan tambahan. Project punya pipeline sendiri (not started, in progress, waiting on client, in review, completed, cancelled), tampilan table dan Kanban board, dengan Task di dalamnya. Setiap project juga punya Request Log untuk permintaan/revisi ad-hoc, thread balasan, attachment, status, dan aksi AI untuk memecah request menjadi task yang sudah dibandingkan dengan task existing
 4. **Proposal** — dibuat manual atau di-generate AI dari brief (bisa job post dari marketplace, atau ringkasan hasil discovery call), disesuaikan konteksnya dengan Profile Library
 5. **Quote** — dokumen harga formal, bisa dikonversi dari proposal yang di-accept
 6. **Invoice** — dibuat manual atau dari quote yang di-accept, dengan opsi otomatis ditawarkan begitu proposal accepted (user tetap yang memilih setiap saat, bukan otomatis penuh)
@@ -43,8 +45,9 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 8. **Reminders** — aturan otomatis (mendekati jatuh tempo, sudah lewat jatuh tempo, follow-up quote yang belum direspon)
 9. **Profile Library** — portfolio, testimonial, dan snippet teks yang jadi bahan AI generation
 10. **PDF export** — proposal, quote, dan invoice bisa dibagikan lewat webview (interaktif, tempat klien accept dan lihat status) sekaligus lampiran PDF (buat diarsipkan, dilampirkan ke email)
-11. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
-12. **Insights / blog engine** — kanal konten publik untuk edukasi freelancer/agency dan akuisisi organik. Blog dan kategori dikelola dari Ops Portal, tampil dinamis di halaman publik `/blog` dan `/blog/{slug}`, bisa diisi manual atau dijadwalkan untuk generate artikel SEO/GEO/AEO beserta thumbnail menggunakan OpenAI API, serta masuk ke sitemap realtime untuk Search Console.
+11. **Client Portal** — halaman publik token-based per Contact (`/c/{portal_token}`) untuk klien melihat project mereka, dokumen yang sudah dibagikan, request yang client-visible, dan membalas thread request dengan attachment tanpa login
+12. **BionAI** — asisten chat AI general-purpose terintegrasi ke workspace. Bisa jawab pertanyaan apa saja seperti chatbot pada umumnya, tapi kalau ditanya soal kondisi kerja user sendiri (task yang overdue, jadwal hari ini, invoice belum dibayar, dst), jawabannya diambil dari data workspace asli lewat tool-calling, bukan menebak atau mengarang
+13. **Insights / blog engine** — kanal konten publik untuk edukasi freelancer/agency dan akuisisi organik. Blog dan kategori dikelola dari Ops Portal, tampil dinamis di halaman publik `/blog` dan `/blog/{slug}`, bisa diisi manual atau dijadwalkan untuk generate artikel SEO/GEO/AEO beserta thumbnail menggunakan OpenAI API, serta masuk ke sitemap realtime untuk Search Console.
 
 ## Yang bukan tujuan Biondesk
 
@@ -53,6 +56,7 @@ Freelancer solo atau agency kecil (1-5 orang) yang:
 - Bukan accounting software lengkap, tidak menggantikan software pembukuan resmi
 - Bukan marketplace pencari klien baru
 - Bukan tool yang terkunci ke satu platform freelance tertentu
+- Bukan portal klien dengan akun, password, role client, atau approval workflow penuh di versi sekarang. Client Portal v1 bersifat secret-link, scoped per Contact, dan fokus ke view + request collaboration
 - Bukan CMS generik penuh. Fitur blog Biondesk difokuskan untuk content marketing Biondesk sendiri (Insights), bukan untuk menggantikan WordPress/Webflow sebagai website builder multi-tenant.
 
 ## Monetisasi

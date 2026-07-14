@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, useHttp, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { show as projectShow } from '@/routes/projects';
@@ -12,6 +12,7 @@ import type {
     ProjectRequestMessage,
     RequestLogAiBreakdown,
     RequestLogAiProposedTask,
+    RequestLogAiSemanticMatch,
     RequestLogDetailPageProps,
 } from '@/types';
 
@@ -117,6 +118,38 @@ function IdList({ label, ids }: { label: string; ids: number[] }) {
     );
 }
 
+function SemanticMatchList({ matches }: { matches: RequestLogAiSemanticMatch[] }) {
+    if (matches.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-[10px] border border-bion-border bg-bion-bg p-[14px]">
+            <div className={FIELD_LABEL}>Semantic matches</div>
+            <div className="grid gap-[8px]">
+                {matches.map((match) => (
+                    <div
+                        key={match.id}
+                        className="rounded-[9px] border border-bion-border bg-bion-surface px-[12px] py-[10px]"
+                    >
+                        <div className="mb-[5px] flex min-w-0 flex-wrap items-center justify-between gap-[8px]">
+                            <span className="min-w-0 truncate text-[13px] font-semibold text-bion-text">
+                                #{match.id} {match.title}
+                            </span>
+                            <span className="font-mono text-[11.5px] text-bion-text-muted">
+                                {Math.round(match.similarity * 100)}%
+                            </span>
+                        </div>
+                        <div className="text-[12px] text-bion-text-muted">
+                            {match.status.replaceAll('_', ' ')}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function ThreadMessage({ message }: { message: ProjectRequestMessage }) {
     return (
         <div
@@ -150,6 +183,7 @@ export default function RequestLogShowPage({
     const [aiError, setAiError] = useState<string | null>(null);
     const [selectedAiTaskIndexes, setSelectedAiTaskIndexes] = useState<number[]>([]);
     const [creatingAiTasks, setCreatingAiTasks] = useState(false);
+    const creatingAiTasksRef = useRef(false);
     const aiHttp = useHttp<Record<string, never>, AiBreakdownResponse>({});
     const replyForm = useForm<ReplyFormValues>({
         body: '',
@@ -247,10 +281,13 @@ export default function RequestLogShowPage({
     };
 
     const createSelectedAiTasks = (): void => {
-        if (!currentTeam || selectedAiTasks().length === 0 || creatingAiTasks) {
+        const tasks = selectedAiTasks();
+
+        if (!currentTeam || tasks.length === 0 || creatingAiTasksRef.current) {
             return;
         }
 
+        creatingAiTasksRef.current = true;
         setCreatingAiTasks(true);
 
         router.post(
@@ -259,10 +296,13 @@ export default function RequestLogShowPage({
                 project: project.id,
                 requestLog: requestLog.id,
             }).url,
-            { tasks: selectedAiTasks() },
+            { tasks },
             {
                 preserveScroll: true,
-                onFinish: () => setCreatingAiTasks(false),
+                onFinish: () => {
+                    creatingAiTasksRef.current = false;
+                    setCreatingAiTasks(false);
+                },
             },
         );
     };
@@ -494,6 +534,8 @@ export default function RequestLogShowPage({
                                                     <IdList label="Duplicate task IDs" ids={aiResult.duplicate_task_ids} />
                                                 </div>
                                             ) : null}
+
+                                            <SemanticMatchList matches={aiResult.semantic_matches} />
 
                                             {aiResult.warnings.length > 0 ? (
                                                 <div className="rounded-[10px] border border-bion-border bg-bion-danger-soft p-[14px]">

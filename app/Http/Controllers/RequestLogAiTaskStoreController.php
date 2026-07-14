@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRequestLogAiTasksRequest;
+use App\Models\Task;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 class RequestLogAiTaskStoreController extends Controller
 {
@@ -15,18 +17,40 @@ class RequestLogAiTaskStoreController extends Controller
         $team = $request->user()->currentTeam;
         $projectModel = $team->projects()->findOrFail($project);
         $requestLogModel = $projectModel->requestLogs()->findOrFail($requestLog);
+        $tasks = $request->validated('tasks');
+        $createdCount = 0;
 
-        foreach ($request->validated('tasks') as $taskData) {
-            $projectModel->tasks()->create([
+        foreach ($tasks as $taskData) {
+            $description = trim(($taskData['description'] ?? '')."\n\nAI source reason: ".($taskData['source_reason'] ?? ''));
+            $task = Task::query()->firstOrCreate([
+                'project_id' => $projectModel->id,
                 'request_log_id' => $requestLogModel->id,
                 'title' => $taskData['title'],
+            ], [
                 'status' => $taskData['status'],
-                'description' => trim(($taskData['description'] ?? '')."\n\nAI source reason: ".($taskData['source_reason'] ?? '')),
+                'description' => $description,
                 'tags' => $taskData['tags'] ?? [],
             ]);
+
+            if ($task->wasRecentlyCreated) {
+                $createdCount++;
+            }
         }
 
-        $projectModel->logActivity('AI breakdown tasks created from request log', 'success');
+        if ($createdCount > 0) {
+            $projectModel->logActivity('AI breakdown tasks created from request log', 'success');
+        }
+
+        $message = $createdCount > 0
+            ? trans_choice(':count task created from AI breakdown.|:count tasks created from AI breakdown.', $createdCount, [
+                'count' => $createdCount,
+            ])
+            : __('Selected AI tasks were already created.');
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $message,
+        ]);
 
         return back();
     }

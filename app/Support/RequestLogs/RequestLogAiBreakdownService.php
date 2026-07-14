@@ -18,7 +18,10 @@ use Illuminate\Support\Str;
 
 class RequestLogAiBreakdownService
 {
-    public function __construct(private readonly AiCostEstimator $costEstimator) {}
+    public function __construct(
+        private readonly AiCostEstimator $costEstimator,
+        private readonly RequestLogSemanticMatcher $semanticMatcher,
+    ) {}
 
     /**
      * Generate a structured task breakdown preview for a request log.
@@ -30,7 +33,8 @@ class RequestLogAiBreakdownService
      *     related_task_ids: list<int>,
      *     duplicate_task_ids: list<int>,
      *     proposed_tasks: list<array{title: string, description: string, status: string, tags: list<string>, source_reason: string}>,
-     *     warnings: list<string>
+     *     warnings: list<string>,
+     *     semantic_matches: list<array{id: int, title: string, status: string, description: string, tags: list<string>, similarity: float}>
      * }
      */
     public function analyze(Project $project, RequestLog $requestLog, User $user): array
@@ -44,6 +48,7 @@ class RequestLogAiBreakdownService
 
         $requestLog->loadMissing(['messages.user', 'messages.contact', 'media']);
         $project->loadMissing('tasks');
+        $semanticMatches = $this->semanticMatches($project, $requestLog, $user);
 
         $response = Http::withToken($apiKey)
             ->timeout(90)
@@ -51,7 +56,7 @@ class RequestLogAiBreakdownService
                 'model' => $model,
                 'messages' => [
                     ['role' => 'system', 'content' => $this->systemPrompt()],
-                    ['role' => 'user', 'content' => json_encode($this->contextFor($project, $requestLog), JSON_PRETTY_PRINT)],
+                    ['role' => 'user', 'content' => json_encode($this->contextFor($project, $requestLog, $semanticMatches), JSON_PRETTY_PRINT)],
                 ],
                 'response_format' => [
                     'type' => 'json_schema',
@@ -77,7 +82,10 @@ class RequestLogAiBreakdownService
             throw new AiGenerationException('AI provider returned an empty response.');
         }
 
-        return $this->normalize($content, $project);
+        return [
+            ...$this->normalize($content, $project),
+            'semantic_matches' => $semanticMatches,
+        ];
     }
 
     private function systemPrompt(): string
@@ -102,10 +110,21 @@ class RequestLogAiBreakdownService
     }
 
     /**
+     * @param  list<array{id: int, title: string, status: string, description: string, tags: list<string>, similarity: float}>  $semanticMatches
      * @return array<string, mixed>
      */
-    private function contextFor(Project $project, RequestLog $requestLog): array
+    private function contextFor(Project $project, RequestLog $requestLog, array $semanticMatches): array
     {
+        $candidateTasks = $semanticMatches === []
+            ? $project->tasks->map(fn (Task $task) => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'status' => $task->status->value,
+                'description' => $task->description,
+                'tags' => $task->tags ?? [],
+            ])->values()->all()
+            : $semanticMatches;
+
         return [
             'project' => [
                 'id' => $project->id,
@@ -127,13 +146,8 @@ class RequestLogAiBreakdownService
                     'attachment_filenames' => $message->getMedia('attachments')->pluck('file_name')->values()->all(),
                 ])->values()->all(),
             ],
-            'existing_tasks' => $project->tasks->map(fn (Task $task) => [
-                'id' => $task->id,
-                'title' => $task->title,
-                'status' => $task->status->value,
-                'description' => $task->description,
-                'tags' => $task->tags ?? [],
-            ])->values()->all(),
+            'existing_tasks_source' => $semanticMatches === [] ? 'all_project_tasks_fallback' : 'semantic_embedding_top_matches',
+            'existing_tasks' => $candidateTasks,
         ];
     }
 
@@ -289,6 +303,18 @@ class RequestLogAiBreakdownService
             ->filter(fn (int $id) => in_array($id, $validTaskIds, true))
             ->values()
             ->all();
+    }
+
+    /**
+     * @return list<array{id: int, title: string, status: string, description: string, tags: list<string>, similarity: float}>
+     */
+    private function semanticMatches(Project $project, RequestLog $requestLog, User $user): array
+    {
+        try {
+            return $this->semanticMatcher->taskMatches($project, $requestLog, $user);
+        } catch (AiGenerationException) {
+            return [];
+        }
     }
 
     private function logUsage(Project $project, User $user, Response $response, string $model): void
