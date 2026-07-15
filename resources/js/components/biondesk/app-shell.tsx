@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { dashboard, home, logout } from '@/routes';
 import { index as automations } from '@/routes/automations';
 import { index as bionAi } from '@/routes/bion-ai';
+import { index as bookingLinks } from '@/routes/booking-links';
 import { index as calendar } from '@/routes/calendar';
 import { index as contacts } from '@/routes/contacts';
 import { index as invoices } from '@/routes/invoices';
@@ -55,6 +56,7 @@ type SidebarCounts = {
     contacts: number;
     reminders: number;
     automations: number;
+    bookingLinks: number;
     profileLibrary: number;
 };
 
@@ -212,6 +214,12 @@ export default function BiondeskAppShell({
                         icon: 'i-sparkles',
                         href: automations(currentTeam.slug),
                         badge: countBadge(sidebarCounts?.automations),
+                    },
+                    {
+                        title: 'Booking Links',
+                        icon: 'i-calendar',
+                        href: bookingLinks(currentTeam.slug),
+                        badge: countBadge(sidebarCounts?.bookingLinks),
                     },
                     {
                         title: 'Profile Library',

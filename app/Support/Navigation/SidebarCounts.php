@@ -21,6 +21,7 @@ class SidebarCounts
      *     contacts: int,
      *     reminders: int,
      *     automations: int,
+     *     bookingLinks: int,
      *     profileLibrary: int
      * }
      */
@@ -42,6 +43,7 @@ class SidebarCounts
                 ->whereHas('document', fn (Builder $query) => $query->whereBelongsTo($team))
                 ->count(),
             'automations' => $team->workflowAutomations()->count(),
+            'bookingLinks' => $team->bookingLinks()->count(),
             'profileLibrary' => $team->profileAssets()->count(),
         ];
     }

@@ -96,6 +96,11 @@ type LinksFormValues = {
     socialLinks: SocialLink[];
 };
 
+type BookingLinkFormValues = {
+    showBookingLink: boolean;
+    bookingLinkId: number | null;
+};
+
 type SeoFormValues = {
     metaTitle: string;
     metaDescription: string;
@@ -121,6 +126,8 @@ type LinksFieldErrors = Partial<
     Record<`social_links.${number}.${'platform' | 'url'}`, string>
 >;
 
+type BookingLinkFieldErrors = Partial<Record<'booking_link_id', string>>;
+
 type SeoFieldErrors = Partial<
     Record<'meta_title' | 'meta_description' | 'og_image', string>
 >;
@@ -132,6 +139,7 @@ const RECOMMENDED_META_DESCRIPTION_LENGTH = 160;
 export default function SettingsLeadForm({
     formUrl,
     settings,
+    bookingLinks,
 }: SettingsLeadFormPageProps) {
     const { currentTeam } = usePage().props;
     const [enabled, setEnabled] = useState(settings.enabled);
@@ -179,6 +187,11 @@ export default function SettingsLeadForm({
         socialLinks: settings.socialLinks,
     });
 
+    const bookingLinkForm = useForm<BookingLinkFormValues>({
+        showBookingLink: settings.showBookingLink,
+        bookingLinkId: settings.bookingLinkId,
+    });
+
     const seoForm = useForm<SeoFormValues>({
         metaTitle: settings.metaTitle,
         metaDescription: settings.metaDescription,
@@ -188,7 +201,12 @@ export default function SettingsLeadForm({
     const linkErrors = linkForm.errors as LinkFieldErrors;
     const appearanceErrors = appearanceForm.errors as AppearanceFieldErrors;
     const linksErrors = linksForm.errors as LinksFieldErrors;
+    const bookingLinkErrors =
+        bookingLinkForm.errors as BookingLinkFieldErrors;
     const seoErrors = seoForm.errors as SeoFieldErrors;
+    const selectedBookingLink = bookingLinks.find(
+        (bookingLink) => bookingLink.id === bookingLinkForm.data.bookingLinkId,
+    );
 
     const copyFormLink = async (): Promise<void> => {
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
@@ -313,6 +331,20 @@ export default function SettingsLeadForm({
 
     const saveSocialLinks = (): void => {
         linksForm.put(update.url(), { preserveScroll: true });
+    };
+
+    const toggleBookingLink = (value: boolean): void => {
+        bookingLinkForm.setData({
+            showBookingLink: value,
+            bookingLinkId:
+                value && !bookingLinkForm.data.bookingLinkId
+                    ? (bookingLinks[0]?.id ?? null)
+                    : bookingLinkForm.data.bookingLinkId,
+        });
+    };
+
+    const saveBookingLink = (): void => {
+        bookingLinkForm.put(update.url(), { preserveScroll: true });
     };
 
     const pickOgImage = (): void => {
@@ -942,6 +974,98 @@ export default function SettingsLeadForm({
                             : linksForm.processing
                               ? 'Saving...'
                               : 'Save Links'}
+                    </button>
+                </div>
+            </div>
+
+            <h3 className="my-[24px] text-[15px] font-semibold text-bion-text">
+                Public Booking CTA
+            </h3>
+            <div className={CARD}>
+                <div className={CARD_BODY}>
+                    <div className="flex items-center justify-between gap-[20px]">
+                        <div className="flex flex-col gap-[4px]">
+                            <span className="text-[13.5px] font-medium text-bion-text">
+                                Show a booking link on the public lead form
+                            </span>
+                            <span className={FIELD_HINT}>
+                                Adds a booking call-to-action near the top of
+                                the public form for visitors who prefer choosing
+                                a time first.
+                            </span>
+                        </div>
+                        <ToggleSwitch
+                            checked={bookingLinkForm.data.showBookingLink}
+                            onChange={toggleBookingLink}
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-[8px] border-t border-bion-border pt-[20px]">
+                        <label className={FIELD_LABEL}>Booking Link</label>
+                        <select
+                            className={FIELD_INPUT}
+                            disabled={bookingLinks.length === 0}
+                            value={bookingLinkForm.data.bookingLinkId ?? ''}
+                            onChange={(event) =>
+                                bookingLinkForm.setData(
+                                    'bookingLinkId',
+                                    event.target.value
+                                        ? Number(event.target.value)
+                                        : null,
+                                )
+                            }
+                        >
+                            <option value="">
+                                {bookingLinks.length === 0
+                                    ? 'No active booking links yet'
+                                    : 'Select a booking link'}
+                            </option>
+                            {bookingLinks.map((bookingLink) => (
+                                <option
+                                    key={bookingLink.id}
+                                    value={bookingLink.id}
+                                >
+                                    {bookingLink.name}
+                                </option>
+                            ))}
+                        </select>
+                        {bookingLinkErrors.booking_link_id ? (
+                            <span className={FIELD_ERROR}>
+                                {bookingLinkErrors.booking_link_id}
+                            </span>
+                        ) : null}
+                        {selectedBookingLink ? (
+                            <a
+                                href={selectedBookingLink.publicUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex w-fit items-center gap-[7px] rounded-[8px] border border-bion-border bg-bion-bg px-[12px] py-[8px] text-[12.5px] font-semibold text-bion-text-muted hover:border-bion-accent hover:text-bion-accent"
+                            >
+                                <svg className={ICON_SM_CLS}>
+                                    <use href="#i-link" />
+                                </svg>
+                                Preview {selectedBookingLink.name}
+                            </a>
+                        ) : (
+                            <p className={FIELD_HINT}>
+                                Create and activate a booking link before
+                                showing it on the public lead form.
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className={CARD_FOOTER}>
+                    <button
+                        type="button"
+                        className={BTN_PRIMARY}
+                        disabled={bookingLinkForm.processing}
+                        onClick={saveBookingLink}
+                    >
+                        {bookingLinkForm.recentlySuccessful
+                            ? 'Saved!'
+                            : bookingLinkForm.processing
+                              ? 'Saving...'
+                              : 'Save Booking CTA'}
                     </button>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 
 use App\Enums\DocumentType;
 use App\Enums\ReminderJobType;
+use App\Models\BookingLink;
 use App\Models\Contact;
 use App\Models\Document;
 use App\Models\Opportunity;
@@ -45,6 +46,9 @@ test('app sidebar counters reflect the current team data', function () {
     ProfileAsset::factory()->for($team)->count(6)->create();
     ProfileAsset::factory()->for($otherTeam)->count(7)->create();
 
+    BookingLink::factory()->for($team)->count(2)->create();
+    BookingLink::factory()->for($otherTeam)->count(3)->create();
+
     $this->actingAs($user)
         ->get(route('dashboard', ['current_team' => $team->slug]))
         ->assertOk()
@@ -56,6 +60,7 @@ test('app sidebar counters reflect the current team data', function () {
             ->where('sidebarCounts.invoices', 4)
             ->where('sidebarCounts.contacts', 3)
             ->where('sidebarCounts.reminders', 5)
+            ->where('sidebarCounts.bookingLinks', 2)
             ->where('sidebarCounts.profileLibrary', 6),
         );
 });
