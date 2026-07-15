@@ -449,6 +449,42 @@ export default function PublicLeadFormPage({
                                         ))}
                                     </div>
                                 ) : null}
+                                {settings.bookingLink ? (
+                                    <a
+                                        href={settings.bookingLink.url}
+                                        className="mx-auto mt-[18px] flex max-w-[360px] items-center justify-between gap-[14px] rounded-[12px] border border-bion-border bg-bion-bg p-[12px] text-left [transition:border-color_0.15s_ease,transform_0.12s_ease] hover:border-bion-accent hover:translate-y-[-1px]"
+                                    >
+                                        <span className="flex min-w-0 items-center gap-[12px]">
+                                            <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-bion-accent-soft text-bion-accent">
+                                                <svg
+                                                    className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <rect
+                                                        x="4"
+                                                        y="5"
+                                                        width="16"
+                                                        height="16"
+                                                        rx="2"
+                                                    />
+                                                    <path d="M16 3v4M8 3v4M4 11h16" />
+                                                </svg>
+                                            </span>
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-[13.5px] font-semibold text-bion-text">
+                                                    {settings.bookingLink.name}
+                                                </span>
+                                                <span className="block text-[12px] text-bion-text-muted">
+                                                    {settings.bookingLink.durationMinutes}{' '}
+                                                    min booking link
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <span className="shrink-0 rounded-full bg-bion-surface px-[10px] py-[5px] text-[11.5px] font-semibold text-bion-accent">
+                                            Book
+                                        </span>
+                                    </a>
+                                ) : null}
                             </div>
                         </div>
 

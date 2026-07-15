@@ -824,6 +824,13 @@ export type SocialLink = {
     url: string;
 };
 
+export type PublicLeadFormBookingLink = {
+    name: string;
+    description: string;
+    url: string;
+    durationMinutes: number;
+};
+
 export type PublicLeadFormSettings = {
     enabled: boolean;
     slug: string;
@@ -836,6 +843,9 @@ export type PublicLeadFormSettings = {
     coverUrl: string | null;
     services: string[];
     socialLinks: SocialLink[];
+    showBookingLink: boolean;
+    bookingLinkId: number | null;
+    bookingLink: PublicLeadFormBookingLink | null;
     askBudget: boolean;
     allowAttachments: boolean;
     bannerUrl: string | null;
@@ -857,6 +867,12 @@ export type PublicLeadFormPageProps = {
 export type SettingsLeadFormPageProps = {
     formUrl: string;
     settings: PublicLeadFormSettings;
+    bookingLinks: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        publicUrl: string;
+    }>;
 };
 
 export type PublicDocumentKind = 'invoice' | 'quotation' | 'proposal';
@@ -912,6 +928,81 @@ export type PublicDocument = {
 
 export type PublicDocumentPageProps = {
     document: PublicDocument;
+};
+
+export type BookingAvailabilityWindow = {
+    start: string;
+    end: string;
+};
+
+export type BookingAvailability = Record<string, BookingAvailabilityWindow[]>;
+
+export type BookingLinkItem = {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    isActive: boolean;
+    durationMinutes: number;
+    bufferBeforeMinutes: number;
+    bufferAfterMinutes: number;
+    timezone: string;
+    availability: BookingAvailability;
+    minNoticeMinutes: number;
+    maxDaysAhead: number;
+    location: string;
+    publicUrl: string;
+    bookingsCount: number;
+    createdAt: string;
+};
+
+export type BookingLinksPageProps = {
+    bookingLinks: BookingLinkItem[];
+};
+
+export type BookingLinkFormPageProps = {
+    mode: 'create' | 'edit';
+    bookingLink: BookingLinkItem | null;
+    defaults: {
+        availability: BookingAvailability;
+        timezone: string;
+        durationMinutes: number;
+        bufferBeforeMinutes: number;
+        bufferAfterMinutes: number;
+        minNoticeMinutes: number;
+        maxDaysAhead: number;
+    };
+};
+
+export type PublicBookingSlot = {
+    startsAt: string;
+    time: string;
+};
+
+export type PublicBookingSlotGroup = {
+    date: string;
+    label: string;
+    slots: PublicBookingSlot[];
+};
+
+export type PublicBookingLinkPageProps = {
+    team: {
+        name: string;
+        slug: string;
+        leadFormSlug: string;
+        imageUrl: string | null;
+    };
+    bookingLink: Pick<
+        BookingLinkItem,
+        | 'name'
+        | 'slug'
+        | 'description'
+        | 'durationMinutes'
+        | 'timezone'
+        | 'location'
+    >;
+    slotGroups: PublicBookingSlotGroup[];
+    turnstileSiteKey: string | null;
 };
 
 export type ClientPortalRequest = {

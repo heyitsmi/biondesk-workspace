@@ -8,6 +8,8 @@ use App\Http\Controllers\BionAiMessageStatusController;
 use App\Http\Controllers\BionAiMessageStoreController;
 use App\Http\Controllers\BlogIndexController;
 use App\Http\Controllers\BlogShowController;
+use App\Http\Controllers\BookingLinkController;
+use App\Http\Controllers\BookingLinkToggleController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientPortalController;
 use App\Http\Controllers\ClientPortalRequestLogShowController;
@@ -56,6 +58,8 @@ use App\Http\Controllers\ProposalsController;
 use App\Http\Controllers\ProposalShowController;
 use App\Http\Controllers\ProposalStoreController;
 use App\Http\Controllers\ProposalUpdateController;
+use App\Http\Controllers\PublicBookingLinkController;
+use App\Http\Controllers\PublicBookingStoreController;
 use App\Http\Controllers\PublicDocumentController;
 use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\PublicLeadFormSubmitController;
@@ -98,6 +102,8 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap.xml');
 Route::get('/sitemap', SitemapController::class)->name('sitemap');
 Route::get('/p/{team}', PublicLeadFormController::class)->name('public-lead-form');
 Route::post('/p/{team}', PublicLeadFormSubmitController::class)->name('public-lead-form.submit');
+Route::get('/book/{team}/{bookingLink}', PublicBookingLinkController::class)->name('public-booking-link.show');
+Route::post('/book/{team}/{bookingLink}', PublicBookingStoreController::class)->name('public-booking-link.store');
 Route::get('/d/{document:public_token}', PublicDocumentController::class)->name('public-document');
 Route::get('/d/{document:public_token}/print', DocumentPrintController::class)->name('documents.print');
 Route::post('/d/{document:public_token}/pdf', DocumentPdfGenerateController::class)->name('documents.pdf.generate');
@@ -306,6 +312,21 @@ Route::prefix('app/{current_team}')
         Route::patch('reminders/{reminder}/dismiss', ReminderDismissController::class)
             ->whereNumber('reminder')
             ->name('reminders.dismiss');
+        Route::get('booking-links', [BookingLinkController::class, 'index'])->name('booking-links.index');
+        Route::get('booking-links/create', [BookingLinkController::class, 'create'])->name('booking-links.create');
+        Route::post('booking-links', [BookingLinkController::class, 'store'])->name('booking-links.store');
+        Route::get('booking-links/{bookingLink}/edit', [BookingLinkController::class, 'edit'])
+            ->whereNumber('bookingLink')
+            ->name('booking-links.edit');
+        Route::put('booking-links/{bookingLink}', [BookingLinkController::class, 'update'])
+            ->whereNumber('bookingLink')
+            ->name('booking-links.update');
+        Route::patch('booking-links/{bookingLink}/toggle', BookingLinkToggleController::class)
+            ->whereNumber('bookingLink')
+            ->name('booking-links.toggle');
+        Route::delete('booking-links/{bookingLink}', [BookingLinkController::class, 'destroy'])
+            ->whereNumber('bookingLink')
+            ->name('booking-links.destroy');
         Route::get('automations', [WorkflowAutomationController::class, 'index'])->name('automations.index');
         Route::get('automations/create', [WorkflowAutomationController::class, 'create'])->name('automations.create');
         Route::post('automations', [WorkflowAutomationController::class, 'store'])->name('automations.store');
