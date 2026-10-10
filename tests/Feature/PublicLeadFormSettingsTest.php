@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\BookingLink;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -23,7 +24,8 @@ test('the lead form settings page shows the current team settings', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/lead-form')
             ->where('settings.title', 'Work with Acme')
-            ->has('formUrl'),
+            ->has('formUrl')
+            ->has('bookingLinks'),
         );
 });
 
@@ -305,6 +307,64 @@ test('more than 8 social links are rejected', function () {
     $this->actingAs($user)->put(route('lead-form.update'), [
         'social_links' => $links,
     ])->assertSessionHasErrors('social_links');
+});
+
+test('a team owner can show a booking link on the public lead form', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+    $bookingLink = BookingLink::factory()->for($team)->create([
+        'name' => 'Discovery Call',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'show_booking_link' => true,
+        'booking_link_id' => $bookingLink->id,
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_show_booking_link)->toBeTrue();
+    expect($team->lead_form_booking_link_id)->toBe($bookingLink->id);
+
+    $this->actingAs($user)
+        ->get(route('lead-form.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('settings.showBookingLink', true)
+            ->where('settings.bookingLinkId', $bookingLink->id)
+            ->where('bookingLinks.0.name', 'Discovery Call'),
+        );
+});
+
+test('a team owner can save the lead form booking link via camelCase keys', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+    $bookingLink = BookingLink::factory()->for($team)->create();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'showBookingLink' => true,
+        'bookingLinkId' => $bookingLink->id,
+    ])->assertRedirect(route('lead-form.edit'));
+
+    $team = $team->fresh();
+    expect($team->lead_form_show_booking_link)->toBeTrue();
+    expect($team->lead_form_booking_link_id)->toBe($bookingLink->id);
+});
+
+test('a booking link from another team is rejected for the public lead form', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+    $team = $user->currentTeam;
+    $otherTeam = Team::factory()->create();
+    $bookingLink = BookingLink::factory()->for($otherTeam)->create();
+
+    $this->actingAs($user)->put(route('lead-form.update'), [
+        'show_booking_link' => true,
+        'booking_link_id' => $bookingLink->id,
+    ])->assertSessionHasErrors('booking_link_id');
+
+    expect($team->fresh()->lead_form_booking_link_id)->toBeNull();
 });
 
 test('a team owner can save SEO meta title and description', function () {

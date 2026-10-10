@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -33,6 +34,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property string|null $lead_form_background_color
  * @property list<string>|null $lead_form_services
  * @property array<int, mixed>|null $lead_form_social_links
+ * @property bool $lead_form_show_booking_link
+ * @property int|null $lead_form_booking_link_id
  * @property string|null $lead_form_meta_title
  * @property string|null $lead_form_meta_description
  * @property bool $lead_form_ask_budget
@@ -48,6 +51,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
     'name', 'slug', 'is_personal', 'lead_form_enabled', 'lead_form_slug', 'lead_form_title',
     'lead_form_description', 'lead_form_welcome_message', 'lead_form_background_theme',
     'lead_form_background_color', 'lead_form_services', 'lead_form_social_links',
+    'lead_form_show_booking_link', 'lead_form_booking_link_id',
     'lead_form_meta_title', 'lead_form_meta_description',
     'lead_form_ask_budget', 'lead_form_allow_attachments',
 ])]
@@ -187,6 +191,36 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get all scheduling booking links for this team.
+     *
+     * @return HasMany<BookingLink, $this>
+     */
+    public function bookingLinks(): HasMany
+    {
+        return $this->hasMany(BookingLink::class);
+    }
+
+    /**
+     * Get the booking link featured on this team's public lead form.
+     *
+     * @return BelongsTo<BookingLink, $this>
+     */
+    public function leadFormBookingLink(): BelongsTo
+    {
+        return $this->belongsTo(BookingLink::class, 'lead_form_booking_link_id');
+    }
+
+    /**
+     * Get all scheduling bookings for this team.
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
      * Get all profile library assets for this team.
      *
      * @return HasMany<ProfileAsset, $this>
@@ -257,6 +291,16 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get the small public-facing brand image shared by lead and booking pages.
+     */
+    public function publicBrandImageUrl(): ?string
+    {
+        return $this->leadFormBannerUrl()
+            ?: $this->leadFormCoverUrl()
+            ?: $this->leadFormOgImageUrl();
+    }
+
+    /**
      * Register the media collections for this model.
      */
     public function registerMediaCollections(): void
@@ -316,6 +360,36 @@ class Team extends Model implements HasMedia
     }
 
     /**
+     * Get the public booking link CTA selected for the lead form.
+     *
+     * @return array{name: string, description: string, url: string, durationMinutes: int}|null
+     */
+    public function leadFormBookingLinkCta(): ?array
+    {
+        if (! $this->lead_form_show_booking_link || ! $this->lead_form_booking_link_id) {
+            return null;
+        }
+
+        $bookingLink = $this->leadFormBookingLink()
+            ->where('team_id', $this->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $bookingLink) {
+            return null;
+        }
+
+        $bookingLink->setRelation('team', $this);
+
+        return [
+            'name' => $bookingLink->name,
+            'description' => $bookingLink->description ?? '',
+            'url' => $bookingLink->publicPath(),
+            'durationMinutes' => $bookingLink->duration_minutes,
+        ];
+    }
+
+    /**
      * Get the resolved public lead form settings, applying sensible fallbacks.
      *
      * @return array<string, mixed>
@@ -338,6 +412,9 @@ class Team extends Model implements HasMedia
             'coverUrl' => $this->leadFormCoverUrl(),
             'services' => $this->lead_form_services ?: self::DEFAULT_LEAD_FORM_SERVICES,
             'socialLinks' => $this->leadFormSocialLinks(),
+            'showBookingLink' => $this->lead_form_show_booking_link,
+            'bookingLinkId' => $this->lead_form_booking_link_id,
+            'bookingLink' => $this->leadFormBookingLinkCta(),
             'askBudget' => $this->lead_form_ask_budget,
             'allowAttachments' => $this->lead_form_allow_attachments,
             'bannerUrl' => $this->leadFormBannerUrl(),
@@ -360,6 +437,8 @@ class Team extends Model implements HasMedia
             'lead_form_background_theme' => LeadFormBackgroundTheme::class,
             'lead_form_services' => 'array',
             'lead_form_social_links' => 'array',
+            'lead_form_show_booking_link' => 'boolean',
+            'lead_form_booking_link_id' => 'integer',
             'lead_form_ask_budget' => 'boolean',
             'lead_form_allow_attachments' => 'boolean',
         ];

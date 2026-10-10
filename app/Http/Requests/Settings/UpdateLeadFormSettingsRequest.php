@@ -47,6 +47,8 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'background_theme' => 'backgroundTheme',
             'background_color' => 'backgroundColor',
             'social_links' => 'socialLinks',
+            'show_booking_link' => 'showBookingLink',
+            'booking_link_id' => 'bookingLinkId',
             'meta_title' => 'metaTitle',
             'meta_description' => 'metaDescription',
             'ask_budget' => 'askBudget',
@@ -80,6 +82,10 @@ class UpdateLeadFormSettingsRequest extends FormRequest
         if ($this->has('meta_description') && trim((string) $this->input('meta_description')) === '') {
             $this->merge(['meta_description' => null]);
         }
+
+        if ($this->has('booking_link_id') && trim((string) $this->input('booking_link_id')) === '') {
+            $this->merge(['booking_link_id' => null]);
+        }
     }
 
     /**
@@ -90,6 +96,7 @@ class UpdateLeadFormSettingsRequest extends FormRequest
     public function rules(): array
     {
         $team = $this->user()?->currentTeam;
+        $teamId = $team?->id;
 
         return [
             'enabled' => ['sometimes', 'boolean'],
@@ -117,6 +124,13 @@ class UpdateLeadFormSettingsRequest extends FormRequest
             'social_links' => ['sometimes', 'array', 'max:8'],
             'social_links.*.platform' => ['required', Rule::enum(SocialLinkPlatform::class)],
             'social_links.*.url' => ['required', 'url', 'max:500'],
+            'show_booking_link' => ['sometimes', 'boolean'],
+            'booking_link_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('booking_links', 'id')->where('team_id', $teamId),
+            ],
             'meta_title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'meta_description' => ['sometimes', 'nullable', 'string', 'max:300'],
             'og_image' => ['sometimes', 'nullable', 'image', 'max:5120'],

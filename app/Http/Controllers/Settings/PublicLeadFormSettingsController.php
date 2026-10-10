@@ -26,6 +26,8 @@ class PublicLeadFormSettingsController extends Controller
         'background_color' => 'lead_form_background_color',
         'services' => 'lead_form_services',
         'social_links' => 'lead_form_social_links',
+        'show_booking_link' => 'lead_form_show_booking_link',
+        'booking_link_id' => 'lead_form_booking_link_id',
         'meta_title' => 'lead_form_meta_title',
         'meta_description' => 'lead_form_meta_description',
         'ask_budget' => 'lead_form_ask_budget',
@@ -42,6 +44,21 @@ class PublicLeadFormSettingsController extends Controller
         return Inertia::render('settings/lead-form', [
             'formUrl' => route('public-lead-form', ['team' => $team->leadFormPublicSlug()]),
             'settings' => $team->leadFormSettings(),
+            'bookingLinks' => $team->bookingLinks()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(function ($bookingLink) use ($team): array {
+                    $bookingLink->setRelation('team', $team);
+
+                    return [
+                        'id' => $bookingLink->id,
+                        'name' => $bookingLink->name,
+                        'slug' => $bookingLink->slug,
+                        'publicUrl' => $bookingLink->publicPath(),
+                    ];
+                })
+                ->values(),
         ]);
     }
 

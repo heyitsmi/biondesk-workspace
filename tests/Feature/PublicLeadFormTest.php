@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\BookingLink;
 use App\Models\Team;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -75,6 +76,62 @@ test('public lead form exposes saved social links', function () {
             ['platform' => 'website', 'url' => 'https://biondesk.test'],
         ]),
     );
+});
+
+test('public lead form exposes selected active booking link when enabled', function () {
+    $team = Team::factory()->create(['name' => 'Biondesk Studio']);
+    $bookingLink = BookingLink::factory()->for($team)->create([
+        'name' => 'Discovery Call',
+        'slug' => 'discovery-call',
+        'description' => 'Pick a time for a quick call.',
+        'duration_minutes' => 30,
+        'is_active' => true,
+    ]);
+
+    $team->update([
+        'lead_form_show_booking_link' => true,
+        'lead_form_booking_link_id' => $bookingLink->id,
+    ]);
+
+    $response = $this->get(route('public-lead-form', ['team' => $team->slug]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('public/lead-form')
+        ->where('settings.showBookingLink', true)
+        ->where('settings.bookingLinkId', $bookingLink->id)
+        ->where('settings.bookingLink.name', 'Discovery Call')
+        ->where('settings.bookingLink.description', 'Pick a time for a quick call.')
+        ->where('settings.bookingLink.url', "/book/{$team->slug}/discovery-call")
+        ->where('settings.bookingLink.durationMinutes', 30),
+    );
+});
+
+test('public lead form hides booking link when disabled or inactive', function () {
+    $team = Team::factory()->create(['name' => 'Biondesk Studio']);
+    $bookingLink = BookingLink::factory()->for($team)->create([
+        'is_active' => false,
+    ]);
+
+    $team->update([
+        'lead_form_show_booking_link' => true,
+        'lead_form_booking_link_id' => $bookingLink->id,
+    ]);
+
+    $this->get(route('public-lead-form', ['team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('settings.bookingLink', null),
+        );
+
+    $bookingLink->update(['is_active' => true]);
+    $team->update(['lead_form_show_booking_link' => false]);
+
+    $this->get(route('public-lead-form', ['team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('settings.bookingLink', null),
+        );
 });
 
 test('public lead form exposes custom SEO meta title and description', function () {
